@@ -10,8 +10,10 @@
  */
 package org.geomajas.layer.wms;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.DecimalFormat;
@@ -64,23 +66,26 @@ import com.vividsolutions.jts.geom.Envelope;
 
 /**
  * <p>
- * Layer model for accessing raster data from WMS servers. It has support for most WMS versions: up to 1.3.0. When using
- * this layer, note that the following fields are required:
+ * Layer model for accessing raster data from WMS servers. It has support for
+ * most WMS versions: up to 1.3.0. When using this layer, note that the
+ * following fields are required:
  * <ul>
  * <li><b>baseWmsUrl</b>: The base URL to the WMS server.</li>
  * <li><b>format</b>: The format for the returned images.</li>
  * <li><b>version</b>: The version of WMS to use.</li>
  * <li><b>styles</b>: The styles to use when rendering the WMS images.</li>
- * <li><b>useProxy</b>: Set to true to use a proxy for rendering the WMS, hiding the URL from the client. This
- * automatically happens when setting the authentication object.</li>
+ * <li><b>useProxy</b>: Set to true to use a proxy for rendering the WMS, hiding
+ * the URL from the client. This automatically happens when setting the
+ * authentication object.</li>
  * </ul>
- * There always is the option of adding additional parameters to the WMS GetMap requests, by filling the
- * <code>parameters</code> list. Such parameters could include optional WMS GetMap parameters, such as "transparency",
- * but also "user" and "password".
+ * There always is the option of adding additional parameters to the WMS GetMap
+ * requests, by filling the <code>parameters</code> list. Such parameters could
+ * include optional WMS GetMap parameters, such as "transparency", but also
+ * "user" and "password".
  * </p>
  * <p>
- * This layer also supports BASIC and DIGEST authentication. To use this functionality, set the
- * <code>authentication</code> field.
+ * This layer also supports BASIC and DIGEST authentication. To use this
+ * functionality, set the <code>authentication</code> field.
  * </p>
  * 
  * @author Jan De Moerloose
@@ -92,11 +97,18 @@ import com.vividsolutions.jts.geom.Envelope;
 @Api
 public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 
+	private static final String GFI_UNAVAILABLE_MSG = "<html><body><div>GetFeatureInfo-support not available on this layer</div></body></html>";
+
+	private static final boolean IS_GML_REQUEST = false;
+
+	private static final boolean IS_HTML_REQUEST = true;
+
 	private final Logger log = LoggerFactory.getLogger(WmsLayer.class);
 
 	private final List<Resolution> resolutions = new ArrayList<Resolution>();
 
-	// @NotNull this seems to cause problems, it is tested in @PostConstruct anyway
+	// @NotNull this seems to cause problems, it is tested in @PostConstruct
+	// anyway
 	private String baseWmsUrl;
 
 	private String format = "image/png";
@@ -106,7 +118,7 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 	private String styles = "";
 
 	private List<Parameter> parameters;
-	
+
 	private boolean enableFeatureInfoSupport;
 
 	private RasterLayerInfo layerInfo;
@@ -120,11 +132,11 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 	 */
 	@Deprecated
 	private WmsAuthentication authentication;
-	 
+
 	private LayerAuthentication layerAuthentication;
 
 	private boolean useProxy;
-	
+
 	private boolean useCache;
 
 	@Autowired
@@ -141,7 +153,7 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 
 	@Autowired(required = false)
 	private CacheManagerService cacheManagerService;
-	
+
 	@Autowired
 	private SecurityContext securityContext;
 
@@ -177,7 +189,8 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 	 * Get coordinate reference system for this layer.
 	 * 
 	 * @return Coordinate reference system for this layer.
-	 * @deprecated use {@link org.geomajas.layer.LayerService#getCrs(org.geomajas.layer.Layer)}
+	 * @deprecated use
+	 *             {@link org.geomajas.layer.LayerService#getCrs(org.geomajas.layer.Layer)}
 	 */
 	@Deprecated
 	public CoordinateReferenceSystem getCrs() {
@@ -187,7 +200,8 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 	@PostConstruct
 	protected void postConstruct() throws GeomajasException {
 		if (null == baseWmsUrl) {
-			throw new GeomajasException(ExceptionCode.PARAMETER_MISSING, "baseWmsUrl");
+			throw new GeomajasException(ExceptionCode.PARAMETER_MISSING,
+					"baseWmsUrl");
 		}
 
 		crs = geoService.getCrs2(getLayerInfo().getCrs());
@@ -206,8 +220,8 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 
 			int level = 0;
 			for (double resolution : r) {
-				resolutions
-						.add(new Resolution(resolution, level++, layerInfo.getTileWidth(), layerInfo.getTileHeight()));
+				resolutions.add(new Resolution(resolution, level++, layerInfo
+						.getTileWidth(), layerInfo.getTileHeight()));
 			}
 		}
 	}
@@ -227,35 +241,24 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 	}
 
 	/** {@inheritDoc}. */
-	public List<Feature> getFeaturesByLocation(Coordinate layerCoordinate, double layerScale, int pixelTolerance)
-			throws LayerException {
+	public List<Feature> getFeaturesByLocation(Coordinate layerCoordinate,
+			double layerScale, int pixelTolerance) throws LayerException {
 		if (!isEnableFeatureInfoSupport()) {
 			return Collections.emptyList();
 		}
-
 		List<Feature> features = new ArrayList<Feature>();
-
-		Resolution bestResolution = getResolutionForScale(layerScale);
-		RasterGrid grid = getRasterGrid(new Envelope(layerCoordinate), bestResolution.getTileWidth(),
-				bestResolution.getTileHeight());
-		int x = (int) (((layerCoordinate.x - grid.getLowerLeft().x) * bestResolution.getTileWidthPx()) / grid
-				.getTileWidth());
-		int y = (int) (bestResolution.getTileHeightPx() - (((layerCoordinate.y - grid.getLowerLeft().y) * bestResolution
-				.getTileHeightPx()) / grid.getTileHeight()));
-
-		Bbox layerBox = new Bbox(grid.getLowerLeft().x, grid.getLowerLeft().y, grid.getTileWidth(),
-				grid.getTileHeight());
-
 		InputStream stream = null;
 		try {
-			String url = formatGetFeatureInfoUrl(bestResolution.getTileWidthPx(), bestResolution.getTileHeightPx(),
-					layerBox, x, y);
-			log.debug("getFeaturesByLocation: {} {} {} {}", new Object[] { layerCoordinate, layerScale, pixelTolerance,
-					url });
+			String url = buildRequestUrl(layerCoordinate, layerScale,
+					IS_GML_REQUEST);
+			log.debug("getFeaturesByLocation: {} {} {} {}", new Object[] {
+					layerCoordinate, layerScale, pixelTolerance, url });
 			GML gml = new GML(Version.GML3);
 
-			stream = httpService.getStream(url, getLayerAuthentication(), getId());
-			FeatureCollection<?, SimpleFeature> collection = gml.decodeFeatureCollection(stream);
+			stream = httpService.getStream(url, getLayerAuthentication(),
+					getId());
+			FeatureCollection<?, SimpleFeature> collection = gml
+					.decodeFeatureCollection(stream);
 			FeatureIterator<SimpleFeature> it = collection.features();
 
 			while (it.hasNext()) {
@@ -278,6 +281,74 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 		return features;
 	}
 
+	@Override
+	public String getFeatureInfoAsHtml(Coordinate coordinate,
+			double layerScale, int pixelTolerance) throws LayerException {
+		if (!isEnableFeatureInfoSupport()) {
+			return GFI_UNAVAILABLE_MSG;
+		}
+		InputStream stream = null;
+		String url;
+		try {
+			url = buildRequestUrl(coordinate, layerScale, IS_GML_REQUEST);
+
+			log.debug("getFeaturesByLocation: {} {} {} {}", new Object[] {
+					coordinate, layerScale, pixelTolerance, url });
+			stream = httpService.getStream(url, getLayerAuthentication(),
+					getId());
+		} catch (Exception e) {
+			throw new LayerException(e, ExceptionCode.UNEXPECTED_PROBLEM);
+		}
+		return getStringFromInputStream(stream);
+	}
+
+	private static String getStringFromInputStream(InputStream is) {
+
+		BufferedReader br = null;
+		StringBuilder sb = new StringBuilder();
+
+		String line;
+		try {
+
+			br = new BufferedReader(new InputStreamReader(is));
+			while ((line = br.readLine()) != null) {
+				sb.append(line);
+			}
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (br != null) {
+				try {
+					br.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+		return sb.toString();
+
+	}
+
+	private String buildRequestUrl(Coordinate layerCoordinate,
+			double layerScale, boolean isHtmlRequest) throws GeomajasException {
+		Resolution bestResolution = getResolutionForScale(layerScale);
+		RasterGrid grid = getRasterGrid(new Envelope(layerCoordinate),
+				bestResolution.getTileWidth(), bestResolution.getTileHeight());
+		int x = (int) (((layerCoordinate.x - grid.getLowerLeft().x) * bestResolution
+				.getTileWidthPx()) / grid.getTileWidth());
+		int y = (int) (bestResolution.getTileHeightPx() - (((layerCoordinate.y - grid
+				.getLowerLeft().y) * bestResolution.getTileHeightPx()) / grid
+				.getTileHeight()));
+
+		Bbox layerBox = new Bbox(grid.getLowerLeft().x, grid.getLowerLeft().y,
+				grid.getTileWidth(), grid.getTileHeight());
+		String url = formatGetFeatureInfoUrl(bestResolution.getTileWidthPx(),
+				bestResolution.getTileHeightPx(), layerBox, x, y, isHtmlRequest);
+		return url;
+	}
+
 	private Feature toDto(SimpleFeature feature) {
 		if (feature == null) {
 			return null;
@@ -286,10 +357,12 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 
 		HashMap<String, Attribute> attributes = new HashMap<String, Attribute>();
 
-		for (AttributeDescriptor desc : feature.getType().getAttributeDescriptors()) {
+		for (AttributeDescriptor desc : feature.getType()
+				.getAttributeDescriptors()) {
 			Object obj = feature.getAttribute(desc.getName());
 			if (null != obj) {
-				attributes.put(desc.getLocalName(), new StringAttribute(obj.toString()));
+				attributes.put(desc.getLocalName(),
+						new StringAttribute(obj.toString()));
 			}
 		}
 		dto.setAttributes(attributes);
@@ -302,7 +375,8 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 	}
 
 	/**
-	 * Paints the specified bounds optimized for the specified scale in pixel/unit.
+	 * Paints the specified bounds optimized for the specified scale in
+	 * pixel/unit.
 	 * 
 	 * @param targetCrs
 	 *            Coordinate reference system used for bounds
@@ -314,27 +388,32 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 	 * @throws GeomajasException
 	 *             oops
 	 */
-	public List<RasterTile> paint(CoordinateReferenceSystem targetCrs, Envelope bounds, double scale)
-			throws GeomajasException {
+	public List<RasterTile> paint(CoordinateReferenceSystem targetCrs,
+			Envelope bounds, double scale) throws GeomajasException {
 		Envelope layerBounds = bounds;
 		double layerScale = scale;
 		CrsTransform layerToMap = null;
 		boolean needTransform = !crs.equals(targetCrs);
 
 		try {
-			// We don't necessarily need to split into same CRS and different CRS cases, the latter implementation uses
-			// identity transform if crs's are equal for map and layer but might introduce bugs in rounding and/or
+			// We don't necessarily need to split into same CRS and different
+			// CRS cases, the latter implementation uses
+			// identity transform if crs's are equal for map and layer but might
+			// introduce bugs in rounding and/or
 			// conversions.
 			if (needTransform) {
 				layerToMap = geoService.getCrsTransform(crs, targetCrs);
-				CrsTransform mapToLayer = geoService.getCrsTransform(targetCrs, crs);
+				CrsTransform mapToLayer = geoService.getCrsTransform(targetCrs,
+						crs);
 
-				// Translate the map coordinates to layer coordinates, assumes equal x-y orientation
+				// Translate the map coordinates to layer coordinates, assumes
+				// equal x-y orientation
 				layerBounds = geoService.transform(bounds, mapToLayer);
 				layerScale = bounds.getWidth() * scale / layerBounds.getWidth();
 			}
 		} catch (MismatchedDimensionException e) {
-			throw new GeomajasException(e, ExceptionCode.RENDER_DIMENSION_MISMATCH);
+			throw new GeomajasException(e,
+					ExceptionCode.RENDER_DIMENSION_MISMATCH);
 		}
 		layerBounds = clipBounds(layerBounds);
 		if (layerBounds.isNull()) {
@@ -343,37 +422,47 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 
 		// Grid is in layer coordinate space!
 		Resolution bestResolution = getResolutionForScale(layerScale);
-		RasterGrid grid = getRasterGrid(layerBounds, bestResolution.getTileWidth(), bestResolution.getTileHeight());
+		RasterGrid grid = getRasterGrid(layerBounds,
+				bestResolution.getTileWidth(), bestResolution.getTileHeight());
 
 		// We calculate the first tile's screen box with this assumption
 		List<RasterTile> result = new ArrayList<RasterTile>();
 		for (int i = grid.getXmin(); i < grid.getXmax(); i++) {
 			for (int j = grid.getYmin(); j < grid.getYmax(); j++) {
-				double x = grid.getLowerLeft().x + (i - grid.getXmin()) * grid.getTileWidth();
-				double y = grid.getLowerLeft().y + (j - grid.getYmin()) * grid.getTileHeight();
+				double x = grid.getLowerLeft().x + (i - grid.getXmin())
+						* grid.getTileWidth();
+				double y = grid.getLowerLeft().y + (j - grid.getYmin())
+						* grid.getTileHeight();
 				// layer coordinates
 				Bbox worldBox;
 				Bbox layerBox;
 				if (needTransform) {
-					layerBox = new Bbox(x, y, grid.getTileWidth(), grid.getTileHeight());
-					// Transforming back to map coordinates will only result in a proper grid if the transformation
+					layerBox = new Bbox(x, y, grid.getTileWidth(),
+							grid.getTileHeight());
+					// Transforming back to map coordinates will only result in
+					// a proper grid if the transformation
 					// is nearly affine
 					worldBox = geoService.transform(layerBox, layerToMap);
 				} else {
-					worldBox = new Bbox(x, y, grid.getTileWidth(), grid.getTileHeight());
+					worldBox = new Bbox(x, y, grid.getTileWidth(),
+							grid.getTileHeight());
 					layerBox = worldBox;
 				}
-				// Rounding to avoid white space between raster tiles lower-left becomes upper-left in inverted y-space
-				Bbox screenBox = new Bbox(Math.round(scale * worldBox.getX()), -Math.round(scale * worldBox.getMaxY()),
-						Math.round(scale * worldBox.getMaxX()) - Math.round(scale * worldBox.getX()), Math.round(scale
-								* worldBox.getMaxY())
+				// Rounding to avoid white space between raster tiles lower-left
+				// becomes upper-left in inverted y-space
+				Bbox screenBox = new Bbox(Math.round(scale * worldBox.getX()),
+						-Math.round(scale * worldBox.getMaxY()),
+						Math.round(scale * worldBox.getMaxX())
+								- Math.round(scale * worldBox.getX()),
+						Math.round(scale * worldBox.getMaxY())
 								- Math.round(scale * worldBox.getY()));
 
-				RasterTile image = new RasterTile(screenBox, getId() + "." + bestResolution.getLevel() + "." + i + ","
-						+ j);
+				RasterTile image = new RasterTile(screenBox, getId() + "."
+						+ bestResolution.getLevel() + "." + i + "," + j);
 
 				image.setCode(new TileCode(bestResolution.getLevel(), i, j));
-				String url = formatUrl(bestResolution.getTileWidthPx(), bestResolution.getTileHeightPx(), layerBox);
+				String url = formatUrl(bestResolution.getTileWidthPx(),
+						bestResolution.getTileHeightPx(), layerBox);
 				image.setUrl(url);
 				result.add(image);
 			}
@@ -398,7 +487,8 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 		}
 	}
 
-	private String formatGetFeatureInfoUrl(int width, int height, Bbox box, int x, int y) throws GeomajasException {
+	private String formatGetFeatureInfoUrl(int width, int height, Bbox box,
+			int x, int y, boolean isHtmlRequest) throws GeomajasException {
 		// Always use direct url
 		try {
 			StringBuilder url = formatBaseUrl(baseWmsUrl, width, height, box);
@@ -413,14 +503,25 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 			url.append(Integer.toString(x));
 			url.append("&Y=");
 			url.append(Integer.toString(y));
-			url.append("&INFO_FORMAT=application/vnd.ogc.gml");
+			url.append("&INFO_FORMAT=");
+			url.append(retrieveFormatString(isHtmlRequest));
+
 			return url.toString();
 		} catch (UnsupportedEncodingException uee) {
 			throw new IllegalStateException("Cannot find UTF8 encoding?", uee);
 		}
 	}
 
-	private String formatUrl(int width, int height, Bbox box) throws GeomajasException {
+	private String retrieveFormatString(boolean isHtmlRequest) {
+		if (isHtmlRequest) {
+			return ("text/html");
+		} else {
+			return ("vnd.ogc.gml");
+		}
+	}
+
+	private String formatUrl(int width, int height, Bbox box)
+			throws GeomajasException {
 		StringBuilder url = formatBaseUrl(getWmsTargetUrl(), width, height, box);
 		url.append("&request=GetMap");
 		String token = securityContext.getToken();
@@ -432,7 +533,8 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 	}
 
 	/**
-	 * Build the base part of the url (doesn't change for getMap or getFeatureInfo requests).
+	 * Build the base part of the url (doesn't change for getMap or
+	 * getFeatureInfo requests).
 	 * 
 	 * @param targetUrl
 	 *            base url
@@ -446,7 +548,8 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 	 * @throws GeomajasException
 	 *             missing parameter
 	 */
-	private StringBuilder formatBaseUrl(String targetUrl, int width, int height, Bbox box) throws GeomajasException {
+	private StringBuilder formatBaseUrl(String targetUrl, int width,
+			int height, Bbox box) throws GeomajasException {
 		try {
 			StringBuilder url = new StringBuilder(targetUrl);
 			int pos = url.lastIndexOf("?");
@@ -465,7 +568,9 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 			url.append(Integer.toString(width));
 			url.append("&HEIGHT=");
 			url.append(Integer.toString(height));
-			DecimalFormat decimalFormat = new DecimalFormat(); // create new as this is not thread safe
+			DecimalFormat decimalFormat = new DecimalFormat(); // create new as
+																// this is not
+																// thread safe
 			decimalFormat.setDecimalSeparatorAlwaysShown(false);
 			decimalFormat.setGroupingUsed(false);
 			decimalFormat.setMinimumFractionDigits(0);
@@ -515,15 +620,17 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 			double screenResolution = 1.0 / scale;
 			if (screenResolution >= resolutions.get(0).getResolution()) {
 				return resolutions.get(0);
-			} else if (screenResolution <= resolutions.get(resolutions.size() - 1).getResolution()) {
+			} else if (screenResolution <= resolutions.get(
+					resolutions.size() - 1).getResolution()) {
 				return resolutions.get(resolutions.size() - 1);
 			} else {
 				for (int i = 0; i < resolutions.size() - 1; i++) {
 					Resolution upper = resolutions.get(i);
 					Resolution lower = resolutions.get(i + 1);
-					if (screenResolution <= upper.getResolution() && screenResolution >= lower.getResolution()) {
-						if ((upper.getResolution() - screenResolution) > 2 * (screenResolution - 
-								lower.getResolution())) {
+					if (screenResolution <= upper.getResolution()
+							&& screenResolution >= lower.getResolution()) {
+						if ((upper.getResolution() - screenResolution) > 2 * (screenResolution - lower
+								.getResolution())) {
 							return lower;
 						} else {
 							return upper;
@@ -546,8 +653,8 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 		int tileWidth = layerInfo.getTileWidth();
 		int tileHeight = layerInfo.getTileHeight();
 
-		Resolution upper = new Resolution(Math.max(maxWidth / tileWidth, maxHeight / tileHeight), 0, tileWidth,
-				tileHeight);
+		Resolution upper = new Resolution(Math.max(maxWidth / tileWidth,
+				maxHeight / tileHeight), 0, tileWidth, tileHeight);
 		if (screenResolution >= upper.getResolution()) {
 			return upper;
 		} else {
@@ -558,9 +665,11 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 				level++;
 				double width = maxWidth / Math.pow(2, level);
 				double height = maxHeight / Math.pow(2, level);
-				upper = new Resolution(Math.max(width / tileWidth, height / tileHeight), level, tileWidth, tileHeight);
+				upper = new Resolution(Math.max(width / tileWidth, height
+						/ tileHeight), level, tileWidth, tileHeight);
 			}
-			if ((screenResolution - upper.getResolution()) > 2 * (lower.getResolution() - screenResolution)) {
+			if ((screenResolution - upper.getResolution()) > 2 * (lower
+					.getResolution() - screenResolution)) {
 				return lower;
 			} else {
 				return upper;
@@ -568,19 +677,22 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 		}
 	}
 
-	private RasterGrid getRasterGrid(Envelope bounds, double width, double height) {
+	private RasterGrid getRasterGrid(Envelope bounds, double width,
+			double height) {
 		Bbox bbox = getLayerInfo().getMaxExtent();
 		int ymin = (int) Math.floor((bounds.getMinY() - bbox.getY()) / height);
 		int ymax = (int) Math.ceil((bounds.getMaxY() - bbox.getY()) / height);
 		int xmin = (int) Math.floor((bounds.getMinX() - bbox.getX()) / width);
 		int xmax = (int) Math.ceil((bounds.getMaxX() - bbox.getX()) / width);
 
-		Coordinate lowerLeft = new Coordinate(bbox.getX() + xmin * width, bbox.getY() + ymin * height);
+		Coordinate lowerLeft = new Coordinate(bbox.getX() + xmin * width,
+				bbox.getY() + ymin * height);
 		return new RasterGrid(lowerLeft, xmin, ymin, xmax, ymax, width, height);
 	}
 
 	private Envelope clipBounds(Envelope bounds) {
-		Envelope maxExtent = converterService.toInternal(layerInfo.getMaxExtent());
+		Envelope maxExtent = converterService.toInternal(layerInfo
+				.getMaxExtent());
 		return bounds.intersection(maxExtent);
 	}
 
@@ -641,10 +753,12 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 	}
 
 	/**
-	 * Set additional parameters to include in all WMS <code>getMap</code> requests.
+	 * Set additional parameters to include in all WMS <code>getMap</code>
+	 * requests.
 	 * 
 	 * @param parameters
-	 *            parameters. For possible keys and values, check your WMS server.
+	 *            parameters. For possible keys and values, check your WMS
+	 *            server.
 	 * @since 1.7.1
 	 */
 	@Api
@@ -665,12 +779,14 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 
 	/**
 	 * <p>
-	 * Set the authentication object. This configuration object provides support for basic and digest HTTP
-	 * authentication on the WMS server. If no HTTP authentication is required, leave this empty.
+	 * Set the authentication object. This configuration object provides support
+	 * for basic and digest HTTP authentication on the WMS server. If no HTTP
+	 * authentication is required, leave this empty.
 	 * </p>
 	 * <p>
-	 * Note that there is still the option of adding a user name and password as HTTP parameters, as some WMS server
-	 * support. To do that, just add {@link #parameters}.
+	 * Note that there is still the option of adding a user name and password as
+	 * HTTP parameters, as some WMS server support. To do that, just add
+	 * {@link #parameters}.
 	 * </p>
 	 * 
 	 * @param authentication
@@ -694,8 +810,10 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 		// TODO Remove when removing deprecated authentication field.
 		if (layerAuthentication == null && authentication != null) {
 			layerAuthentication = new LayerAuthentication();
-			layerAuthentication.setAuthenticationMethod(LayerAuthenticationMethod.valueOf(authentication
-					.getAuthenticationMethod().name()));
+			layerAuthentication
+					.setAuthenticationMethod(LayerAuthenticationMethod
+							.valueOf(authentication.getAuthenticationMethod()
+									.name()));
 			layerAuthentication.setPassword(authentication.getPassword());
 			layerAuthentication.setPasswordKey(authentication.getPasswordKey());
 			layerAuthentication.setRealm(authentication.getRealm());
@@ -708,12 +826,14 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 
 	/**
 	 * <p>
-	 * Set the authentication object. This configuration object provides support for basic and digest HTTP
-	 * authentication on the WMS server. If no HTTP authentication is required, leave this empty.
+	 * Set the authentication object. This configuration object provides support
+	 * for basic and digest HTTP authentication on the WMS server. If no HTTP
+	 * authentication is required, leave this empty.
 	 * </p>
 	 * <p>
-	 * Note that there is still the option of adding a user name and password as HTTP parameters, as some WMS server
-	 * support. To do that, just add {@link #parameters}.
+	 * Note that there is still the option of adding a user name and password as
+	 * HTTP parameters, as some WMS server support. To do that, just add
+	 * {@link #parameters}.
 	 * </p>
 	 * 
 	 * @param layerAuthentication
@@ -726,8 +846,9 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 	}
 
 	/**
-	 * Set whether the WMS request should use a proxy. This is automatically done when the authentication object is set.
-	 * When the WMS request is proxied, the credentials and WMS base address are hidden from the client.
+	 * Set whether the WMS request should use a proxy. This is automatically
+	 * done when the authentication object is set. When the WMS request is
+	 * proxied, the credentials and WMS base address are hidden from the client.
 	 * 
 	 * @param useProxy
 	 *            true when request needs to use the proxy
@@ -739,9 +860,11 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 	}
 
 	/**
-	 * Set whether the WMS tiles should be cached for later use. This implies that the WMS tiles will be proxied.
-	 *
-	 * @param useCache true when request needs to be cached
+	 * Set whether the WMS tiles should be cached for later use. This implies
+	 * that the WMS tiles will be proxied.
+	 * 
+	 * @param useCache
+	 *            true when request needs to be cached
 	 * @since 1.9.0
 	 */
 	@Api
@@ -754,8 +877,9 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 	}
 
 	/**
-	 * Set whether the WMS tiles should be cached for later use. This implies that the WMS tiles will be proxied.
-	 *
+	 * Set whether the WMS tiles should be cached for later use. This implies
+	 * that the WMS tiles will be proxied.
+	 * 
 	 * @return true when request needs to be cached
 	 * @since 1.9.0
 	 */
@@ -765,8 +889,10 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 	}
 
 	/**
-	 * Set whether the WMS layer should support feature info support. This allows to retrieve feature info from a raster
-	 * layer. This only makes sense if the WMS layer is based on some kind of feature store like a database.
+	 * Set whether the WMS layer should support feature info support. This
+	 * allows to retrieve feature info from a raster layer. This only makes
+	 * sense if the WMS layer is based on some kind of feature store like a
+	 * database.
 	 * 
 	 * @param enableFeatureInfoSupport
 	 *            whether feature info support is enabled for this layer
@@ -780,7 +906,8 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 	/**
 	 * Get whether the WMS layer should support feature info support.
 	 * 
-	 * @return the enableFeatureInfoSupport true if feature info support is enabled
+	 * @return the enableFeatureInfoSupport true if feature info support is
+	 *         enabled
 	 */
 	public boolean isEnableFeatureInfoSupport() {
 		return enableFeatureInfoSupport;
@@ -808,7 +935,8 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 
 		private final double tileHeight;
 
-		RasterGrid(Coordinate lowerLeft, int xmin, int ymin, int xmax, int ymax, double tileWidth, double tileHeight) {
+		RasterGrid(Coordinate lowerLeft, int xmin, int ymin, int xmax,
+				int ymax, double tileWidth, double tileHeight) {
 			super();
 			this.lowerLeft = lowerLeft;
 			this.xmin = xmin;
@@ -849,8 +977,8 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 	}
 
 	/**
-	 * Single resolution definition for a WMS layer. This class is used internally in the WMS layer, and therefore has
-	 * no public constructors.
+	 * Single resolution definition for a WMS layer. This class is used
+	 * internally in the WMS layer, and therefore has no public constructors.
 	 * 
 	 * @author Jan De Moerloose
 	 * @author Pieter De Graef
@@ -869,7 +997,8 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 		 * Constructor that immediately requires all fields.
 		 * 
 		 * @param resolution
-		 *            The actual resolution value. This is the reverse of the scale.
+		 *            The actual resolution value. This is the reverse of the
+		 *            scale.
 		 * @param level
 		 *            The level in the quad tree.
 		 * @param tileWidth
