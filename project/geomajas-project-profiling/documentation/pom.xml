@@ -16,7 +16,7 @@
 	<parent>
 		<groupId>org.geomajas</groupId>
 		<artifactId>geomajas-doc-parent</artifactId>
-		<version>1.0.2</version>
+		<version>1.0.2-latlon-SNAPSHOT</version>
 	</parent>
 	<groupId>org.geomajas.documentation</groupId>
 	<artifactId>geomajas-project-profiling-documentation</artifactId>
