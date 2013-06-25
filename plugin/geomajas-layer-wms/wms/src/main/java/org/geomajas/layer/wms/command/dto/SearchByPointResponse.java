@@ -33,10 +33,13 @@ public class SearchByPointResponse extends CommandResponse {
 
 	private Map<String, List<Feature>> featureMap; // NOSONAR GWT will not serialize when final
 
+	private Map<String, String> htmlFeatureInfoMap; // NOSONAR GWT will not serialize when final
+
 	/** No arguments constructor. */
 	public SearchByPointResponse() {
 		super();
 		featureMap = new HashMap<String, List<Feature>>();
+		htmlFeatureInfoMap = new HashMap<String, String>();
 	}
 
 	/**
@@ -53,6 +56,14 @@ public class SearchByPointResponse extends CommandResponse {
 		}
 		return false;
 	}
+	
+	public boolean addLayer(String layerId, String html) {
+		if (!htmlFeatureInfoMap.containsKey(layerId)) {
+			htmlFeatureInfoMap.put(layerId,html);
+			return true;
+		}
+		return false;
+	}
 
 	/**
 	 * Get the features map.
@@ -61,5 +72,13 @@ public class SearchByPointResponse extends CommandResponse {
 	 */
 	public Map<String, List<Feature>> getFeatureMap() {
 		return featureMap;
+	}
+	
+	/**
+	 * Get a map of the html response of all layers that support HTML GFI
+	 * @return a map of the html response of all layers that support HTML GFI
+	 */
+	public Map<String,String> getFeatureInfoHtmlMap() {
+		return htmlFeatureInfoMap;
 	}
 }

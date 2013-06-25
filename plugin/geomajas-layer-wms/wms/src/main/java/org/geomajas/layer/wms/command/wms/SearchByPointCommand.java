@@ -20,8 +20,10 @@ import org.geomajas.annotation.Api;
 import org.geomajas.global.ExceptionCode;
 import org.geomajas.global.GeomajasException;
 import org.geomajas.layer.Layer;
+import org.geomajas.layer.LayerException;
 import org.geomajas.layer.LayerService;
 import org.geomajas.layer.feature.Feature;
+import org.geomajas.layer.wms.LayerFeatureInfoAsHtmlSupport;
 import org.geomajas.layer.wms.LayerFeatureInfoSupport;
 import org.geomajas.security.SecurityContext;
 import org.geomajas.service.ConfigurationService;
@@ -114,28 +116,62 @@ public class SearchByPointCommand
 
 		if (request.getLayerMapping().size() > 0) {
 			for (Entry<String, String> entry : request.getLayerMapping().entrySet()) {
+				boolean isAnyLayerHit = false;
 				String serverLayerId = entry.getValue();
 				String clientLayerId = entry.getKey();
 				
 				if (securityContext.isLayerVisible(serverLayerId)) {
+					
 					Layer<?> layer = configurationService.getLayer(serverLayerId);
-					if (layer instanceof LayerFeatureInfoSupport &&
-							((LayerFeatureInfoSupport) layer).isEnableFeatureInfoSupport()) {
-						Crs layerCrs = layerService.getCrs(layer);
-						double layerScale = calculateLayerScale(crs, layerCrs, mapBounds, request.getScale());
-						Coordinate layerCoordinate = geoService.transform(coordinate, crs, layerCrs);
-						List<Feature> features = ((LayerFeatureInfoSupport) layer).getFeaturesByLocation(
-								layerCoordinate, layerScale, request.getPixelTolerance());
-						if (features != null && features.size() > 0) {
-							response.addLayer(clientLayerId, features);
-							if (searchFirstLayerOnly) {
-								break;
-							}
-						}
+					isAnyLayerHit = addFeatureInfoLayerIfSupported(request, response,
+							mapBounds, coordinate, crs, clientLayerId, layer);
+					isAnyLayerHit = isAnyLayerHit || addFeatureInfoHtmlLayerIfSupported(request, response,
+							mapBounds, coordinate, crs, clientLayerId, layer);
+					if (searchFirstLayerOnly && isAnyLayerHit) {
+						break;
 					}
 				}
 			}
 		}
+	}
+
+	private boolean addFeatureInfoHtmlLayerIfSupported(
+			SearchByPointRequest request, SearchByPointResponse response,
+			Bbox mapBounds, Coordinate coordinate, Crs crs,
+			String clientLayerId, Layer<?> layer) throws LayerException,
+			GeomajasException {
+		if (layer instanceof LayerFeatureInfoAsHtmlSupport && 
+				((LayerFeatureInfoAsHtmlSupport)layer).isEnableFeatureInfoSupportAsHtml()) {
+			Crs layerCrs = layerService.getCrs(layer);
+			double layerScale = calculateLayerScale(crs, layerCrs, mapBounds, request.getScale());
+			Coordinate layerCoordinate = geoService.transform(coordinate, crs, layerCrs);
+			String html = ((LayerFeatureInfoAsHtmlSupport) layer).getFeatureInfoAsHtml(
+					layerCoordinate, layerScale, request.getPixelTolerance());
+			if (html != null && !"".equals(html)) {
+				response.addLayer(clientLayerId, html);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean addFeatureInfoLayerIfSupported(SearchByPointRequest request,
+			SearchByPointResponse response, Bbox mapBounds,
+			Coordinate coordinate, Crs crs, String clientLayerId, Layer<?> layer)
+			throws LayerException, GeomajasException {
+		if (layer instanceof LayerFeatureInfoSupport &&
+				((LayerFeatureInfoSupport) layer).isEnableFeatureInfoSupport()) {
+			Crs layerCrs = layerService.getCrs(layer);
+			double layerScale = calculateLayerScale(crs, layerCrs, mapBounds, request.getScale());
+			Coordinate layerCoordinate = geoService.transform(coordinate, crs, layerCrs);
+			List<Feature> features = ((LayerFeatureInfoSupport) layer).getFeaturesByLocation(
+					layerCoordinate, layerScale, request.getPixelTolerance());
+			if (features != null && features.size() > 0) {
+				response.addLayer(clientLayerId, features);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public SearchByPointResponse getEmptyCommandResponse() {

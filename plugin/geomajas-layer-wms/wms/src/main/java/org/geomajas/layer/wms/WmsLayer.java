@@ -95,7 +95,7 @@ import com.vividsolutions.jts.geom.Envelope;
  * @since 1.7.1
  */
 @Api
-public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
+public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport, LayerFeatureInfoAsHtmlSupport {
 
 	private static final String GFI_UNAVAILABLE_MSG = "<html><body><div>GetFeatureInfo-support not available on this layer</div></body></html>";
 
@@ -121,6 +121,8 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 
 	private boolean enableFeatureInfoSupport;
 
+	private boolean enableFeatureInfoSupportAsHtml;
+	
 	private RasterLayerInfo layerInfo;
 
 	private Crs crs;
@@ -290,7 +292,7 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 		InputStream stream = null;
 		String url;
 		try {
-			url = buildRequestUrl(coordinate, layerScale, IS_GML_REQUEST);
+			url = buildRequestUrl(coordinate, layerScale, IS_HTML_REQUEST);
 
 			log.debug("getFeaturesByLocation: {} {} {} {}", new Object[] {
 					coordinate, layerScale, pixelTolerance, url });
@@ -516,7 +518,7 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 		if (isHtmlRequest) {
 			return ("text/html");
 		} else {
-			return ("vnd.ogc.gml");
+			return ("application/vnd.ogc.gml");
 		}
 	}
 
@@ -1043,6 +1045,16 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 	 */
 	void clearCacheManagerService() {
 		this.cacheManagerService = null;
+	}
+
+	@Override
+	public boolean isEnableFeatureInfoSupportAsHtml() {
+		return enableFeatureInfoSupportAsHtml;
+	}
+
+	public void setEnableFeatureInfoSupportAsHtml(
+			boolean enableFeatureInfoSupportAsHtml) {
+		this.enableFeatureInfoSupportAsHtml = enableFeatureInfoSupportAsHtml;
 	}
 
 }
