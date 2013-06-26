@@ -37,6 +37,8 @@ public class MultiLayerFeatureInfoModalAction extends ToolbarModalAction impleme
 	private final MapWidget mapWidget;
 
 	private final MultiLayerFeatureInfoController controller;
+	
+	private String infoFormat;
 
 	/**
 	 * Number of pixels that describes the tolerance allowed when searching nearby features.
@@ -80,6 +82,8 @@ public class MultiLayerFeatureInfoModalAction extends ToolbarModalAction impleme
 					featuresListLabels.put(feature.split("=")[0], feature.split("=")[1]);
 				}
 			}
+		} else if ("displayFormat".equalsIgnoreCase(key) && null != value) {
+			controller.setFeatureInfoFormat(value);
 		}
 	}
 
@@ -130,5 +134,13 @@ public class MultiLayerFeatureInfoModalAction extends ToolbarModalAction impleme
 	public void setFeaturesListLabels(Map<String, String> featuresListLabels) {
 		this.featuresListLabels = featuresListLabels;
 		controller.setFeaturesListLabels(featuresListLabels);
+	}
+
+	public String getInfoFormat() {
+		return infoFormat;
+	}
+
+	public void setInfoFormat(String infoFormat) {
+		this.infoFormat = infoFormat;
 	}
 }

@@ -116,19 +116,18 @@ public class SearchByPointCommand
 
 		if (request.getLayerMapping().size() > 0) {
 			for (Entry<String, String> entry : request.getLayerMapping().entrySet()) {
-				boolean isAnyLayerHit = false;
 				String serverLayerId = entry.getValue();
 				String clientLayerId = entry.getKey();
 				
 				if (securityContext.isLayerVisible(serverLayerId)) {
 					
 					Layer<?> layer = configurationService.getLayer(serverLayerId);
-					isAnyLayerHit = addFeatureInfoLayerIfSupported(request, response,
-							mapBounds, coordinate, crs, clientLayerId, layer);
-					isAnyLayerHit = isAnyLayerHit || addFeatureInfoHtmlLayerIfSupported(request, response,
-							mapBounds, coordinate, crs, clientLayerId, layer);
-					if (searchFirstLayerOnly && isAnyLayerHit) {
-						break;
+					if ("html".equals(request.getFeatureInfoFormat())) {
+						addFeatureInfoHtmlLayerIfSupported(request, response,
+								mapBounds, coordinate, crs, clientLayerId, layer);
+					} else {
+						addFeatureInfoLayerIfSupported(request, response,
+								mapBounds, coordinate, crs, clientLayerId, layer);
 					}
 				}
 			}

@@ -22,6 +22,7 @@ import org.geomajas.gwt.client.util.Log;
 import org.geomajas.gwt.client.util.WidgetLayout;
 import org.geomajas.gwt.client.widget.FeatureAttributeWindow;
 import org.geomajas.widget.featureinfo.client.widget.DockableWindow;
+import org.geomajas.widget.featureinfo.client.widget.FeatureInfoHtmlWindow;
 import org.geomajas.widget.featureinfo.configuration.client.WidgetBuilderInfo;
 
 import com.google.gwt.core.client.GWT;
@@ -65,6 +66,11 @@ public final class FeatureDetailWidgetFactory {
 
 	public static Window createFeatureDetailWindow(Feature feature, boolean editingAllowed) {
 		return createFeatureDetailWindow(feature, feature.getLayer(), editingAllowed);
+	}
+	
+	public static Window createLayerDetailWindow(String html, boolean editingAllowed) {
+		// TODO
+		return new FeatureInfoHtmlWindow(html);
 	}
 
 	/**
