@@ -77,6 +77,12 @@
 			<artifactId>gt-xml</artifactId>
 		</dependency>
 
+        <!-- Dependencies to deegree3 -->
+		<dependency>
+			<groupId>org.deegree</groupId>
+			<artifactId>deegree-protocol-wms</artifactId>
+		</dependency>
+
 		<!-- Dependencies for the Proxy controller -->
 		<dependency>
 			<groupId>javax.servlet</groupId>
