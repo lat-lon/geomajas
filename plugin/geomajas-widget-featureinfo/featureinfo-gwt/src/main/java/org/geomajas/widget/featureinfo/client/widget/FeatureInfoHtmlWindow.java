@@ -22,7 +22,7 @@ import com.smartgwt.client.widgets.Window;
  * @author Alexander Erben
  */
 public class FeatureInfoHtmlWindow extends Window {
-	
+
 	private static final FeatureInfoMessages MESSAGES = GWT.create(FeatureInfoMessages.class);
 
 	// TODO use KeepInScreenWindow?
@@ -33,8 +33,8 @@ public class FeatureInfoHtmlWindow extends Window {
 
 	private void buildWidget(String html) {
 		setTitle(MESSAGES.layerHtmlWindowTitleMessage());
-        setAutoSize(true);
-        Label label = new Label();
+		setAutoSize(true);
+		Label label = new Label();
 		label.setContents(html);
 		label.setAutoFit(true);
 		label.draw();

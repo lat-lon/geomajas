@@ -73,7 +73,6 @@ public class MultiLayerHtmlList extends ListGrid {
 	// Constructor:
 	// -------------------------------------------------------------------------
 
-
 	/**
 	 * Create an instance.
 	 * 
@@ -86,7 +85,7 @@ public class MultiLayerHtmlList extends ListGrid {
 			LayerClickHandler layerClickHandler) {
 		super();
 		this.mapWidget = mapWidget;
-		this.htmlMap = new HashMap<String,String>();
+		this.htmlMap = new HashMap<String, String>();
 		this.layerMap = new HashMap<String, Layer<?>>();
 		populateHtmlMap(htmlMap);
 		populateLayerMap(htmlMap);
@@ -100,7 +99,7 @@ public class MultiLayerHtmlList extends ListGrid {
 	 * @param htmlMap
 	 */
 	private void populateHtmlMap(Map<String, String> htmlMap) {
-		for (Entry<String,String> entry : htmlMap.entrySet()) {
+		for (Entry<String, String> entry : htmlMap.entrySet()) {
 			String layerId = entry.getKey();
 			String html = retrieveHtmlFromEntry(entry.getValue());
 			this.htmlMap.put(layerId, html);
@@ -120,8 +119,9 @@ public class MultiLayerHtmlList extends ListGrid {
 	}
 
 	private void addLayerRecord(Layer<?> layer) {
-		if (layer == null)
+		if (layer == null) {
 			return;
+		}
 		ListGridRecord record = new ListGridRecord();
 		record.setAttribute(LABEL, layer.getLabel());
 		record.setAttribute(LAYER_ID, layer.getId());
@@ -150,7 +150,7 @@ public class MultiLayerHtmlList extends ListGrid {
 		ListGridField layerField = new ListGridField(LAYER_ID);
 		setFields(labelField, layerField);
 		hideField(LAYER_ID);
-		
+
 		// List size calculation
 		setDefaultWidth(400);
 		setDefaultHeight(300);
@@ -158,7 +158,6 @@ public class MultiLayerHtmlList extends ListGrid {
 		setAutoFitMaxRecords(MAX_ROWS);
 		setAutoFitFieldWidths(true);
 		setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
-
 
 		addRecordClickHandler(new RecordClickHandler() {
 
@@ -212,7 +211,7 @@ public class MultiLayerHtmlList extends ListGrid {
 		String style = record.getCustomStyle(); /*
 												 * returns groupNode if group row, else e.g. null
 												 */
-	
+
 		if (LABEL.equals(getFieldName(colNum)) && (null == style || !"groupNode".equalsIgnoreCase(style))) {
 			newStyle = "padding-left: 40px;";
 		} else { /* groupCell */
