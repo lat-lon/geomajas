@@ -507,7 +507,7 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport, LayerFeat
 			url.append(Integer.toString(y));
 			url.append("&INFO_FORMAT=");
 			url.append(retrieveFormatString(isHtmlRequest));
-
+			log.debug("Requesting GetFeatureInfo with URL {}",url);
 			return url.toString();
 		} catch (UnsupportedEncodingException uee) {
 			throw new IllegalStateException("Cannot find UTF8 encoding?", uee);

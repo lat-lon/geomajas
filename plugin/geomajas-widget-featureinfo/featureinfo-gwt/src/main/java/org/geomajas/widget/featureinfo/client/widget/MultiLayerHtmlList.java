@@ -31,9 +31,8 @@ import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 
 /**
  * <p>
- * The <code>MultiLayerHtmlList</code> is a class providing a floating window
- * that shows a list of all the layers provided to it. Clicking on a layer in
- * the list, results in a call of the provided
+ * The <code>MultiLayerHtmlList</code> is a class providing a floating window that shows a list of all the layers
+ * provided to it. Clicking on a layer in the list, results in a call of the provided
  * {@link org.geomajas.widget.featureinfo.client.widget.LayerClickHandler}.
  * </p>
  * 
@@ -43,8 +42,7 @@ public class MultiLayerHtmlList extends ListGrid {
 
 	private static final int MAX_ROWS = 25;
 
-	private static final FeatureInfoMessages MESSAGES = GWT
-			.create(FeatureInfoMessages.class);
+	private static final FeatureInfoMessages MESSAGES = GWT.create(FeatureInfoMessages.class);
 
 	/**
 	 * external handler, called when clicking on a feature in the list
@@ -54,85 +52,75 @@ public class MultiLayerHtmlList extends ListGrid {
 	private final MapWidget mapWidget;
 
 	private final Map<String, Layer<?>> layerMap;
-	
-	private final Map<String,String> htmlMap;
+
+	private final Map<String, String> htmlMap;
 
 	private static final String LABEL = "LABEL";
 
 	private static final String LAYER_ID = "LAYER_ID";
 
+	private static final String NO_HTML_AVAILABLE_MESSAGE = createNoHtmlMessage();
+
+	private static String createNoHtmlMessage() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("<html><body><div>");
+		builder.append(MESSAGES.featureInfoNoHtmlAvailableMessage());
+		builder.append("</div></body></html>");
+		return builder.toString();
+	}
+
 	// -------------------------------------------------------------------------
 	// Constructor:
 	// -------------------------------------------------------------------------
+
 
 	/**
 	 * Create an instance.
 	 * 
 	 * @param mapWidget
 	 *            map widget
-	 * @param featureClickHandler
+	 * @param layerClickHandler
 	 *            handler
 	 */
-	public MultiLayerHtmlList(final MapWidget mapWidget,
+	public MultiLayerHtmlList(final MapWidget mapWidget, Map<String, String> htmlMap,
 			LayerClickHandler layerClickHandler) {
 		super();
 		this.mapWidget = mapWidget;
-		this.htmlMap = new HashMap<String, String>();
+		this.htmlMap = new HashMap<String,String>();
 		this.layerMap = new HashMap<String, Layer<?>>();
+		populateHtmlMap(htmlMap);
+		populateLayerMap(htmlMap);
 		this.layerClickHandler = layerClickHandler;
 		buildWidget();
 	}
 
 	/**
-	 * Feed a map of features to the widget, so it can be built.
+	 * Feed a map of html output to the widget, so it can be built.
 	 * 
-	 * @param featureMap
-	 *            feature map
+	 * @param htmlMap
 	 */
-	public void setHtmlMap(Map<String, String> htmlMap) {
-		MapModel mapModel = mapWidget.getMapModel();
+	private void populateHtmlMap(Map<String, String> htmlMap) {
+		for (Entry<String,String> entry : htmlMap.entrySet()) {
+			String layerId = entry.getKey();
+			String html = retrieveHtmlFromEntry(entry.getValue());
+			this.htmlMap.put(layerId, html);
+		}
+	}
 
-		for (Entry<String, String> layerEntry : htmlMap.entrySet()) {
-			Layer<?> layer = mapModel.getLayer(layerEntry.getKey());
+	private void populateLayerMap(Map<String, String> htmlMap) {
+		MapModel mapModel = mapWidget.getMapModel();
+		for (Entry<String, String> htmlMapEntry : htmlMap.entrySet()) {
+			Layer<?> layer = mapModel.getLayer(htmlMapEntry.getKey());
 			if (null != layer) {
-				String html = layerEntry.getValue();
-				if (html != null && !"".equals(html)) {
-					layerMap.put(layer.getId(), layer);
-					addLayer(layer, html);
-				}
+				String layerId = layer.getId();
+				layerMap.put(layerId, layer);
+				addLayerRecord(layer);
 			}
 		}
 	}
 
-	@Override
-	/*
-	 * Override getCellCSSText to implement padding-left of ordinary feature
-	 * rows
-	 */
-	protected String getCellCSSText(ListGridRecord record, int rowNum,
-			int colNum) {
-		// Note: using listGrid.setCellPadding() would also padd group rows
-		String newStyle;
-		String style = record.getCustomStyle(); /*
-												 * returns groupNode if group
-												 * row, else e.g. null
-												 */
-
-		if (LABEL.equals(getFieldName(colNum))
-				&& (null == style || !"groupNode".equalsIgnoreCase(style))) {
-			newStyle = "padding-left: 40px;";
-		} else { /* groupCell */
-			newStyle = "padding-left: 5px;";
-		}
-		if (null != super.getCellCSSText(record, rowNum, colNum)) {
-			newStyle = super.getCellCSSText(record, rowNum, colNum) + newStyle;
-			/* add padding after original, the latter specified wins. */
-		}
-		return newStyle;
-	}
-
-	private void addLayer(Layer<?> layer, String html) {
-		if (layer == null || html == null || "".equals(html))
+	private void addLayerRecord(Layer<?> layer) {
+		if (layer == null)
 			return;
 		ListGridRecord record = new ListGridRecord();
 		record.setAttribute(LABEL, layer.getLabel());
@@ -140,17 +128,29 @@ public class MultiLayerHtmlList extends ListGrid {
 		addData(record);
 	}
 
+	private String retrieveHtmlFromEntry(String html) {
+		if (html == null || "".equals(html)) {
+			html = NO_HTML_AVAILABLE_MESSAGE;
+		}
+		return html;
+	}
+
 	/**
 	 * Build the entire widget.
 	 */
 	private void buildWidget() {
-		// setTitle(MESSAGES.nearbyFeaturesListTooltip());
+		setTitle(MESSAGES.nearbyLayersListTooltip());
 		setShowEmptyMessage(true);
 		setWidth100();
 		setHeight100();
 		setShowHeader(false);
 		setShowAllRecords(true);
 
+		ListGridField labelField = new ListGridField(LABEL);
+		ListGridField layerField = new ListGridField(LAYER_ID);
+		setFields(labelField, layerField);
+		hideField(LAYER_ID);
+		
 		// List size calculation
 		setDefaultWidth(400);
 		setDefaultHeight(300);
@@ -159,17 +159,14 @@ public class MultiLayerHtmlList extends ListGrid {
 		setAutoFitFieldWidths(true);
 		setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
 
-		ListGridField labelField = new ListGridField(LABEL);
-		ListGridField layerField = new ListGridField(LAYER_ID);
 
-		setFields(labelField, layerField);
-		hideFields(layerField);
 		addRecordClickHandler(new RecordClickHandler() {
 
 			public void onRecordClick(RecordClickEvent event) {
 				String layerId = event.getRecord().getAttribute(LAYER_ID);
 				Layer<?> layer = layerMap.get(layerId);
-				layerClickHandler.onClick(layer, htmlMap.get(layerId));
+				String html = htmlMap.get(layerId);
+				layerClickHandler.onClick(layer, html);
 			}
 
 		});
@@ -203,6 +200,29 @@ public class MultiLayerHtmlList extends ListGrid {
 		// return tooltip.toString();
 		// }
 		// });
+	}
+
+	@Override
+	/*
+	 * Override getCellCSSText to implement padding-left of ordinary feature rows
+	 */
+	protected String getCellCSSText(ListGridRecord record, int rowNum, int colNum) {
+		// Note: using listGrid.setCellPadding() would also padd group rows
+		String newStyle;
+		String style = record.getCustomStyle(); /*
+												 * returns groupNode if group row, else e.g. null
+												 */
+	
+		if (LABEL.equals(getFieldName(colNum)) && (null == style || !"groupNode".equalsIgnoreCase(style))) {
+			newStyle = "padding-left: 40px;";
+		} else { /* groupCell */
+			newStyle = "padding-left: 5px;";
+		}
+		if (null != super.getCellCSSText(record, rowNum, colNum)) {
+			newStyle = super.getCellCSSText(record, rowNum, colNum) + newStyle;
+			/* add padding after original, the latter specified wins. */
+		}
+		return newStyle;
 	}
 
 }

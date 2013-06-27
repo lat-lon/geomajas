@@ -42,7 +42,6 @@ import org.geomajas.widget.featureinfo.client.FeatureInfoMessages;
 import org.geomajas.widget.featureinfo.client.util.FitSetting;
 import org.geomajas.widget.featureinfo.client.widget.MultiLayerFeatureInfoHtmlWindow;
 import org.geomajas.widget.featureinfo.client.widget.MultiLayerFeatureInfoWindow;
-import org.geomajas.widget.featureinfo.client.widget.MultiLayerHtmlList;
 import org.geomajas.widget.featureinfo.client.widget.factory.FeatureDetailWidgetFactory;
 
 import com.google.gwt.core.client.GWT;
