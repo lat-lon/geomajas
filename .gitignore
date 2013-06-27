@@ -19,6 +19,16 @@
 /project/geomajas-project-geometry/core/target/
 /project/geomajas-project-geometry/jts/target/
 /project/geomajas-project-geometry/documentation/target/
+<<<<<<< HEAD
+
+# Eclipse stuff
+*.classpath
+*.project
+*.settings
+
+# Mvn target
+target
+
 /build-tools/geomajas-doc-parent/target/
 /project/geomajas-project-sld/target/
 /project/geomajas-project-sld/api/target/
