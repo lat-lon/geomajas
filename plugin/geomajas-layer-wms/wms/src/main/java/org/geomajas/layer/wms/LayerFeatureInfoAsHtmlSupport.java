@@ -6,7 +6,7 @@ import com.vividsolutions.jts.geom.Coordinate;
 
 /**
  * Extension for any type of layer that supports retrieving feature info as HTML.
- * @author erben
+ * @author Alexander Erben
  *
  */
 public interface LayerFeatureInfoAsHtmlSupport {
@@ -23,9 +23,9 @@ public interface LayerFeatureInfoAsHtmlSupport {
 	String getFeatureInfoAsHtml(Coordinate coordinate, double layerScale, int pixelTolerance) throws LayerException;
 
 	/**
-	 * Return whether the layer should support feature info support as HTML.
+	 * Return whether the layer should support GetFeatureInfo support as HTML.
 	 *
 	 * @return the enableFeatureInfoSupport true if feature info HTML support is enabled
 	 */
-	boolean isEnableFeatureInfoSupportAsHtml();
+	boolean isEnableFeatureInfoAsHtmlSupport();
 }

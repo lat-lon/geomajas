@@ -159,6 +159,8 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport, LayerFeat
 	@Autowired
 	private SecurityContext securityContext;
 
+	private boolean enableFeatureInfoSupportAsGml;
+
 	/**
 	 * Return the layers identifier.
 	 * 
@@ -286,7 +288,7 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport, LayerFeat
 	@Override
 	public String getFeatureInfoAsHtml(Coordinate coordinate,
 			double layerScale, int pixelTolerance) throws LayerException {
-		if (!isEnableFeatureInfoSupportAsHtml()) {
+		if (!isEnableFeatureInfoAsHtmlSupport()) {
 			return GFI_UNAVAILABLE_MSG;
 		}
 		InputStream stream = null;
@@ -901,6 +903,7 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport, LayerFeat
 	 * @since 1.9.0
 	 */
 	@Api
+	@Deprecated
 	public void setEnableFeatureInfoSupport(boolean enableFeatureInfoSupport) {
 		this.enableFeatureInfoSupport = enableFeatureInfoSupport;
 	}
@@ -911,8 +914,29 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport, LayerFeat
 	 * @return the enableFeatureInfoSupport true if feature info support is
 	 *         enabled
 	 */
+	@Deprecated
 	public boolean isEnableFeatureInfoSupport() {
 		return enableFeatureInfoSupport;
+	}
+
+	@Api
+	public boolean isEnableFeatureInfoAsHtmlSupport() {
+		return enableFeatureInfoSupportAsHtml;
+	}
+
+	public void setEnableFeatureInfoSupportAsHtml(
+			boolean enableFeatureInfoSupportAsHtml) {
+		this.enableFeatureInfoSupportAsHtml = enableFeatureInfoSupportAsHtml;
+	}
+
+	@Api
+	public boolean isEnableFeatureInfoAsGmlSupport() {
+		return enableFeatureInfoSupportAsHtml;
+	}
+
+	public void setEnableFeatureInfoSupportAsGml(
+			boolean enableFeatureInfoSupportAsGml) {
+		this.enableFeatureInfoSupportAsGml = enableFeatureInfoSupportAsGml;
 	}
 
 	/**
@@ -1045,16 +1069,6 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport, LayerFeat
 	 */
 	void clearCacheManagerService() {
 		this.cacheManagerService = null;
-	}
-
-	@Override
-	public boolean isEnableFeatureInfoSupportAsHtml() {
-		return enableFeatureInfoSupportAsHtml;
-	}
-
-	public void setEnableFeatureInfoSupportAsHtml(
-			boolean enableFeatureInfoSupportAsHtml) {
-		this.enableFeatureInfoSupportAsHtml = enableFeatureInfoSupportAsHtml;
 	}
 
 }

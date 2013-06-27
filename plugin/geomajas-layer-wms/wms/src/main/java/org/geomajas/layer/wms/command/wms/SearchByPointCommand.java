@@ -23,6 +23,7 @@ import org.geomajas.layer.Layer;
 import org.geomajas.layer.LayerException;
 import org.geomajas.layer.LayerService;
 import org.geomajas.layer.feature.Feature;
+import org.geomajas.layer.wms.LayerFeatureInfoAsGmlSupport;
 import org.geomajas.layer.wms.LayerFeatureInfoAsHtmlSupport;
 import org.geomajas.layer.wms.LayerFeatureInfoSupport;
 import org.geomajas.security.SecurityContext;
@@ -40,8 +41,8 @@ import java.util.Map.Entry;
 
 /**
  * <p>
- * Execute a search for features by location/point. You can also specify a tolerance (in pixels) for the search.
- * This tolerance may or may not be supported (it is not for WMS GetFeatureInfo).
+ * Execute a search for features by location/point. You can also specify a tolerance (in pixels) for the search. This
+ * tolerance may or may not be supported (it is not for WMS GetFeatureInfo).
  * </p>
  * <p>
  * It is required that at least one layer ID is given to search in. If multiple layers are given, an extra parameter
@@ -50,20 +51,19 @@ import java.util.Map.Entry;
  * </p>
  * <p>
  * It will go over all given layers (provided they're layers that support feature info by implementing
- * {@link LayerFeatureInfoSupport}), and fetch the features, using the location and the query type. The
- * resulting list of features is added to the command result so it can be send back to the client.
+ * {@link LayerFeatureInfoSupport}), and fetch the features, using the location and the query type. The resulting list
+ * of features is added to the command result so it can be send back to the client.
  * </p>
  * <p>
  * This class is based on the {@link org.geomajas.command.feature.SearchByLocationCommand} class.
  * </p>
- *
+ * 
  * @author Oliver May
  * @since 1.8.0
  */
 @Api
 @Component()
-public class SearchByPointCommand
-		implements Command<SearchByPointRequest, SearchByPointResponse> {
+public class SearchByPointCommand implements Command<SearchByPointRequest, SearchByPointResponse> {
 
 	private static final String TEXT_HTML = "text/html";
 
@@ -82,8 +82,7 @@ public class SearchByPointCommand
 	@Autowired
 	private SecurityContext securityContext;
 
-	public void execute(SearchByPointRequest request, SearchByPointResponse response)
-			throws Exception {
+	public void execute(SearchByPointRequest request, SearchByPointResponse response) throws Exception {
 		if (null == request.getLayerMapping()) {
 			throw new GeomajasException(ExceptionCode.PARAMETER_MISSING, "serverLayerMapping");
 		}
@@ -121,34 +120,35 @@ public class SearchByPointCommand
 			for (Entry<String, String> entry : request.getLayerMapping().entrySet()) {
 				String serverLayerId = entry.getValue();
 				String clientLayerId = entry.getKey();
-				
+
 				if (securityContext.isLayerVisible(serverLayerId)) {
-					
+
 					Layer<?> layer = configurationService.getLayer(serverLayerId);
+					boolean match;
 					if (TEXT_HTML.equals(request.getFeatureInfoFormat())) {
-						addFeatureInfoHtmlLayerIfSupported(request, response,
-								mapBounds, coordinate, crs, clientLayerId, layer);
+						match = addFeatureInfoHtmlLayerIfSupported(request, response, mapBounds, coordinate, crs,
+								clientLayerId, layer);
 					} else {
-						addFeatureInfoLayerIfSupported(request, response,
-								mapBounds, coordinate, crs, clientLayerId, layer);
+						match = addFeatureInfoGmlLayerIfSupported(request, response, mapBounds, coordinate, crs,
+								clientLayerId, layer);
 					}
+					if (match && searchFirstLayerOnly)
+						break;
 				}
 			}
 		}
 	}
 
-	private boolean addFeatureInfoHtmlLayerIfSupported(
-			SearchByPointRequest request, SearchByPointResponse response,
-			Bbox mapBounds, Coordinate coordinate, Crs crs,
-			String clientLayerId, Layer<?> layer) throws LayerException,
-			GeomajasException {
-		if (layer instanceof LayerFeatureInfoAsHtmlSupport && 
-				((LayerFeatureInfoAsHtmlSupport)layer).isEnableFeatureInfoSupportAsHtml()) {
+	private boolean addFeatureInfoHtmlLayerIfSupported(SearchByPointRequest request, SearchByPointResponse response,
+			Bbox mapBounds, Coordinate coordinate, Crs crs, String clientLayerId, Layer<?> layer)
+			throws LayerException, GeomajasException {
+		if (layer instanceof LayerFeatureInfoAsHtmlSupport
+				&& ((LayerFeatureInfoAsHtmlSupport) layer).isEnableFeatureInfoAsHtmlSupport()) {
 			Crs layerCrs = layerService.getCrs(layer);
 			double layerScale = calculateLayerScale(crs, layerCrs, mapBounds, request.getScale());
 			Coordinate layerCoordinate = geoService.transform(coordinate, crs, layerCrs);
-			String html = ((LayerFeatureInfoAsHtmlSupport) layer).getFeatureInfoAsHtml(
-					layerCoordinate, layerScale, request.getPixelTolerance());
+			String html = ((LayerFeatureInfoAsHtmlSupport) layer).getFeatureInfoAsHtml(layerCoordinate, layerScale,
+					request.getPixelTolerance());
 			if (html != null && !"".equals(html)) {
 				response.addLayer(clientLayerId, html);
 				return true;
@@ -157,23 +157,41 @@ public class SearchByPointCommand
 		return false;
 	}
 
-	private boolean addFeatureInfoLayerIfSupported(SearchByPointRequest request,
-			SearchByPointResponse response, Bbox mapBounds,
-			Coordinate coordinate, Crs crs, String clientLayerId, Layer<?> layer)
+	private boolean addFeatureInfoGmlLayerIfSupported(SearchByPointRequest request, SearchByPointResponse response,
+			Bbox mapBounds, Coordinate coordinate, Crs crs, String clientLayerId, Layer<?> layer)
 			throws LayerException, GeomajasException {
-		if (layer instanceof LayerFeatureInfoSupport &&
-				((LayerFeatureInfoSupport) layer).isEnableFeatureInfoSupport()) {
+		if (checkIfGmlFeatureInfoIsSupported(layer)
+
+		) {
 			Crs layerCrs = layerService.getCrs(layer);
 			double layerScale = calculateLayerScale(crs, layerCrs, mapBounds, request.getScale());
 			Coordinate layerCoordinate = geoService.transform(coordinate, crs, layerCrs);
-			List<Feature> features = ((LayerFeatureInfoSupport) layer).getFeaturesByLocation(
-					layerCoordinate, layerScale, request.getPixelTolerance());
+			List<Feature> features = retrieveFeaturesAsGml(request, layer, layerScale, layerCoordinate);
 			if (features != null && features.size() > 0) {
 				response.addLayer(clientLayerId, features);
 				return true;
 			}
 		}
 		return false;
+	}
+
+	private List<Feature> retrieveFeaturesAsGml(SearchByPointRequest request, Layer<?> layer, double layerScale,
+			Coordinate layerCoordinate) throws LayerException {
+		if (layer instanceof LayerFeatureInfoSupport)
+			return ((LayerFeatureInfoSupport) layer).getFeaturesByLocation(layerCoordinate, layerScale,
+					request.getPixelTolerance());
+		else
+			return ((LayerFeatureInfoAsGmlSupport) layer).getFeatureInfoAsGml(layerCoordinate, layerScale,
+					request.getPixelTolerance());
+	}
+
+	private boolean checkIfGmlFeatureInfoIsSupported(Layer<?> layer) {
+		if (layer instanceof LayerFeatureInfoAsGmlSupport)
+			return ((LayerFeatureInfoAsGmlSupport) layer).isEnableFeatureInfoAsGmlSupport();
+		if (layer instanceof LayerFeatureInfoSupport)
+			return ((LayerFeatureInfoSupport) layer).isEnableFeatureInfoSupport();
+		else
+			return false;
 	}
 
 	public SearchByPointResponse getEmptyCommandResponse() {
@@ -200,4 +218,3 @@ public class SearchByPointCommand
 		return layerScale;
 	}
 }
-
