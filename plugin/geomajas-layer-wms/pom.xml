@@ -109,6 +109,24 @@
 				<groupId>org.deegree</groupId>
 				<artifactId>deegree-protocol-wms</artifactId>
 				<version>${deegree-version}</version>
+				<exclusions>
+					<exclusion>
+						<groupId>jgridshift</groupId>
+						<artifactId>jgridshift</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>commons-pool</groupId>
+						<artifactId>commons-pool</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>java3d</groupId>
+						<artifactId>vecmath</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>com.h2database</groupId>
+						<artifactId>h2</artifactId>
+					</exclusion>
+				</exclusions>
 			</dependency>
 
 			<dependency>
