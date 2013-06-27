@@ -28,10 +28,9 @@ public class FeatureInfoHtmlWindow extends KeepInScreenWindow {
 	private void buildWidget(String html) {
 		Canvas canvas = new Canvas();
 		canvas.setContents(html);
+		canvas.draw();
 		canvas.show();
 		addChild(canvas);
-		
 	}
-
 
 }

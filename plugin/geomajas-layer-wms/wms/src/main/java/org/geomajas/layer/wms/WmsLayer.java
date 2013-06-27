@@ -286,7 +286,7 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport, LayerFeat
 	@Override
 	public String getFeatureInfoAsHtml(Coordinate coordinate,
 			double layerScale, int pixelTolerance) throws LayerException {
-		if (!isEnableFeatureInfoSupport()) {
+		if (!isEnableFeatureInfoSupportAsHtml()) {
 			return GFI_UNAVAILABLE_MSG;
 		}
 		InputStream stream = null;

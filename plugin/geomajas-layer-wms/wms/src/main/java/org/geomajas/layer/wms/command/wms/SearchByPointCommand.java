@@ -65,6 +65,8 @@ import java.util.Map.Entry;
 public class SearchByPointCommand
 		implements Command<SearchByPointRequest, SearchByPointResponse> {
 
+	private static final String TEXT_HTML = "text/html";
+
 	private final Logger log = LoggerFactory.getLogger(SearchByPointCommand.class);
 
 	@Autowired
@@ -101,6 +103,7 @@ public class SearchByPointCommand
 		Coordinate coordinate = new Coordinate(requestLocation.getX(), requestLocation.getY());
 		Crs crs = geoService.getCrs2(request.getCrs());
 		boolean searchFirstLayerOnly;
+		// TODO
 		switch (request.getSearchType()) {
 			case SearchByPointRequest.SEARCH_FIRST_LAYER:
 				searchFirstLayerOnly = true;
@@ -122,7 +125,7 @@ public class SearchByPointCommand
 				if (securityContext.isLayerVisible(serverLayerId)) {
 					
 					Layer<?> layer = configurationService.getLayer(serverLayerId);
-					if ("html".equals(request.getFeatureInfoFormat())) {
+					if (TEXT_HTML.equals(request.getFeatureInfoFormat())) {
 						addFeatureInfoHtmlLayerIfSupported(request, response,
 								mapBounds, coordinate, crs, clientLayerId, layer);
 					} else {

@@ -48,8 +48,9 @@ public class MultiLayerFeatureInfoHtmlWindow extends DockableWindow {
 	public MultiLayerFeatureInfoHtmlWindow(MapWidget mapWidget, Map<String,String> htmlMap) {
 		super();
 		this.mapWidget = mapWidget;
-		buildWidget();
 		setHtmlMap(htmlMap);
+		buildWidget();
+
 	}
 	
 	/**
@@ -64,9 +65,9 @@ public class MultiLayerFeatureInfoHtmlWindow extends DockableWindow {
 	public MultiLayerFeatureInfoHtmlWindow(MapWidget mapWidget,	Map<String,String> htmlMap, Map<String, String> featuresListLabels) {
 		super();
 		this.mapWidget = mapWidget;
-		buildWidget();
 		//setFeaturesListLabels(featuresListLabels);
 		setHtmlMap(htmlMap);
+		buildWidget();
 	}
 
 	private void buildWidget() {
@@ -90,6 +91,7 @@ public class MultiLayerFeatureInfoHtmlWindow extends DockableWindow {
 			}
 
 		});
+		layerList.setHtmlMap(htmlMap);
 		addItem(layerList);
 	}
 

@@ -218,6 +218,7 @@ public class MultiLayerFeatureInfoListener extends AbstractListener {
 		rasterLayerRequest.setLayerMapping(rasterLayerIds);
 		rasterLayerRequest.setBbox(toBbox(mapWidget.getMapModel().getMapView().getBounds()));
 		rasterLayerRequest.setScale(mapWidget.getMapModel().getMapView().getCurrentScale());
+		rasterLayerRequest.setFeatureInfoFormat(featureInfoFormat);
 		return rasterLayerRequest;
 	}
 
