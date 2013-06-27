@@ -68,7 +68,7 @@ public final class FeatureDetailWidgetFactory {
 		return createFeatureDetailWindow(feature, feature.getLayer(), editingAllowed);
 	}
 	
-	public static Window createLayerDetailWindow(String html, boolean editingAllowed) {
+	public static Window createLayerDetailWindow(String html) {
 		// TODO
 		return new FeatureInfoHtmlWindow(html);
 	}

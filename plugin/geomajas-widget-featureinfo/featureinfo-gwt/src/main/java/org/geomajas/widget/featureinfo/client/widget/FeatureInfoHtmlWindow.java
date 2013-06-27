@@ -11,26 +11,35 @@
 
 package org.geomajas.widget.featureinfo.client.widget;
 
-import org.geomajas.gwt.client.widget.KeepInScreenWindow;
+import org.geomajas.widget.featureinfo.client.FeatureInfoMessages;
 
-import com.smartgwt.client.widgets.Canvas;
+import com.google.gwt.core.client.GWT;
+import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.Window;
 
 /**
  * 
  * @author Alexander Erben
  */
-public class FeatureInfoHtmlWindow extends KeepInScreenWindow {
+public class FeatureInfoHtmlWindow extends Window {
+
+	private static final FeatureInfoMessages MESSAGES = GWT.create(FeatureInfoMessages.class);
+
+	// TODO use KeepInScreenWindow?
 
 	public FeatureInfoHtmlWindow(String html) {
 		buildWidget(html);
 	}
 
 	private void buildWidget(String html) {
-		Canvas canvas = new Canvas();
-		canvas.setContents(html);
-		canvas.draw();
-		canvas.show();
-		addChild(canvas);
+		setTitle(MESSAGES.layerHtmlWindowTitleMessage());
+		setAutoSize(true);
+		Label label = new Label();
+		label.setContents(html);
+		label.setAutoFit(true);
+		label.draw();
+		label.show();
+		addItem(label);
 	}
 
 }

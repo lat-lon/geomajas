@@ -20,7 +20,7 @@ import java.util.Map;
 
 /**
  * Response object for {@link org.geomajas.layer.wms.command.wms.SearchByPointCommand}.
- *
+ * 
  * @author Jan De Moerloose
  * @author Pieter De Graef
  * @author Joachim Van der Auwera
@@ -44,9 +44,11 @@ public class SearchByPointResponse extends CommandResponse {
 
 	/**
 	 * Add features for a layer. Only adds the features for a server id once.
-	 *
-	 * @param layerId layer id
-	 * @param features features
+	 * 
+	 * @param layerId
+	 *            layer id
+	 * @param features
+	 *            features
 	 * @return true when features were added
 	 */
 	public boolean addLayer(String layerId, List<Feature> features) {
@@ -56,10 +58,21 @@ public class SearchByPointResponse extends CommandResponse {
 		}
 		return false;
 	}
-	
+
+	/**
+	 * Add html GFI Strings for a layer. Only adds the Strings for a server id once.
+	 * 
+	 * @param layerId
+	 *            layer id
+	 * @param html
+	 *            html
+	 * @return true when html was added
+	 * 
+	 * @since 1.11.0
+	 */
 	public boolean addLayer(String layerId, String html) {
 		if (!htmlFeatureInfoMap.containsKey(layerId)) {
-			htmlFeatureInfoMap.put(layerId,html);
+			htmlFeatureInfoMap.put(layerId, html);
 			return true;
 		}
 		return false;
@@ -67,18 +80,22 @@ public class SearchByPointResponse extends CommandResponse {
 
 	/**
 	 * Get the features map.
-	 *
+	 * 
 	 * @return map with layer id as key and list of features as value
+	 * 
 	 */
 	public Map<String, List<Feature>> getFeatureMap() {
 		return featureMap;
 	}
-	
+
 	/**
-	 * Get a map of the html response of all layers that support HTML GFI
+	 * Get a map of the html response of all layers that support HTML GFI.
+	 * 
 	 * @return a map of the html response of all layers that support HTML GFI
+	 * 
+	 * @since 1.11.0
 	 */
-	public Map<String,String> getFeatureInfoHtmlMap() {
+	public Map<String, String> getFeatureInfoHtmlMap() {
 		return htmlFeatureInfoMap;
 	}
 }

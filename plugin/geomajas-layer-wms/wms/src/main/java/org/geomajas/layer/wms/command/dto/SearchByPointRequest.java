@@ -243,10 +243,20 @@ public class SearchByPointRequest extends LayerIdsCommandRequest {
 		}
 	}
 
+	/**
+	 * ...
+	 * @return  featureInfoFormat
+	 * @since 1.11.0
+	 */
 	public String getFeatureInfoFormat() {
 		return featureInfoFormat;
 	}
 
+	/**
+	 * ...
+	 * @param featureInfoFormat
+	 * @since 1.11.0
+	 */
 	public void setFeatureInfoFormat(String featureInfoFormat) {
 		this.featureInfoFormat = featureInfoFormat;
 	}
