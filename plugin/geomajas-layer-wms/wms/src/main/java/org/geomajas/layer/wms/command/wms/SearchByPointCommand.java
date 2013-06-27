@@ -102,7 +102,6 @@ public class SearchByPointCommand implements Command<SearchByPointRequest, Searc
 		Coordinate coordinate = new Coordinate(requestLocation.getX(), requestLocation.getY());
 		Crs crs = geoService.getCrs2(request.getCrs());
 		boolean searchFirstLayerOnly;
-		// TODO
 		switch (request.getSearchType()) {
 			case SearchByPointRequest.SEARCH_FIRST_LAYER:
 				searchFirstLayerOnly = true;
@@ -160,9 +159,7 @@ public class SearchByPointCommand implements Command<SearchByPointRequest, Searc
 	private boolean addFeatureInfoGmlLayerIfSupported(SearchByPointRequest request, SearchByPointResponse response,
 			Bbox mapBounds, Coordinate coordinate, Crs crs, String clientLayerId, Layer<?> layer)
 			throws LayerException, GeomajasException {
-		if (checkIfGmlFeatureInfoIsSupported(layer)
-
-		) {
+		if (checkIfGmlFeatureInfoIsSupported(layer)) {
 			Crs layerCrs = layerService.getCrs(layer);
 			double layerScale = calculateLayerScale(crs, layerCrs, mapBounds, request.getScale());
 			Coordinate layerCoordinate = geoService.transform(coordinate, crs, layerCrs);
@@ -186,12 +183,13 @@ public class SearchByPointCommand implements Command<SearchByPointRequest, Searc
 	}
 
 	private boolean checkIfGmlFeatureInfoIsSupported(Layer<?> layer) {
+		// Check if the underlying layer implements one of the matching interfaces and has GFI enabled for at least one of them
+		boolean result = false;
 		if (layer instanceof LayerFeatureInfoAsGmlSupport)
-			return ((LayerFeatureInfoAsGmlSupport) layer).isEnableFeatureInfoAsGmlSupport();
+			result = ((LayerFeatureInfoAsGmlSupport) layer).isEnableFeatureInfoAsGmlSupport();
 		if (layer instanceof LayerFeatureInfoSupport)
-			return ((LayerFeatureInfoSupport) layer).isEnableFeatureInfoSupport();
-		else
-			return false;
+			result = result || ((LayerFeatureInfoSupport) layer).isEnableFeatureInfoSupport();
+		return result;
 	}
 
 	public SearchByPointResponse getEmptyCommandResponse() {
