@@ -284,6 +284,12 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport, LayerFeat
 
 		return features;
 	}
+	
+	@Override
+	public List<Feature> getFeatureInfoAsGml(Coordinate coordinate, double layerScale, int pixelTolerance)
+			throws LayerException {
+		return getFeaturesByLocation(coordinate, layerScale, pixelTolerance);
+	}
 
 	@Override
 	public String getFeatureInfoAsHtml(Coordinate coordinate,
