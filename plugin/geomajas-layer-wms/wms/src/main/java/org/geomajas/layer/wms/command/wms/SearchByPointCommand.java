@@ -131,8 +131,9 @@ public class SearchByPointCommand implements Command<SearchByPointRequest, Searc
 						match = addFeatureInfoGmlLayerIfSupported(request, response, mapBounds, coordinate, crs,
 								clientLayerId, layer);
 					}
-					if (match && searchFirstLayerOnly)
+					if (match && searchFirstLayerOnly) {
 						break;
+					}
 				}
 			}
 		}
@@ -174,21 +175,25 @@ public class SearchByPointCommand implements Command<SearchByPointRequest, Searc
 
 	private List<Feature> retrieveFeaturesAsGml(SearchByPointRequest request, Layer<?> layer, double layerScale,
 			Coordinate layerCoordinate) throws LayerException {
-		if (layer instanceof LayerFeatureInfoSupport)
+		if (layer instanceof LayerFeatureInfoSupport) {
 			return ((LayerFeatureInfoSupport) layer).getFeaturesByLocation(layerCoordinate, layerScale,
 					request.getPixelTolerance());
-		else
+		} else {
 			return ((LayerFeatureInfoAsGmlSupport) layer).getFeatureInfoAsGml(layerCoordinate, layerScale,
 					request.getPixelTolerance());
+		}
 	}
 
 	private boolean checkIfGmlFeatureInfoIsSupported(Layer<?> layer) {
-		// Check if the underlying layer implements one of the matching interfaces and has GFI enabled for at least one of them
+		// Check if the underlying layer implements one of the matching interfaces and has GFI enabled for at least one
+		// of them
 		boolean result = false;
-		if (layer instanceof LayerFeatureInfoAsGmlSupport)
+		if (layer instanceof LayerFeatureInfoAsGmlSupport) {
 			result = ((LayerFeatureInfoAsGmlSupport) layer).isEnableFeatureInfoAsGmlSupport();
-		if (layer instanceof LayerFeatureInfoSupport)
+		}
+		if (layer instanceof LayerFeatureInfoSupport) {
 			result = result || ((LayerFeatureInfoSupport) layer).isEnableFeatureInfoSupport();
+		}
 		return result;
 	}
 

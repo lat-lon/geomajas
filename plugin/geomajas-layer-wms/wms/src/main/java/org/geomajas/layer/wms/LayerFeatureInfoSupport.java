@@ -23,6 +23,8 @@ import java.util.List;
  *
  * @author Oliver May
  * @since 1.8.0
+ * 
+ * @deprecated Use {@link LayerFeatureInfoAsGmlSupport} instead
  */
 @FutureApi(allMethods = true)
 @UserImplemented
