@@ -86,7 +86,7 @@ public class MultiLayerFeatureInfoListener extends AbstractListener {
 	private Map<String, String> featuresListLabels;
 
 	private String featureInfoFormat = FEATUREINFO_FORMAT_GML;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -171,26 +171,6 @@ public class MultiLayerFeatureInfoListener extends AbstractListener {
 													handleFeatureInfoHtml(rasterResponse);
 												}
 											}
-
-											private void handleFeatureInfoHtml(SearchByPointResponse rasterResponse) {
-												// Just show wms
-												// featureinfo response
-												// as html
-												Map<String, String> htmlMap = rasterResponse.getFeatureInfoHtmlMap();
-												showFeatureInfoHtml(htmlMap);
-											}
-
-											private void handleFeatureInfoGml(
-													final SearchByLocationResponse vectorResponse,
-													final SearchByPointResponse rasterResponse) {
-												// Featuremap maps
-												// client layer on
-												// feature
-												Map<String, List<org.geomajas.layer.feature.Feature>> featureMap = vectorResponse
-														.getFeatureMap();
-												featureMap.putAll(rasterResponse.getFeatureMap());
-												showFeatureInfoGml(featureMap);
-											}
 										});
 
 							} else {
@@ -204,6 +184,24 @@ public class MultiLayerFeatureInfoListener extends AbstractListener {
 			dragging = false;
 		}
 		clickstart = false;
+	}
+
+	private void handleFeatureInfoHtml(SearchByPointResponse rasterResponse) {
+		// Just show wms
+		// featureinfo response
+		// as html
+		Map<String, String> htmlMap = rasterResponse.getFeatureInfoHtmlMap();
+		showFeatureInfoHtml(htmlMap);
+	}
+
+	private void handleFeatureInfoGml(final SearchByLocationResponse vectorResponse,
+			final SearchByPointResponse rasterResponse) {
+		// Featuremap maps
+		// client layer on
+		// feature
+		Map<String, List<org.geomajas.layer.feature.Feature>> featureMap = vectorResponse.getFeatureMap();
+		featureMap.putAll(rasterResponse.getFeatureMap());
+		showFeatureInfoGml(featureMap);
 	}
 
 	private SearchByPointRequest createSearchByPointRequest(Point point) {

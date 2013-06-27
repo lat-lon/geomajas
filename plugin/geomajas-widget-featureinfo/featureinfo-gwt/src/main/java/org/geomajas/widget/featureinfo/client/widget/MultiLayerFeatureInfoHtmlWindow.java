@@ -34,38 +34,23 @@ public class MultiLayerFeatureInfoHtmlWindow extends DockableWindow {
 	private static final FeatureInfoMessages MESSAGES = GWT.create(FeatureInfoMessages.class);
 
 	private final MapWidget mapWidget;
-	
-	private Map<String,String> htmlMap;
+
+	private Map<String, String> htmlMap;
 
 	/**
-	 * Construct a MultiLayerFeatureInfoWindow, allowing feature info of multiple features on one location.
+	 * Construct a MultiLayerFeatureInfoWindow, allowing feature info of multiple layers on one location.
 	 * 
-	 * @param mapWidget the map widget
-	 * @param featureMap a Map (Layer, List(Feature)) that contains all the features on this position
+	 * @param mapWidget
+	 *            the map widget
+	 * @param htmlMap
+	 *            a Map (String,String) that contains all the layers with their html gfi output
 	 */
-	public MultiLayerFeatureInfoHtmlWindow(MapWidget mapWidget, Map<String,String> htmlMap) {
+	public MultiLayerFeatureInfoHtmlWindow(MapWidget mapWidget, Map<String, String> htmlMap) {
 		super();
 		this.mapWidget = mapWidget;
 		setHtmlMap(htmlMap);
 		buildWidget();
 
-	}
-	
-	/**
-	 * Construct a MultiLayerFeatureInfoWindow with specified featuresListLabels.
-	 * Useful when using labels composed of multiple attributes
-	 * 
-	 * @param mapWidget the map widget
-	 * @param featureMap a Map (Layer, List(Feature)) that contains all the features on this position
-	 * @param featuresListLabels contains for each layer specified in SLD attributeName
-	 * to be used as shown list entry value
-	 */
-	public MultiLayerFeatureInfoHtmlWindow(MapWidget mapWidget,	Map<String,String> htmlMap, Map<String, String> featuresListLabels) {
-		super();
-		this.mapWidget = mapWidget;
-		//setFeaturesListLabels(featuresListLabels);
-		setHtmlMap(htmlMap);
-		buildWidget();
 	}
 
 	private void buildWidget() {
@@ -77,11 +62,11 @@ public class MultiLayerFeatureInfoHtmlWindow extends DockableWindow {
 		setMinWidth(250);
 		setKeepInParentRect(true);
 
-		MultiLayerHtmlList layerList = new MultiLayerHtmlList(mapWidget, new LayerClickHandler() {
-			
+		MultiLayerHtmlList layerList = new MultiLayerHtmlList(mapWidget, htmlMap, new LayerClickHandler() {
+
 			@Override
 			public void onClick(Layer<?> layer, String html) {
-				Window window = FeatureDetailWidgetFactory.createLayerDetailWindow(html, false);
+				Window window = FeatureDetailWidgetFactory.createLayerDetailWindow(html);
 				window.setPageTop(mapWidget.getAbsoluteTop() + 25);
 				window.setPageLeft(mapWidget.getAbsoluteLeft() + 25);
 				window.setKeepInParentRect(true);
@@ -89,15 +74,14 @@ public class MultiLayerFeatureInfoHtmlWindow extends DockableWindow {
 			}
 
 		});
-		layerList.setHtmlMap(htmlMap);
 		addItem(layerList);
 	}
 
-	public Map<String,String> getHtmlMap() {
+	public Map<String, String> getHtmlMap() {
 		return htmlMap;
 	}
-	
-	public void setHtmlMap(Map<String,String> htmlMap) {
+
+	public void setHtmlMap(Map<String, String> htmlMap) {
 		this.htmlMap = htmlMap;
 	}
 }
