@@ -891,7 +891,7 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport, LayerFeat
 		return enableFeatureInfoSupportAsHtml;
 	}
 
-	public void setEnableFeatureInfoSupportAsHtml(boolean enableFeatureInfoSupportAsHtml) {
+	public void setEnableFeatureInfoAsHtmlSupport(boolean enableFeatureInfoSupportAsHtml) {
 		this.enableFeatureInfoSupportAsHtml = enableFeatureInfoSupportAsHtml;
 	}
 
@@ -907,7 +907,7 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport, LayerFeat
 		return enableFeatureInfoSupportAsHtml;
 	}
 
-	public void setEnableFeatureInfoSupportAsGml(boolean enableFeatureInfoSupportAsGml) {
+	public void setEnableFeatureInfoAsGmlSupport(boolean enableFeatureInfoSupportAsGml) {
 		this.enableFeatureInfoSupportAsGml = enableFeatureInfoSupportAsGml;
 	}
 
