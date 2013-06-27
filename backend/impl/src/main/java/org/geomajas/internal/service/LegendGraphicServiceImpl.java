@@ -26,6 +26,7 @@ import org.geomajas.global.ExceptionCode;
 import org.geomajas.global.GeomajasException;
 import org.geomajas.layer.Layer;
 import org.geomajas.layer.LayerException;
+import org.geomajas.layer.LayerLegendImageSupport;
 import org.geomajas.layer.RasterLayer;
 import org.geomajas.layer.VectorLayer;
 import org.geomajas.service.ConfigurationService;
@@ -94,14 +95,14 @@ public class LegendGraphicServiceImpl implements LegendGraphicService {
 	private int defaultWidth = LegendGraphicMetadata.DEFAULT_WIDTH;
 
 	private int defaultHeight = LegendGraphicMetadata.DEFAULT_HEIGHT;
-	
+
 	private String rasterImagePath = DEFAULT_RASTER_IMAGE_PATH;
 
 	private final Logger log = LoggerFactory.getLogger(LegendGraphicServiceImpl.class);
 
 	/**
 	 * Get default width.
-	 *
+	 * 
 	 * @return default width
 	 */
 	public int getDefaultWidth() {
@@ -110,8 +111,9 @@ public class LegendGraphicServiceImpl implements LegendGraphicService {
 
 	/**
 	 * Set default width.
-	 *
-	 * @param defaultWidth default width
+	 * 
+	 * @param defaultWidth
+	 *            default width
 	 */
 	public void setDefaultWidth(int defaultWidth) {
 		this.defaultWidth = defaultWidth;
@@ -119,7 +121,7 @@ public class LegendGraphicServiceImpl implements LegendGraphicService {
 
 	/**
 	 * Get default height.
-	 *
+	 * 
 	 * @return default height
 	 */
 	public int getDefaultHeight() {
@@ -128,8 +130,9 @@ public class LegendGraphicServiceImpl implements LegendGraphicService {
 
 	/**
 	 * Set default height.
-	 *
-	 * @param defaultHeight default height
+	 * 
+	 * @param defaultHeight
+	 *            default height
 	 */
 	public void setDefaultHeight(int defaultHeight) {
 		this.defaultHeight = defaultHeight;
@@ -137,7 +140,7 @@ public class LegendGraphicServiceImpl implements LegendGraphicService {
 
 	/**
 	 * Get raster image path.
-	 *
+	 * 
 	 * @return raster image path
 	 */
 	public String getRasterImagePath() {
@@ -146,8 +149,9 @@ public class LegendGraphicServiceImpl implements LegendGraphicService {
 
 	/**
 	 * Set raster image path.
-	 *
-	 * @param rasterImagePath raster image path
+	 * 
+	 * @param rasterImagePath
+	 *            raster image path
 	 */
 	public void setRasterImagePath(String rasterImagePath) {
 		this.rasterImagePath = rasterImagePath;
@@ -155,15 +159,17 @@ public class LegendGraphicServiceImpl implements LegendGraphicService {
 
 	/**
 	 * Get legend image.
-	 *
-	 * @param legendMetadata the legend metadata
+	 * 
+	 * @param legendMetadata
+	 *            the legend metadata
 	 * @return rendered image
-	 * @throws GeomajasException cannot render image
+	 * @throws GeomajasException
+	 *             cannot render image
 	 */
 	public RenderedImage getLegendGraphic(LegendGraphicMetadata legendMetadata) throws GeomajasException {
 		return getLegendGraphicInternal(legendMetadata);
 	}
-	
+
 	private BufferedImage getLegendGraphicInternal(LegendGraphicMetadata legendMetadata) throws GeomajasException {
 		Style style = null;
 		VectorLayer vectorLayer = null;
@@ -204,7 +210,7 @@ public class LegendGraphicServiceImpl implements LegendGraphicService {
 		int height = legendMetadata.getHeight() > 0 ? legendMetadata.getHeight() : defaultHeight;
 		if (rule != null) {
 			SimpleFeature sampleFeature = createSampleFeature(vectorLayer);
-			
+
 			MetaBufferEstimator estimator = new MetaBufferEstimator();
 			estimator.visit(rule);
 			double buffer = (double) estimator.getBuffer();
@@ -239,14 +245,19 @@ public class LegendGraphicServiceImpl implements LegendGraphicService {
 			BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 			Graphics2D graphics = image.createGraphics();
 			graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-			graphics.drawImage(getImage(getRasterImagePath()), 0, 0, width, height, null);
+			String legendImageUrl = ((LayerLegendImageSupport) layer).getLegendImageUrl();
+			if (legendImageUrl != null) {
+				graphics.drawImage(getImage(legendImageUrl), 0, 0, width, height, null);
+			} else {
+				graphics.drawImage(getImage(getRasterImagePath()), 0, 0, width, height, null);
+			}
 			graphics.dispose();
 			return image;
 		} else {
 			throw new GeomajasException(ExceptionCode.LAYER_NOT_FOUND, legendMetadata.getLayerId());
 		}
 	}
-	
+
 	@Override
 	public RenderedImage getLegendGraphics(List<LegendGraphicMetadata> legendMetadata) throws GeomajasException {
 		int width = 0;
@@ -257,16 +268,16 @@ public class LegendGraphicServiceImpl implements LegendGraphicService {
 		}
 		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D graphics = image.createGraphics();
-		
+
 		int y = 0;
 		for (LegendGraphicMetadata lmd : legendMetadata) {
 			graphics.drawImage(getLegendGraphicInternal(lmd), null, 0, y);
 			y += lmd.getHeight() > 0 ? lmd.getHeight() : defaultHeight;
 		}
 		graphics.dispose();
-		
+
 		return image;
-		
+
 	}
 
 	private SimpleFeature createSampleFeature(VectorLayer vectorLayer) {
