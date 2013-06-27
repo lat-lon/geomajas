@@ -152,9 +152,11 @@ public class WmsLayerTest {
 		RasterTile tile = tiles.get(0);
 
 		// ZOOMED_IN_SCALE 1E-4 corresponds to level 4 with current algorithm !!!!
-		assertThat(tile.getUrl()).isEqualTo("http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&" +
-				"layers=geomajas%3Abluemarble&WIDTH=512&HEIGHT=512&bbox=0,0,45,45&format=image/png&version=1.1.1&" +
-				"srs=EPSG%3A4326&styles=&what%3F=value%2Bmore%21&request=GetMap");
+		assertThat(tile.getUrl())
+				.isEqualTo(
+						"http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&"
+								+ "layers=geomajas%3Abluemarble&WIDTH=512&HEIGHT=512&bbox=0,0,45,45&format=image/png&version=1.1.1&"
+								+ "srs=EPSG%3A4326&styles=&what%3F=value%2Bmore%21&request=GetMap");
 
 	}
 
@@ -417,7 +419,7 @@ public class WmsLayerTest {
 			Assert.assertEquals(ExceptionCode.PARAMETER_MISSING, ge.getExceptionCode());
 		}
 	}
-	
+
 	@Test
 	@DirtiesContext
 	public void testNoCache() throws Exception {
@@ -444,6 +446,12 @@ public class WmsLayerTest {
 			}
 			throw ex;
 		}
+	}
+
+	@Test
+	public void testGetLegendImageUrl() {
+		String url = wms.getLegendImageUrl();
+		System.out.println(url);
 	}
 
 }
