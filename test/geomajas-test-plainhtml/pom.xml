@@ -21,6 +21,30 @@
 	<description>Geomajas GWT application</description>
 	<url>http://www.geomajas.org/</url>
 
+<repositories>
+    <repository>
+      <id>latlon-repo</id>
+      <url>http://repo.lat-lon/nexus/content/groups/public/</url>
+    </repository>
+  </repositories>
+
+  <distributionManagement>
+    <repository>
+      <id>latlon-releases</id>
+      <url>http://repo.lat-lon/nexus/content/repositories/releases/</url>
+    </repository>
+    <snapshotRepository>
+      <id>latlon-snapshots</id>
+      <url>http://repo.lat-lon/nexus/content/repositories/snapshots/</url>
+    </snapshotRepository>
+  </distributionManagement>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>latlon-repo</id>
+      <url>http://repo.lat-lon/nexus/content/groups/public/</url>
+    </pluginRepository>
+  </pluginRepositories>
 	<!--
 		@todo required for sample applications which are included in the
 		Geomajas project, fix or delete <scm>
