@@ -10,13 +10,13 @@
  */
 package org.geomajas.layer.wms.command.wms;
 
-import com.vividsolutions.jts.geom.Coordinate;
+import java.util.List;
+import java.util.Map.Entry;
+
+import org.geomajas.annotation.Api;
 import org.geomajas.command.Command;
-import org.geomajas.layer.wms.command.dto.SearchByPointRequest;
-import org.geomajas.layer.wms.command.dto.SearchByPointResponse;
 import org.geomajas.geometry.Bbox;
 import org.geomajas.geometry.Crs;
-import org.geomajas.annotation.Api;
 import org.geomajas.global.ExceptionCode;
 import org.geomajas.global.GeomajasException;
 import org.geomajas.layer.Layer;
@@ -26,6 +26,8 @@ import org.geomajas.layer.feature.Feature;
 import org.geomajas.layer.wms.LayerFeatureInfoAsGmlSupport;
 import org.geomajas.layer.wms.LayerFeatureInfoAsHtmlSupport;
 import org.geomajas.layer.wms.LayerFeatureInfoSupport;
+import org.geomajas.layer.wms.command.dto.SearchByPointRequest;
+import org.geomajas.layer.wms.command.dto.SearchByPointResponse;
 import org.geomajas.security.SecurityContext;
 import org.geomajas.service.ConfigurationService;
 import org.geomajas.service.GeoService;
@@ -36,8 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.Map.Entry;
+import com.vividsolutions.jts.geom.Coordinate;
 
 /**
  * <p>
