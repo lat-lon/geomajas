@@ -42,7 +42,6 @@ import org.geomajas.widget.featureinfo.client.FeatureInfoMessages;
 import org.geomajas.widget.featureinfo.client.util.FitSetting;
 import org.geomajas.widget.featureinfo.client.widget.MultiLayerFeatureInfoHtmlWindow;
 import org.geomajas.widget.featureinfo.client.widget.MultiLayerFeatureInfoWindow;
-import org.geomajas.widget.featureinfo.client.widget.MultiLayerHtmlList;
 import org.geomajas.widget.featureinfo.client.widget.factory.FeatureDetailWidgetFactory;
 
 import com.google.gwt.core.client.GWT;
@@ -63,6 +62,10 @@ import com.smartgwt.client.widgets.Window;
  */
 public class MultiLayerFeatureInfoListener extends AbstractListener {
 
+	public static final String FEATUREINFO_FORMAT_GML = "application/gml";
+
+	public static final String FEATUREINFO_FORMAT_HTML = "text/html";
+
 	private static final FeatureInfoMessages MESSAGES = GWT.create(FeatureInfoMessages.class);
 
 	private boolean dragging;
@@ -82,8 +85,8 @@ public class MultiLayerFeatureInfoListener extends AbstractListener {
 
 	private Map<String, String> featuresListLabels;
 
-	private String featureInfoFormat;
-
+	private String featureInfoFormat = FEATUREINFO_FORMAT_GML;
+	
 	/**
 	 * Constructor.
 	 * 
@@ -162,9 +165,9 @@ public class MultiLayerFeatureInfoListener extends AbstractListener {
 										new AbstractCommandCallback<SearchByPointResponse>() {
 
 											public void execute(final SearchByPointResponse rasterResponse) {
-												if ("application/gml".equals(featureInfoFormat)) {
+												if (FEATUREINFO_FORMAT_GML.equals(featureInfoFormat)) {
 													handleFeatureInfoGml(vectorResponse, rasterResponse);
-												} else if ("text/html".equals(featureInfoFormat)) {
+												} else if (FEATUREINFO_FORMAT_HTML.equals(featureInfoFormat)) {
 													handleFeatureInfoHtml(rasterResponse);
 												}
 											}

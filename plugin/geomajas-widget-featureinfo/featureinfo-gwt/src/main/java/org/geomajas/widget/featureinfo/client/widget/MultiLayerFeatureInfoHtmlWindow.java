@@ -11,10 +11,8 @@
 
 package org.geomajas.widget.featureinfo.client.widget;
 
-import java.util.List;
 import java.util.Map;
 
-import org.geomajas.gwt.client.map.feature.Feature;
 import org.geomajas.gwt.client.map.layer.Layer;
 import org.geomajas.gwt.client.widget.MapWidget;
 import org.geomajas.widget.featureinfo.client.FeatureInfoMessages;
