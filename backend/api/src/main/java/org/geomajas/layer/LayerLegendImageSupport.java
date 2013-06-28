@@ -9,7 +9,8 @@
  * details, see LICENSE.txt in the project root.
  */
 
-package org.geomajas.layer.wms;
+package org.geomajas.layer;
+
 
 /**
  * 
@@ -19,7 +20,8 @@ package org.geomajas.layer.wms;
  * @author Jeronimo Wanhoff
  *
  */
-public interface LegendImageSupport {
+
+public interface LayerLegendImageSupport {
 
 	/**
 	 * Get the width of the legend image.
@@ -41,7 +43,5 @@ public interface LegendImageSupport {
 	 * @return a string representing the image URL
 	 */
 	String getLegendImageUrl();
-	
-	//boolean isEnableLegendImageSupport();
 
 }

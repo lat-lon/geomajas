@@ -5,13 +5,14 @@ import java.util.List;
 
 import org.geomajas.configuration.RasterLayerInfo;
 import org.geomajas.global.GeomajasException;
+import org.geomajas.layer.LayerLegendImageSupport;
 import org.geomajas.layer.RasterLayer;
 import org.geomajas.layer.tile.RasterTile;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import com.vividsolutions.jts.geom.Envelope;
 
-public class TestRasterLayer implements RasterLayer {
+public class TestRasterLayer implements RasterLayer, LayerLegendImageSupport {
 
 	private String id;
 
@@ -42,6 +43,21 @@ public class TestRasterLayer implements RasterLayer {
 
 	public void setId(String id) {
 		this.id = id;
+	}
+
+	@Override
+	public int getLegendImageWidth() {
+		return 0;
+	}
+
+	@Override
+	public int getLegendImageHeight() {
+		return 0;
+	}
+
+	@Override
+	public String getLegendImageUrl() {
+		return null;
 	}
 
 }

@@ -42,6 +42,7 @@ import org.geomajas.geometry.CrsTransform;
 import org.geomajas.global.ExceptionCode;
 import org.geomajas.global.GeomajasException;
 import org.geomajas.layer.LayerException;
+import org.geomajas.layer.LayerLegendImageSupport;
 import org.geomajas.layer.RasterLayer;
 import org.geomajas.layer.common.proxy.LayerAuthentication;
 import org.geomajas.layer.common.proxy.LayerAuthenticationMethod;
@@ -103,7 +104,7 @@ import com.vividsolutions.jts.geom.Envelope;
  */
 @Api
 public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport,
-		LegendImageSupport, LayerFeatureInfoAsHtmlSupport {
+		LayerLegendImageSupport, LayerFeatureInfoAsHtmlSupport {
 
 	private static final String GFI_UNAVAILABLE_MSG = "GetFeatureInfo-support not available on this layer";
 
