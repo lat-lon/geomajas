@@ -23,15 +23,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.annotation.PostConstruct;
-import javax.xml.stream.XMLStreamException;
 
-import org.deegree.layer.metadata.LayerMetadata;
-import org.deegree.protocol.ows.exception.OWSExceptionReport;
-import org.deegree.protocol.wms.client.WMSClient;
-import org.deegree.style.se.unevaluated.Style;
 import org.geomajas.annotation.Api;
 import org.geomajas.configuration.Parameter;
 import org.geomajas.configuration.RasterLayerInfo;
@@ -59,8 +53,13 @@ import org.geomajas.service.DtoConverterService;
 import org.geomajas.service.GeoService;
 import org.geotools.GML;
 import org.geotools.GML.Version;
+import org.geotools.data.ows.Layer;
+import org.geotools.data.ows.StyleImpl;
+import org.geotools.data.ows.WMSCapabilities;
+import org.geotools.data.wms.WebMapServer;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
+import org.geotools.ows.ServiceException;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.geometry.MismatchedDimensionException;
@@ -690,42 +689,35 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport,
 	}
 
 	private void retrieveLegendImageParameters(String baseWmsUrl) {
-		final int connectionTimeout = 10;
-		final int sessionTimeout = 10;
-		WMSClient wms;
 		String capabilitiesUrl = formatGetCapabilitiesUrl(baseWmsUrl);
 		try {
+			WebMapServer wms = new WebMapServer(new URL(capabilitiesUrl));
 			if (layerAuthentication != null) {
-				wms = new WMSClient(new URL(capabilitiesUrl),
-						connectionTimeout, sessionTimeout,
-						layerAuthentication.getUser(),
-						layerAuthentication.getPassword());
-			} else {
-				wms = new WMSClient(new URL(capabilitiesUrl));
+				wms.getHTTPClient().setUser(layerAuthentication.getUser());
+				wms.getHTTPClient().setPassword(layerAuthentication.getPassword());
 			}
+			WMSCapabilities capabilities = wms.getCapabilities();
 			String layerId = getId();
 			if (layerInfo.getDataSourceName() != null) {
 				layerId = layerInfo.getDataSourceName();
 			}
-			for (LayerMetadata layer : wms.getLayerTree().flattenDepthFirst()) {
+			for (Layer layer : capabilities.getLayer().getLayerChildren()) {
 				if (layerId.equals(layer.getName())) {
-					Map<String, Style> legendStyles = layer.getStyles();
-					Object key = legendStyles.keySet().toArray()[0];
-					Style legendStyle = legendStyles.get(key);
-					legendImageUrl = legendStyle.getLegendURL().toString();
-					// TODO get image width and height
+					if (layer.getStyles() != null && !layer.getStyles().isEmpty()) {
+						StyleImpl style = layer.getStyles().get(0);
+						if (style.getLegendURLs() != null && !style.getLegendURLs().isEmpty()) {
+							Object legendUrl = style.getLegendURLs().get(0);
+							legendImageUrl = legendUrl.toString();
+							// TODO get image width and height
+						}
+					}
 					break;
 				}
 			}
 		} catch (IOException e) {
 			log.warn(e.getMessage());
-		} catch (OWSExceptionReport e) {
-			log.warn("WMSClient to parse the capabilities cannot be created. URL: "
-					+ capabilitiesUrl);
-			e.printStackTrace();
-		} catch (XMLStreamException e) {
-			log.warn("Capabilities document seems to be malformed. URL: "
-					+ capabilitiesUrl);
+		} catch (ServiceException e) {
+			log.warn("Could not parse capabilities from {}", capabilitiesUrl);
 		}
 	}
 
