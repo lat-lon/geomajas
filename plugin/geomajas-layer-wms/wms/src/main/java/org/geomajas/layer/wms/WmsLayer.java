@@ -92,7 +92,7 @@ import com.vividsolutions.jts.geom.Envelope;
  * @since 1.7.1
  */
 @Api
-public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport, LayerFeatureInfoAsHtmlSupport {
+public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport, LayerFeatureInfoAsHtmlSupport, LayerFeatureInfoAsGmlSupport {
 
 	private static final String GFI_UNAVAILABLE_MSG = "GetFeatureInfo-support not available on this layer";
 
@@ -332,7 +332,7 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport, LayerFeat
 
 	}
 
-	private String buildRequestUrl(Coordinate layerCoordinate, double layerScale, boolean isHtmlRequest)
+	protected String buildRequestUrl(Coordinate layerCoordinate, double layerScale, boolean isHtmlRequest)
 			throws GeomajasException {
 		Resolution bestResolution = getResolutionForScale(layerScale);
 		RasterGrid grid = getRasterGrid(new Envelope(layerCoordinate), bestResolution.getTileWidth(),
@@ -909,6 +909,11 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport, LayerFeat
 
 	public void setEnableFeatureInfoAsGmlSupport(boolean enableFeatureInfoSupportAsGml) {
 		this.enableFeatureInfoSupportAsGml = enableFeatureInfoSupportAsGml;
+	}
+
+	
+	protected LayerHttpService getHttpService() {
+		return httpService;
 	}
 
 	/**
