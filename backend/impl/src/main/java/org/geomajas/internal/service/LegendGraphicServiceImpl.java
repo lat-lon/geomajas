@@ -245,7 +245,11 @@ public class LegendGraphicServiceImpl implements LegendGraphicService {
 			BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 			Graphics2D graphics = image.createGraphics();
 			graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-			String legendImageUrl = ((LayerLegendImageSupport) layer).getLegendImageUrl();
+			
+			String legendImageUrl = null;
+			if (layer instanceof LayerLegendImageSupport) {
+				legendImageUrl = ((LayerLegendImageSupport) layer).getLegendImageUrl();
+			}
 			if (legendImageUrl != null) {
 				graphics.drawImage(getImage(legendImageUrl), 0, 0, width, height, null);
 			} else {

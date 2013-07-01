@@ -42,8 +42,7 @@ import static org.fest.assertions.Assertions.assertThat;
  * @author Joachim Van der Auwera
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = { "/org/geomajas/spring/geomajasContext.xml",
-		"/wmsContext.xml" })
+@ContextConfiguration(locations = { "/org/geomajas/spring/geomajasContext.xml", "/wmsContext.xml" })
 public class WmsLayerTest {
 
 	private static final double ZOOMED_IN_SCALE = .0001;
@@ -87,14 +86,11 @@ public class WmsLayerTest {
 		for (int level = 0; level < 32; level++) {
 			double latlonScale = Math.pow(2, level);
 			// must reduce envelope as we zoom
-			latlonEnvelope = new Envelope(-180, -180 + 1.0 / latlonScale, -412,
-					-412 + 1.0 / latlonScale);
-			List<RasterTile> tiles = wms.paint(latlon, latlonEnvelope,
-					latlonScale);
+			latlonEnvelope = new Envelope(-180, -180 + 1.0 / latlonScale, -412, -412 + 1.0 / latlonScale);
+			List<RasterTile> tiles = wms.paint(latlon, latlonEnvelope, latlonScale);
 			Assert.assertEquals(1, tiles.size());
 			Assert.assertEquals(level, tiles.get(0).getCode().getTileLevel());
-			Assert.assertEquals(512, tiles.get(0).getBounds().getHeight(),
-					DELTA);
+			Assert.assertEquals(512, tiles.get(0).getBounds().getHeight(), DELTA);
 			Assert.assertEquals(512, tiles.get(0).getBounds().getWidth(), DELTA);
 		}
 	}
@@ -106,13 +102,11 @@ public class WmsLayerTest {
 		// back-transform envelope to latlon
 		Crs google = geoService.getCrs2(MERCATOR);
 		Crs latlon = geoService.getCrs2(LONLAT);
-		Envelope latlonEnvelope = geoService.transform(
-				JTS.toGeometry(googleEnvelope), google, latlon)
+		Envelope latlonEnvelope = geoService.transform(JTS.toGeometry(googleEnvelope), google, latlon)
 				.getEnvelopeInternal();
 
 		// back-transform scale to latlon
-		double latlonScale = ZOOMED_IN_SCALE * googleEnvelope.getWidth()
-				/ latlonEnvelope.getWidth();
+		double latlonScale = ZOOMED_IN_SCALE * googleEnvelope.getWidth() / latlonEnvelope.getWidth();
 
 		// paint with re-projection (affine is fine for now...:-)
 		List<RasterTile> tiles = wms.paint(latlon, latlonEnvelope, latlonScale);
@@ -121,10 +115,9 @@ public class WmsLayerTest {
 
 		// ZOOMED_IN_SCALE 1E-4 corresponds to level 4 with current algorithm
 		// !!!!
-		Assert.assertEquals(
-				"http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=geosparc%3Abluemarble&"
-						+ "WIDTH=512&HEIGHT=512&bbox=-20,-28,12,4&format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&"
-						+ "styles=&request=GetMap", tile.getUrl());
+		Assert.assertEquals("http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=geosparc%3Abluemarble&"
+				+ "WIDTH=512&HEIGHT=512&bbox=-20,-28,12,4&format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&"
+				+ "styles=&request=GetMap", tile.getUrl());
 
 		// Assert.assertEquals("http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&"
 		// + "layers=bluemarble&WIDTH=512&HEIGHT=512&"
@@ -152,17 +145,14 @@ public class WmsLayerTest {
 		// back-transform envelope to latlon
 		Crs google = geoService.getCrs2(MERCATOR);
 		Crs latlon = geoService.getCrs2(LONLAT);
-		Envelope latlonEnvelope = geoService.transform(
-				JTS.toGeometry(googleEnvelope), google, latlon)
+		Envelope latlonEnvelope = geoService.transform(JTS.toGeometry(googleEnvelope), google, latlon)
 				.getEnvelopeInternal();
 
 		// back-transform scale to latlon
-		double latlonScale = ZOOMED_IN_SCALE * googleEnvelope.getWidth()
-				/ latlonEnvelope.getWidth();
+		double latlonScale = ZOOMED_IN_SCALE * googleEnvelope.getWidth() / latlonEnvelope.getWidth();
 
 		// paint with re-projection (affine is fine for now...:-)
-		List<RasterTile> tiles = escapeBlue.paint(latlon, latlonEnvelope,
-				latlonScale);
+		List<RasterTile> tiles = escapeBlue.paint(latlon, latlonEnvelope, latlonScale);
 		Assert.assertEquals(1, tiles.size());
 		RasterTile tile = tiles.get(0);
 
@@ -184,13 +174,11 @@ public class WmsLayerTest {
 		// back-transform envelope to latlon
 		Crs google = geoService.getCrs2(MERCATOR);
 		Crs latlon = geoService.getCrs2(LONLAT);
-		Envelope latlonEnvelope = geoService.transform(
-				JTS.toGeometry(googleEnvelope), google, latlon)
+		Envelope latlonEnvelope = geoService.transform(JTS.toGeometry(googleEnvelope), google, latlon)
 				.getEnvelopeInternal();
 
 		// back-transform scale to latlon
-		double latlonScale = MAX_LEVEL_SCALE * googleEnvelope.getWidth()
-				/ latlonEnvelope.getWidth();
+		double latlonScale = MAX_LEVEL_SCALE * googleEnvelope.getWidth() / latlonEnvelope.getWidth();
 
 		// paint with re-projection (affine is fine for now...:-)
 		List<RasterTile> tiles = wms.paint(latlon, latlonEnvelope, latlonScale);
@@ -200,13 +188,11 @@ public class WmsLayerTest {
 		Assert.assertEquals(
 				"http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=geosparc%3Abluemarble&WIDTH=512&"
 						+ "HEIGHT=512&bbox=0.0859375,47.3828125,0.09375,47.390625&format=image/jpeg&version=1.1.1&"
-						+ "srs=EPSG%3A4326&styles=&request=GetMap", tiles
-						.get(0).getUrl());
+						+ "srs=EPSG%3A4326&styles=&request=GetMap", tiles.get(0).getUrl());
 		Assert.assertEquals(
 				"http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=geosparc%3Abluemarble&WIDTH=512&"
 						+ "HEIGHT=512&bbox=0.09375,47.3828125,0.1015625,47.390625&format=image/jpeg&version=1.1.1&"
-						+ "srs=EPSG%3A4326&styles=&request=GetMap", tiles
-						.get(1).getUrl());
+						+ "srs=EPSG%3A4326&styles=&request=GetMap", tiles.get(1).getUrl());
 
 		RasterTile tile = tiles.get(1);
 		Assert.assertEquals(16, tile.getCode().getTileLevel());
@@ -261,8 +247,7 @@ public class WmsLayerTest {
 		// back-transform envelope to latlon
 		Crs google = geoService.getCrs2(MERCATOR);
 		// paint with reprojection (affine is fine for now...:-)
-		List<RasterTile> tiles = wms.paint(google, googleEnvelope,
-				ZOOMED_IN_SCALE);
+		List<RasterTile> tiles = wms.paint(google, googleEnvelope, ZOOMED_IN_SCALE);
 		Assert.assertEquals(1, tiles.size());
 		RasterTile tile = tiles.get(0);
 		Assert.assertEquals(
@@ -304,20 +289,17 @@ public class WmsLayerTest {
 		Crs google = geoService.getCrs2(MERCATOR);
 
 		// paint with reprojection (affine is fine for now...:-)
-		List<RasterTile> tiles = wms.paint(google, googleEnvelope,
-				MAX_LEVEL_SCALE);
+		List<RasterTile> tiles = wms.paint(google, googleEnvelope, MAX_LEVEL_SCALE);
 
 		Assert.assertEquals(2, tiles.size());
 		Assert.assertEquals(
 				"http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=geosparc%3Abluemarble&WIDTH=512&"
 						+ "HEIGHT=512&bbox=0.0859375,47.3828125,0.09375,47.390625&format=image/jpeg&version=1.1.1&"
-						+ "srs=EPSG%3A4326&styles=&request=GetMap", tiles
-						.get(0).getUrl());
+						+ "srs=EPSG%3A4326&styles=&request=GetMap", tiles.get(0).getUrl());
 		Assert.assertEquals(
 				"http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=geosparc%3Abluemarble&WIDTH=512&"
 						+ "HEIGHT=512&bbox=0.09375,47.3828125,0.1015625,47.390625&format=image/jpeg&version=1.1.1&"
-						+ "srs=EPSG%3A4326&styles=&request=GetMap", tiles
-						.get(1).getUrl());
+						+ "srs=EPSG%3A4326&styles=&request=GetMap", tiles.get(1).getUrl());
 
 		RasterTile tile = tiles.get(1);
 		Assert.assertEquals(16, tile.getCode().getTileLevel());
@@ -392,24 +374,19 @@ public class WmsLayerTest {
 		// back-transform envelope to latlon
 		Crs google = geoService.getCrs2(MERCATOR);
 		Crs latlon = geoService.getCrs2(LONLAT);
-		Envelope latlonEnvelope = geoService.transform(
-				JTS.toGeometry(googleEnvelope), google, latlon)
+		Envelope latlonEnvelope = geoService.transform(JTS.toGeometry(googleEnvelope), google, latlon)
 				.getEnvelopeInternal();
 
 		// back-transform scale to latlon
-		double latlonScale = ZOOMED_IN_SCALE * googleEnvelope.getWidth()
-				/ latlonEnvelope.getWidth();
+		double latlonScale = ZOOMED_IN_SCALE * googleEnvelope.getWidth() / latlonEnvelope.getWidth();
 
 		// paint with re-projection (affine is fine for now...:-)
-		List<RasterTile> tiles = proxyWms.paint(latlon, latlonEnvelope,
-				latlonScale);
+		List<RasterTile> tiles = proxyWms.paint(latlon, latlonEnvelope, latlonScale);
 		Assert.assertEquals(1, tiles.size());
 		RasterTile tile = tiles.get(0);
 
-		Assert.assertEquals(
-				"./d/wms/proxyBlue/?SERVICE=WMS&layers=geosparc%3Abluemarble&WIDTH=512&HEIGHT=512&bbox"
-						+ "=-20,-28,12,4&format=image/jpeg&version=1.3.0&crs=EPSG%3A4326&styles=&request=GetMap",
-				tile.getUrl());
+		Assert.assertEquals("./d/wms/proxyBlue/?SERVICE=WMS&layers=geosparc%3Abluemarble&WIDTH=512&HEIGHT=512&bbox"
+				+ "=-20,-28,12,4&format=image/jpeg&version=1.3.0&crs=EPSG%3A4326&styles=&request=GetMap", tile.getUrl());
 		Assert.assertEquals(4, tile.getCode().getTileLevel());
 		Assert.assertEquals(5, tile.getCode().getX());
 		Assert.assertEquals(12, tile.getCode().getY());
@@ -440,17 +417,14 @@ public class WmsLayerTest {
 		// back-transform envelope to latlon
 		Crs google = geoService.getCrs2(MERCATOR);
 		Crs latlon = geoService.getCrs2(LONLAT);
-		Envelope latlonEnvelope = geoService.transform(
-				JTS.toGeometry(googleEnvelope), google, latlon)
+		Envelope latlonEnvelope = geoService.transform(JTS.toGeometry(googleEnvelope), google, latlon)
 				.getEnvelopeInternal();
 
 		// back-transform scale to latlon
-		double latlonScale = ZOOMED_IN_SCALE * googleEnvelope.getWidth()
-				/ latlonEnvelope.getWidth();
+		double latlonScale = ZOOMED_IN_SCALE * googleEnvelope.getWidth() / latlonEnvelope.getWidth();
 
 		// paint with re-projection (affine is fine for now...:-)
-		List<RasterTile> tiles = defaultWms.paint(latlon, latlonEnvelope,
-				latlonScale);
+		List<RasterTile> tiles = defaultWms.paint(latlon, latlonEnvelope, latlonScale);
 		Assert.assertEquals(1, tiles.size());
 		RasterTile tile = tiles.get(0);
 
@@ -487,8 +461,7 @@ public class WmsLayerTest {
 			loadApplicationContext("/wmsInvalidContext.xml");
 			Assert.fail("invalid layer declaration was allowed");
 		} catch (GeomajasException ge) {
-			Assert.assertEquals(ExceptionCode.PARAMETER_MISSING,
-					ge.getExceptionCode());
+			Assert.assertEquals(ExceptionCode.PARAMETER_MISSING, ge.getExceptionCode());
 		}
 	}
 
@@ -506,8 +479,7 @@ public class WmsLayerTest {
 													// service
 	}
 
-	private ApplicationContext loadApplicationContext(String location)
-			throws Exception {
+	private ApplicationContext loadApplicationContext(String location) throws Exception {
 		String[] locations = new String[2];
 		locations[0] = "/org/geomajas/spring/geomajasContext.xml";
 		locations[1] = location;
@@ -528,21 +500,20 @@ public class WmsLayerTest {
 	@Test
 	public void testGetLegendImageUrl() {
 		String expectedImageUrl = "http://apps.geomajas.org:80/geoserver/wms?"
-				+ "request=GetLegendGraphic&format=image%2Fpng&"
-				+ "width=20&height=20&layer=bluemarble";
+				+ "request=GetLegendGraphic&format=image%2Fpng&" + "width=20&height=20&layer=bluemarble";
 		String actualImageUrl = wms.getLegendImageUrl();
 		assertThat(actualImageUrl).isEqualTo(expectedImageUrl);
 	}
 
-	@Ignore // neither deegree nor geotools are able to parse image height from the capabilities document
+	@Ignore("neither deegree nor geotools are able to parse image height from the capabilities document")
 	@Test
 	public void testGetLegendImageHeight() {
 		int expectedHeight = 20;
 		int actualHeight = wms.getLegendImageHeight();
 		assertThat(actualHeight).isEqualTo(expectedHeight);
-		}
+	}
 
-	@Ignore // neither deegree nor geotools are able to parse image width from the capabilities document
+	@Ignore("neither deegree nor geotools are able to parse image width from the capabilities document")
 	@Test
 	public void testGetLegendImageWidth() {
 		int expectedWidth = 20;
