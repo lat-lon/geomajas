@@ -46,16 +46,6 @@ public class TestRasterLayer implements RasterLayer, LayerLegendImageSupport {
 	}
 
 	@Override
-	public int getLegendImageWidth() {
-		return 0;
-	}
-
-	@Override
-	public int getLegendImageHeight() {
-		return 0;
-	}
-
-	@Override
 	public String getLegendImageUrl() {
 		return null;
 	}

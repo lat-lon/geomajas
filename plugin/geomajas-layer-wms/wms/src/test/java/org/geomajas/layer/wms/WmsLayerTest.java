@@ -11,6 +11,8 @@
 
 package org.geomajas.layer.wms;
 
+import static org.fest.assertions.Assertions.assertThat;
+
 import java.util.List;
 
 import junit.framework.Assert;
@@ -21,7 +23,6 @@ import org.geomajas.global.GeomajasException;
 import org.geomajas.layer.tile.RasterTile;
 import org.geomajas.service.GeoService;
 import org.geotools.geometry.jts.JTS;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,8 +34,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.vividsolutions.jts.geom.Envelope;
-
-import static org.fest.assertions.Assertions.assertThat;
 
 /**
  * Test for {@link WmsLayer}.
@@ -505,20 +504,18 @@ public class WmsLayerTest {
 		assertThat(actualImageUrl).isEqualTo(expectedImageUrl);
 	}
 
-	@Ignore("neither deegree nor geotools are able to parse image height from the capabilities document")
 	@Test
-	public void testGetLegendImageHeight() {
-		int expectedHeight = 20;
-		int actualHeight = wms.getLegendImageHeight();
-		assertThat(actualHeight).isEqualTo(expectedHeight);
-	}
+	public void testGetLegendImageStyleNameNotFound() {
+		// it is expected that the first style for the layer is used if the style name of the WmsLayer does not match
+		// any styles in the capabilities
+		String wrongStyleName = "willNotBeFound";
+		wms.setStyles(wrongStyleName);
 
-	@Ignore("neither deegree nor geotools are able to parse image width from the capabilities document")
-	@Test
-	public void testGetLegendImageWidth() {
-		int expectedWidth = 20;
-		int actualWidth = wms.getLegendImageWidth();
-		assertThat(actualWidth).isEqualTo(expectedWidth);
+		String firstImageUrl = "http://apps.geomajas.org:80/geoserver/wms?"
+				+ "request=GetLegendGraphic&format=image%2Fpng&" + "width=20&height=20&layer=bluemarble";
+		String actualImageUrl = wms.getLegendImageUrl();
+
+		assertThat(actualImageUrl).isEqualTo(firstImageUrl);
 	}
 
 }

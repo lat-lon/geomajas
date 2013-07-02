@@ -168,10 +168,6 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 
 	private String legendImageUrl;
 
-	private int legendImageHeight;
-
-	private int legendImageWidth;
-
 	/**
 	 * Return the layers identifier.
 	 * 
@@ -487,22 +483,6 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 	}
 
 	@Override
-	public int getLegendImageWidth() {
-		if (legendImageUrl == null) {
-			retrieveLegendImageParameters(baseWmsUrl);
-		}
-		return legendImageWidth;
-	}
-
-	@Override
-	public int getLegendImageHeight() {
-		if (legendImageUrl == null) {
-			retrieveLegendImageParameters(baseWmsUrl);
-		}
-		return legendImageHeight;
-	}
-
-	@Override
 	public String getLegendImageUrl() {
 		if (legendImageUrl == null) {
 			retrieveLegendImageParameters(baseWmsUrl);
@@ -677,7 +657,8 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 			if (layerInfo.getDataSourceName() != null) {
 				searchedLayerId = layerInfo.getDataSourceName();
 			}
-			parseNode(searchedLayerId, capabilities.getLayer());
+			String searchedStyleName = styles;
+			parseNodeLayer(searchedStyleName, searchedLayerId, capabilities.getLayer());
 		} catch (IOException e) {
 			log.warn(e.getMessage());
 		} catch (ServiceException e) {
@@ -685,47 +666,70 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 		}
 	}
 
-	private boolean parseNode(String searchedLayerId, Layer layer) {
+	private boolean parseNodeLayer(String searchedStyleName, String searchedLayerId, Layer layer) {
 		// check if the layer itself matches the given id
-		boolean isThisLayerMatched = parseLeaf(searchedLayerId, layer);
+		boolean isThisLayerMatched = parseLeafLayer(searchedStyleName, searchedLayerId, layer);
 		if (isThisLayerMatched) {
-			// the layer is matched. stop search.
-			return true;
+			return true; // the layer is matched. stop search.
 		}
 
 		List<Layer> childLayers = layer.getLayerChildren();
 		for (Layer childLayer : childLayers) {
 			boolean isChildMatched = false;
 			if (layer.getChildren().length > 0) {
-				isChildMatched = parseNode(searchedLayerId, childLayer);
+				isChildMatched = parseNodeLayer(searchedStyleName, searchedLayerId, childLayer);
 			} else {
-				isChildMatched = parseLeaf(searchedLayerId, childLayer);
+				isChildMatched = parseLeafLayer(searchedStyleName, searchedLayerId, childLayer);
 			}
 			if (isChildMatched) {
-				// A child layer matched. stop search.
-				return true;
+				return true; // A child layer matched. stop search.
 			}
 		}
-
 		// neither the layer itself nor its childs matched. return to parent layer.
 		return false;
 	}
 
-	private boolean parseLeaf(String searchedLayerId, Layer layer) {
+	private boolean parseLeafLayer(String searchedStyleName, String searchedLayerId, Layer layer) {
 		if (searchedLayerId.equals(layer.getName())) {
-			if (layer.getStyles() != null && !layer.getStyles().isEmpty()) {
-				StyleImpl style = layer.getStyles().get(0);
-				if (style.getLegendURLs() != null && !style.getLegendURLs().isEmpty()) {
-					Object legendUrl = style.getLegendURLs().get(0);
-					legendImageUrl = legendUrl.toString();
-					// this leaf matched.
-					return true;
-					// TODO get image width and height
-				}
+			legendImageUrl = retrieveStyleForLayer(searchedStyleName, layer);
+			// this layer matched. stop search.
+			return true;
+		}
+		return false; // this leaf did not match.
+	}
+
+	private String retrieveStyleForLayer(String searchedStyleName, Layer layer) {
+		List<StyleImpl> layerStyles = layer.getStyles();
+		if (layerStyles != null && !layerStyles.isEmpty()) {
+			String retrievedLegendUrl = searchStyle(searchedStyleName, layerStyles);
+			if (!"".equals(retrievedLegendUrl)) {
+				return retrievedLegendUrl;
+			}
+			return retrieveFirstStyle(layerStyles);
+		} else {
+			return "";
+		}
+	}
+
+	private String retrieveFirstStyle(List<StyleImpl> layerStyles) {
+		String legendUrl = "";
+		StyleImpl style = layerStyles.get(0);
+		List<?> legendURLs = style.getLegendURLs();
+		if (legendURLs != null && !legendURLs.isEmpty()) {
+			legendUrl = legendURLs.get(0).toString();
+		}
+		return legendUrl;
+	}
+
+	private String searchStyle(String styleName, List<StyleImpl> layerStyles) {
+		String legendUrl = "";
+		for (StyleImpl style : layerStyles) {
+			List<?> legendUrls = style.getLegendURLs();
+			if (styleName.equals(style.getName()) && legendUrls != null && !legendUrls.isEmpty()) {
+				legendUrl = legendUrls.get(0).toString();
 			}
 		}
-		// this leaf did not match.
-		return false;
+		return legendUrl;
 	}
 
 	private Resolution getResolutionForScale(double scale) {
@@ -1044,7 +1048,7 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 	protected LayerHttpService getHttpService() {
 		return httpService;
 	}
-	
+
 	protected void setHttpService(LayerHttpService httpService) {
 		this.httpService = httpService;
 	}

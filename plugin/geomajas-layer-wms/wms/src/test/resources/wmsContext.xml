@@ -48,7 +48,7 @@ http://www.springframework.org/schema/context/spring-context-2.5.xsd http://www.
 		<property name="baseWmsUrl" value="http://apps.geomajas.org/geoserver/wms"/>
 		<property name="version" value="1.1.1"/>
 		<property name="format" value="image/jpeg"/>
-		<property name="styles" value=""/>
+		<property name="styles" value="raster"/>
 	</bean>
 
 	<bean name="proxyBlue" class="org.geomajas.layer.wms.WmsLayer">
