@@ -92,7 +92,8 @@ import com.vividsolutions.jts.geom.Envelope;
  * @since 1.7.1
  */
 @Api
-public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport, LayerFeatureInfoAsHtmlSupport, LayerFeatureInfoAsGmlSupport {
+public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport, LayerFeatureInfoAsHtmlSupport,
+		LayerFeatureInfoAsGmlSupport {
 
 	private static final String GFI_UNAVAILABLE_MSG = "GetFeatureInfo-support not available on this layer";
 
@@ -280,6 +281,9 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport, LayerFeat
 	@Override
 	public List<Feature> getFeatureInfoAsGml(Coordinate coordinate, double layerScale, int pixelTolerance)
 			throws LayerException {
+		if (!isEnableFeatureInfoAsGmlSupport()) {
+			return Collections.emptyList();
+		}
 		return getFeaturesByLocation(coordinate, layerScale, pixelTolerance);
 	}
 
@@ -611,8 +615,7 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport, LayerFeat
 					Resolution upper = resolutions.get(i);
 					Resolution lower = resolutions.get(i + 1);
 					if (screenResolution <= upper.getResolution() && screenResolution >= lower.getResolution()) {
-						if ((upper.getResolution() - screenResolution) > 2 * 
-								(screenResolution - lower.getResolution())) {
+						if ((upper.getResolution() - screenResolution) > 2 * (screenResolution - lower.getResolution())) {
 							return lower;
 						} else {
 							return upper;
@@ -911,7 +914,6 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport, LayerFeat
 		this.enableFeatureInfoSupportAsGml = enableFeatureInfoSupportAsGml;
 	}
 
-	
 	protected LayerHttpService getHttpService() {
 		return httpService;
 	}
