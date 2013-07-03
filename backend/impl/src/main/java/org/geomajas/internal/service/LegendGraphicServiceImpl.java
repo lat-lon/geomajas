@@ -246,9 +246,11 @@ public class LegendGraphicServiceImpl implements LegendGraphicService {
 			if (layer instanceof LayerLegendImageSupport) {
 				LayerLegendImageSupport legendImage = (LayerLegendImageSupport) layer;
 				legendImageUrl = ((LayerLegendImageSupport) layer).getLegendImageUrl();
-				// use WMS layer legend size only if none is set in the legendMetadata
-				width = legendMetadata.getWidth() <= 0 ? legendImage.getLegendImageWidth() : width;
-				height = legendMetadata.getHeight() <= 0 ? legendImage.getLegendImageHeight() : height;
+				if (legendImage.getLegendImageWidth() > 0 && legendImage.getLegendImageHeight() > 0) {
+					// use WMS layer legend size only if none is set in the legendMetadata
+					width = legendMetadata.getWidth() <= 0 ? legendImage.getLegendImageWidth() : width;
+					height = legendMetadata.getHeight() <= 0 ? legendImage.getLegendImageHeight() : height;
+				}
 			}
 			BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 			Graphics2D graphics = image.createGraphics();
