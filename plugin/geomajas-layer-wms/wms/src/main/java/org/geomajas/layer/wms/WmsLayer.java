@@ -10,6 +10,7 @@
  */
 package org.geomajas.layer.wms;
 
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
+import javax.imageio.ImageIO;
 
 import org.geomajas.annotation.Api;
 import org.geomajas.configuration.Parameter;
@@ -168,6 +170,10 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 
 	private String legendImageUrl;
 
+	private int legendImageHeight;
+
+	private int legendImageWidth;
+
 	/**
 	 * Return the layers identifier.
 	 * 
@@ -233,6 +239,7 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 						.add(new Resolution(resolution, level++, layerInfo.getTileWidth(), layerInfo.getTileHeight()));
 			}
 		}
+		retrieveAndSetLegendImageParameters(baseWmsUrl);
 	}
 
 	/**
@@ -484,9 +491,6 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 
 	@Override
 	public String getLegendImageUrl() {
-		if (legendImageUrl == null) {
-			retrieveLegendImageParameters(baseWmsUrl);
-		}
 		return legendImageUrl;
 	}
 
@@ -644,7 +648,11 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 		return url.toString();
 	}
 
-	private void retrieveLegendImageParameters(String baseWmsUrl) {
+	private void retrieveAndSetLegendImageParameters(String baseWmsUrl) {
+		// set default values
+		legendImageUrl = "";
+		legendImageHeight = -1;
+		legendImageWidth = -1;
 		String capabilitiesUrl = formatGetCapabilitiesUrl(baseWmsUrl);
 		try {
 			WebMapServer wms = new WebMapServer(new URL(capabilitiesUrl));
@@ -717,6 +725,7 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 		List<?> legendURLs = style.getLegendURLs();
 		if (legendURLs != null && !legendURLs.isEmpty()) {
 			legendUrl = legendURLs.get(0).toString();
+			retrieveAndSetHeightAndWidth(legendUrl);
 		}
 		return legendUrl;
 	}
@@ -727,9 +736,21 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 			List<?> legendUrls = style.getLegendURLs();
 			if (styleName.equals(style.getName()) && legendUrls != null && !legendUrls.isEmpty()) {
 				legendUrl = legendUrls.get(0).toString();
+				retrieveAndSetHeightAndWidth(legendUrl);
 			}
 		}
 		return legendUrl;
+	}
+
+	private void retrieveAndSetHeightAndWidth(String legendUrl) {
+		try {
+			InputStream stream = httpService.getStream(legendUrl, null, null);
+			BufferedImage img = ImageIO.read(stream);
+			setLegendImageHeight(img.getHeight());
+			setLegendImageWidth(img.getWidth());
+		} catch (IOException e) {
+			log.debug("Could not retrieve legend image height and size. Reason: ", e);
+		}
 	}
 
 	private Resolution getResolutionForScale(double scale) {
@@ -1189,6 +1210,22 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 
 	public void setEnableFeatureInfoSupportAsGml(boolean enableFeatureInfoSupportAsGml) {
 		this.enableFeatureInfoSupportAsGml = enableFeatureInfoSupportAsGml;
+	}
+
+	public int getLegendImageHeight() {
+		return legendImageHeight;
+	}
+
+	public void setLegendImageHeight(int legendImageHeight) {
+		this.legendImageHeight = legendImageHeight;
+	}
+
+	public int getLegendImageWidth() {
+		return legendImageWidth;
+	}
+
+	public void setLegendImageWidth(int legendImageWidth) {
+		this.legendImageWidth = legendImageWidth;
 	}
 
 }

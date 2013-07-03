@@ -242,14 +242,20 @@ public class LegendGraphicServiceImpl implements LegendGraphicService {
 			graphics.dispose();
 			return image;
 		} else if (layer instanceof RasterLayer) {
+			String legendImageUrl = null;
+			if (layer instanceof LayerLegendImageSupport) {
+				LayerLegendImageSupport legendImage = (LayerLegendImageSupport) layer;
+				legendImageUrl = ((LayerLegendImageSupport) layer).getLegendImageUrl();
+				if (legendImage.getLegendImageWidth() > 0 && legendImage.getLegendImageHeight() > 0) {
+					// use WMS layer legend size only if none is set in the legendMetadata
+					width = legendMetadata.getWidth() <= 0 ? legendImage.getLegendImageWidth() : width;
+					height = legendMetadata.getHeight() <= 0 ? legendImage.getLegendImageHeight() : height;
+				}
+			}
 			BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 			Graphics2D graphics = image.createGraphics();
 			graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-			String legendImageUrl = null;
-			if (layer instanceof LayerLegendImageSupport) {
-				legendImageUrl = ((LayerLegendImageSupport) layer).getLegendImageUrl();
-			}
 			if (legendImageUrl != null && !"".equals(legendImageUrl)) {
 				graphics.drawImage(getImage(legendImageUrl), 0, 0, width, height, null);
 			} else {
@@ -325,7 +331,7 @@ public class LegendGraphicServiceImpl implements LegendGraphicService {
 			return null;
 		}
 	}
-
+	
 	private BufferedImage getImage(String href) throws GeomajasException {
 		InputStream is = null;
 		try {
