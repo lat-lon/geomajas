@@ -24,6 +24,20 @@ package org.geomajas.layer;
 public interface LayerLegendImageSupport {
 
 	/**
+	 * Get the width of the legend image.
+	 * 
+	 * @return the image width
+	 */
+	int getLegendImageWidth();
+
+	/**
+	 * Get the height of the legend image.
+	 * 
+	 * @return the image height
+	 */
+	int getLegendImageHeight();
+
+	/**
 	 * Get the URL pointing to the legend image.
 	 * 
 	 * @return a string representing the image URL
