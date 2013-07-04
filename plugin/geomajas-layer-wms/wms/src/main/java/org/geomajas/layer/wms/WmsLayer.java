@@ -55,7 +55,9 @@ import org.geomajas.service.DtoConverterService;
 import org.geomajas.service.GeoService;
 import org.geotools.GML;
 import org.geotools.GML.Version;
+import org.geotools.data.ows.HTTPClient;
 import org.geotools.data.ows.Layer;
+import org.geotools.data.ows.SimpleHttpClient;
 import org.geotools.data.ows.StyleImpl;
 import org.geotools.data.ows.WMSCapabilities;
 import org.geotools.data.wms.WebMapServer;
@@ -106,10 +108,18 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 
 	private static final String GFI_UNAVAILABLE_MSG = "GetFeatureInfo-support not available on this layer";
 
+	private static final int DEFAULT_CAPABILITIES_CONNECTION_TIMEOUT_MS = 10000;
+
+	private static final int EMPTY_LEGEND_WIDTH = -1;
+
+	private static final int EMPTY_LEGEND_HEIGHT = -1;
+
+	private static final String EMPTY_LEGENDURL = "";
+
 	private static final boolean IS_GML_REQUEST = false;
 
 	private static final boolean IS_HTML_REQUEST = true;
-
+	
 	private final Logger log = LoggerFactory.getLogger(WmsLayer.class);
 
 	private final List<Resolution> resolutions = new ArrayList<Resolution>();
@@ -122,7 +132,7 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 
 	private String version = "1.1.1";
 
-	private String styles = "";
+	private String styles = EMPTY_LEGENDURL;
 
 	private List<Parameter> parameters;
 
@@ -650,16 +660,11 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 
 	private void retrieveAndSetLegendImageParameters(String baseWmsUrl) {
 		// set default values
-		legendImageUrl = "";
-		legendImageHeight = -1;
-		legendImageWidth = -1;
+		setDefaultLegendImageValues();
 		String capabilitiesUrl = formatGetCapabilitiesUrl(baseWmsUrl);
 		try {
-			WebMapServer wms = new WebMapServer(new URL(capabilitiesUrl));
-			if (layerAuthentication != null) {
-				wms.getHTTPClient().setUser(layerAuthentication.getUser());
-				wms.getHTTPClient().setPassword(layerAuthentication.getPassword());
-			}
+			HTTPClient httpClient = createConfiguredWmsHttpClient();
+			WebMapServer wms = new WebMapServer(new URL(capabilitiesUrl), httpClient);
 			WMSCapabilities capabilities = wms.getCapabilities();
 			String searchedLayerId = getId();
 			if (layerInfo.getDataSourceName() != null) {
@@ -672,6 +677,22 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 		} catch (ServiceException e) {
 			log.warn("Could not parse capabilities from {}", capabilitiesUrl);
 		}
+	}
+
+	private HTTPClient createConfiguredWmsHttpClient() {
+		HTTPClient httpClient = new SimpleHttpClient();
+		httpClient.setConnectTimeout(DEFAULT_CAPABILITIES_CONNECTION_TIMEOUT_MS);
+		if (layerAuthentication != null) {
+			httpClient.setUser(layerAuthentication.getUser());
+			httpClient.setPassword(layerAuthentication.getPassword());
+		}
+		return httpClient;
+	}
+
+	private void setDefaultLegendImageValues() {
+		legendImageUrl = EMPTY_LEGENDURL;
+		legendImageHeight = EMPTY_LEGEND_HEIGHT;
+		legendImageWidth = EMPTY_LEGEND_WIDTH;
 	}
 
 	private boolean parseNodeLayer(String searchedStyleName, String searchedLayerId, Layer layer) {
@@ -710,17 +731,17 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 		List<StyleImpl> layerStyles = layer.getStyles();
 		if (layerStyles != null && !layerStyles.isEmpty()) {
 			String retrievedLegendUrl = searchStyle(searchedStyleName, layerStyles);
-			if (!"".equals(retrievedLegendUrl)) {
+			if (!EMPTY_LEGENDURL.equals(retrievedLegendUrl)) {
 				return retrievedLegendUrl;
 			}
 			return retrieveFirstStyle(layerStyles);
 		} else {
-			return "";
+			return EMPTY_LEGENDURL;
 		}
 	}
 
 	private String retrieveFirstStyle(List<StyleImpl> layerStyles) {
-		String legendUrl = "";
+		String legendUrl = EMPTY_LEGENDURL;
 		StyleImpl style = layerStyles.get(0);
 		List<?> legendURLs = style.getLegendURLs();
 		if (legendURLs != null && !legendURLs.isEmpty()) {
@@ -731,7 +752,7 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 	}
 
 	private String searchStyle(String styleName, List<StyleImpl> layerStyles) {
-		String legendUrl = "";
+		String legendUrl = EMPTY_LEGENDURL;
 		for (StyleImpl style : layerStyles) {
 			List<?> legendUrls = style.getLegendURLs();
 			if (styleName.equals(style.getName()) && legendUrls != null && !legendUrls.isEmpty()) {
