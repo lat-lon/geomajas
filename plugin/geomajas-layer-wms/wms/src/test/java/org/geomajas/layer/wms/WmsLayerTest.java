@@ -23,6 +23,7 @@ import org.geomajas.global.GeomajasException;
 import org.geomajas.layer.tile.RasterTile;
 import org.geomajas.service.GeoService;
 import org.geotools.geometry.jts.JTS;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,6 +78,11 @@ public class WmsLayerTest {
 	@Autowired
 	private GeoService geoService;
 
+	@After
+	public void cleanupWmsClient(){
+		wms.setStyles("");
+	}
+	
 	@Test
 	public void testLevels() throws Exception {
 		// this test failed before http://jira.geomajas.org/browse/WMS-18
@@ -514,7 +520,6 @@ public class WmsLayerTest {
 		String firstImageUrl = "http://apps.geomajas.org:80/geoserver/wms?"
 				+ "request=GetLegendGraphic&format=image%2Fpng&" + "width=20&height=20&layer=bluemarble";
 		String actualImageUrl = wms.getLegendImageUrl();
-
 		assertThat(actualImageUrl).isEqualTo(firstImageUrl);
 	}
 
