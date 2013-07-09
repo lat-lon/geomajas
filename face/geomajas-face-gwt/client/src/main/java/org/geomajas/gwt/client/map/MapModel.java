@@ -52,6 +52,7 @@ import org.geomajas.gwt.client.map.feature.FeatureEditor;
 import org.geomajas.gwt.client.map.feature.FeatureTransaction;
 import org.geomajas.gwt.client.map.feature.LazyLoadCallback;
 import org.geomajas.gwt.client.map.layer.Layer;
+import org.geomajas.gwt.client.map.layer.MapLayer;
 import org.geomajas.gwt.client.map.layer.RasterLayer;
 import org.geomajas.gwt.client.map.layer.VectorLayer;
 import org.geomajas.gwt.client.service.ClientConfigurationService;
@@ -111,6 +112,8 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 	private List<Runnable> whenInitializedRunnables = new ArrayList<Runnable>();
 	
 	private State state = State.IDLE;
+	
+	private MapLayer mapLayer = new MapLayer(this);
 	
 	/**
 	 * Internal configuration state of the map.
@@ -325,18 +328,23 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		// Paint the MapModel itself (see MapModelPainter):
 		visitor.visit(this, group);
 
-		// Paint the layers:
-		if (recursive) {
-			for (Layer<?> layer : layers) {
-				if (layer.isShowing()) {
-					layer.accept(visitor, group, bounds, recursive);
-				} else {
-					// JDM: paint the top part of the layer, if not we loose the map order
-					layer.accept(visitor, group, bounds, false);
+		if (mapLayer != null) {
+			mapLayer.accept(visitor, group, bounds, recursive);
+		} else {
+		
+			// Paint the layers:
+			if (recursive) {
+				for (Layer<?> layer : layers) {
+					if (layer.isShowing()) {
+						layer.accept(visitor, group, bounds, recursive);
+					} else {
+						// JDM: paint the top part of the layer, if not we loose the map order
+						layer.accept(visitor, group, bounds, false);
+					}
 				}
 			}
-		}
 
+		}
 		// Paint the editing of a feature (if a feature is being edited):
 		if (featureEditor.getFeatureTransaction() != null) {
 			featureEditor.getFeatureTransaction().accept(visitor, group, bounds, recursive);
