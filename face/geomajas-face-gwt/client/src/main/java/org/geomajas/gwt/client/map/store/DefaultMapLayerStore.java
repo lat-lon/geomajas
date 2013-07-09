@@ -22,17 +22,13 @@ import org.geomajas.gwt.client.command.CommandCallback;
 import org.geomajas.gwt.client.command.Deferred;
 import org.geomajas.gwt.client.command.GwtCommand;
 import org.geomajas.gwt.client.command.GwtCommandDispatcher;
-import org.geomajas.gwt.client.map.MapModel;
-import org.geomajas.gwt.client.map.MapView;
 import org.geomajas.gwt.client.map.MapViewState;
 import org.geomajas.gwt.client.map.cache.tile.MapTile;
 import org.geomajas.gwt.client.map.cache.tile.TileFunction;
 import org.geomajas.gwt.client.map.layer.MapLayer;
 import org.geomajas.gwt.client.spatial.Bbox;
 import org.geomajas.gwt.client.spatial.Matrix;
-import org.geomajas.gwt.client.util.Dom;
 import org.geomajas.layer.tile.TileCode;
-import org.geotools.map.Layer;
 
 /**
  * A map layer store that keeps tiles in cache while panning, only clearing them when a non-panning move occurs, see
