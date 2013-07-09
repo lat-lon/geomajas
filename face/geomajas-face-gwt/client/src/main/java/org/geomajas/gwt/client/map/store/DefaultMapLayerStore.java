@@ -109,7 +109,7 @@ public class DefaultMapLayerStore  {
 		request.setScale(getLayer().getMapModel().getMapView().getCurrentScale());
 		for (org.geomajas.gwt.client.map.layer.Layer<?> layer : getLayer().getMapModel().getLayers()) {
 			if (layer.isShowing()) {
-				request.getVisibleLayers().add(layer.getId());
+				request.getVisibleLayers().add(layer.getServerLayerId());
 				//FIXME: add support for vectortiles here
 				// We should calculate and add all vectorlayer tile codes here, and add all requests for vectortiles
 				// For each vectorlayer we need:

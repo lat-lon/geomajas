@@ -10,6 +10,7 @@
  */
 package org.geomajas.internal.layer;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -25,6 +26,10 @@ import java.util.List;
 public class MapLayer<T> {
 	
 	private List<T> tiles;
+	
+	public MapLayer () {
+		this.tiles = new ArrayList<T>();
+	}
 
 	public void setTiles(List<T> tiles) {
 		this.tiles = tiles;
