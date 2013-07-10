@@ -25,9 +25,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Test for {@link WmsAggregationLayerServiceImpl}.
+ * Tests for {@link WmsAggregationLayerServiceImpl}.
  * 
  * @author Alexander Erben
+ * @author Lyn Goltz
  */
 public class WmsAggregationLayerServiceTest {
 
@@ -43,31 +44,17 @@ public class WmsAggregationLayerServiceTest {
 	}
 
 	@Test
-	public void testCreateAggregatedLayerWithSingleWmsLayerShouldHaveCorrectDataSource() throws GeomajasException {
+	public void testCreateAggregatedLayerWithSingleWmsLayerShouldHaveCorrectSize() throws GeomajasException {
 		List<RasterLayer> layerList = createSingletonWmsLayerList();
-		RasterLayer aggregatedLayer = service.createAggregatedLayer(layerList);
-		assertEquals(DATA_SOURCE_NAME, aggregatedLayer.getLayerInfo().getDataSourceName());
-	}
-
-	@Test
-	public void testCreateAggregatedLayerWithSingleWmsLayerShouldHaveCorrectId() throws GeomajasException {
-		List<RasterLayer> layerList = createSingletonWmsLayerList();
-		RasterLayer aggregatedLayer = service.createAggregatedLayer(layerList);
-		assertEquals(LAYER_ID, aggregatedLayer.getId());
+		AggregatedWmsLayer aggregatedLayer = (AggregatedWmsLayer) service.createAggregatedLayer(layerList);
+		assertEquals(layerList.size(), aggregatedLayer.getWmsLayers().size());
 	}
 	
 	@Test
-	public void testCreateAggregatedLayerWithMultipleWmsLayerShouldHaveCorrectDataSource() throws GeomajasException {
+	public void testCreateAggregatedLayerWithMultipleWmsLayerShouldHaveCorrectSize() throws GeomajasException {
 		List<RasterLayer> layerList = createConfiguredWmsLayerList();
-		RasterLayer aggregatedLayer = service.createAggregatedLayer(layerList);
-		assertEquals("ds1,ds2,ds3", aggregatedLayer.getLayerInfo().getDataSourceName());
-	}
-
-	@Test
-	public void testCreateAggregatedLayerWithMultipleWmsLayerShouldHaveCorrectId() throws GeomajasException {
-		List<RasterLayer> layerList = createConfiguredWmsLayerList();
-		RasterLayer aggregatedLayer = service.createAggregatedLayer(layerList);
-		assertEquals("id1id2id3", aggregatedLayer.getId());
+		AggregatedWmsLayer aggregatedLayer = (AggregatedWmsLayer) service.createAggregatedLayer(layerList);
+		assertEquals(layerList.size(), aggregatedLayer.getWmsLayers().size());
 	}
 
 	private RasterLayer createConfiguredWmsLayer() throws LayerException {
