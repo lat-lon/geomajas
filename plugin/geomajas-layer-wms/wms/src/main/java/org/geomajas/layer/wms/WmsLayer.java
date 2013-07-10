@@ -170,7 +170,7 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 
 	@Autowired
 	private SecurityContext securityContext;
-	
+
 	@Autowired
 	private WmsLayerPainter painter;
 
@@ -182,7 +182,6 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 
 	private int legendImageWidth;
 
-	
 	/**
 	 * Return the layers identifier.
 	 * 
@@ -272,7 +271,7 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 			return Collections.emptyList();
 		}
 		List<Feature> features = new ArrayList<Feature>();
-		Resolution bestResolution = painter.getResolutionForScale(this, layerScale);
+		Resolution bestResolution = WmsLayerUtils.getResolutionForScale(resolutions, layerInfo, layerScale);
 		Bbox bbox = getLayerInfo().getMaxExtent();
 
 		RasterGrid grid = painter.getRasterGrid(bbox, new Envelope(layerCoordinate), bestResolution.getTileWidth(),
@@ -287,7 +286,7 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 
 		InputStream stream = null;
 		try {
-			String url = buildRequestUrl(layerCoordinate, layerScale, IS_GML_REQUEST);
+			String url = buildGetFeatureInfoRequestUrl(layerCoordinate, layerScale, IS_GML_REQUEST);
 			log.debug("getFeaturesByLocation: {} {} {} {}", new Object[] { layerCoordinate, layerScale, pixelTolerance,
 					url });
 			GML gml = new GML(Version.GML3);
@@ -334,7 +333,7 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 		InputStream stream = null;
 		String url;
 		try {
-			url = buildRequestUrl(coordinate, layerScale, IS_HTML_REQUEST);
+			url = buildGetFeatureInfoRequestUrl(coordinate, layerScale, IS_HTML_REQUEST);
 
 			log.debug("getFeaturesByLocation: {} {} {} {}",
 					new Object[] { coordinate, layerScale, pixelTolerance, url });
@@ -374,9 +373,9 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 
 	}
 
-	protected String buildRequestUrl(Coordinate layerCoordinate, double layerScale, boolean isHtmlRequest)
+	protected String buildGetFeatureInfoRequestUrl(Coordinate layerCoordinate, double layerScale, boolean isHtmlRequest)
 			throws GeomajasException {
-		Resolution bestResolution = painter.getResolutionForScale(this, layerScale);
+		Resolution bestResolution = WmsLayerUtils.getResolutionForScale(resolutions, layerInfo, layerScale);
 		Bbox bbox = getLayerInfo().getMaxExtent();
 		RasterGrid grid = painter.getRasterGrid(bbox, new Envelope(layerCoordinate), bestResolution.getTileWidth(),
 				bestResolution.getTileHeight());
@@ -384,7 +383,6 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 				.getTileWidth());
 		int y = (int) (bestResolution.getTileHeightPx() - (((layerCoordinate.y - grid.getLowerLeft().y) * bestResolution
 				.getTileHeightPx()) / grid.getTileHeight()));
-
 		Bbox layerBox = new Bbox(grid.getLowerLeft().x, grid.getLowerLeft().y, grid.getTileWidth(),
 				grid.getTileHeight());
 		String url = formatGetFeatureInfoUrl(bestResolution.getTileWidthPx(), bestResolution.getTileHeightPx(),
