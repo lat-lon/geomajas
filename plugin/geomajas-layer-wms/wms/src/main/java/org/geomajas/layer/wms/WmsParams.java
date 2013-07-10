@@ -11,7 +11,7 @@ public class WmsParams {
 
 	private final boolean useProxy;
 
-	private final LayerAuthentication authentication;
+	private final WmsAuthentication authentication;
 
 	private final boolean useCache;
 
@@ -23,7 +23,7 @@ public class WmsParams {
 
 	private final String version;
 
-	public WmsParams(String format, boolean useProxy, LayerAuthentication authentication, boolean useCache,
+	public WmsParams(String format, boolean useProxy, WmsAuthentication authentication, boolean useCache,
 			String baseWmsUrl, String styles, List<Parameter> parameters, String version) {
 		this.format = format;
 		this.useProxy = useProxy;
@@ -43,7 +43,7 @@ public class WmsParams {
 		return useProxy;
 	}
 
-	public LayerAuthentication getAuthentication() {
+	public WmsAuthentication getAuthentication() {
 		return authentication;
 	}
 

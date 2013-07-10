@@ -21,15 +21,18 @@ public class WmsAggregationLayerServiceImpl implements AggregationLayerService {
 	@Autowired
 	private PipelineService pipelineService;
 
+	@Autowired
+	private WmsLayerPainter painter;
+
 	@Override
-	public RasterTile getAggregatedLayerTile(List<RasterLayer> rasterLayers, Envelope bounds, double scale, CoordinateReferenceSystem crs)
+	public List<RasterTile> getAggregatedLayerTile(List<RasterLayer> rasterLayers, Envelope bounds, double scale, CoordinateReferenceSystem crs)
 			throws GeomajasException {
 		RasterLayer layer = createAggregatedLayer(rasterLayers);
 		return createTile(layer, bounds, scale, crs);
 	}
 
 	@SuppressWarnings("unchecked")
-	private RasterTile createTile(RasterLayer layer, Envelope bounds, double scale, CoordinateReferenceSystem crs) throws GeomajasException {
+	private List<RasterTile> createTile(RasterLayer layer, Envelope bounds, double scale, CoordinateReferenceSystem crs) throws GeomajasException {
 		PipelineContext context = pipelineService.createContext();
 		String layerId = layer.getId();
 		context.put(PipelineCode.LAYER_ID_KEY, layerId);
@@ -39,10 +42,7 @@ public class WmsAggregationLayerServiceImpl implements AggregationLayerService {
 		context.put(PipelineCode.SCALE_KEY, scale);
 		List<RasterTile> response = new ArrayList<RasterTile>();
 		pipelineService.execute(PipelineCode.PIPELINE_GET_RASTER_TILES, layerId, context, response);
-		if (!response.isEmpty()) {
-			return response.get(0);
-		}
-		return null;
+		return response;
 	}
 
 	protected RasterLayer createAggregatedLayer(List<RasterLayer> rasterLayers) throws GeomajasException {
@@ -57,7 +57,7 @@ public class WmsAggregationLayerServiceImpl implements AggregationLayerService {
 				throw new GeomajasException(/* TODO: code */);
 			}
 		}
-		return new AggregatedWmsLayer(wmsLayers);
+		return new AggregatedWmsLayer(wmsLayers, painter);
 	}
 
 	private String checkBaseWmsUrl(String baseWmsUrl, WmsLayer wmsLayer) throws GeomajasException {

@@ -16,7 +16,7 @@ import com.vividsolutions.jts.geom.Envelope;
  */
 public interface AggregationLayerService {
 
-	RasterTile getAggregatedLayerTile(List<RasterLayer> rasterLayers, Envelope bounds, double scale, CoordinateReferenceSystem crs)
+	List<RasterTile> getAggregatedLayerTile(List<RasterLayer> rasterLayers, Envelope bounds, double scale, CoordinateReferenceSystem crs)
 			throws GeomajasException;
 
 }

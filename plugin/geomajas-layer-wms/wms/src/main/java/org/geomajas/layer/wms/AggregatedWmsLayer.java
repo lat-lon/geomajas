@@ -8,6 +8,7 @@ import org.geomajas.global.GeomajasException;
 import org.geomajas.layer.RasterLayer;
 import org.geomajas.layer.tile.RasterTile;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vividsolutions.jts.geom.Envelope;
 
@@ -23,13 +24,16 @@ public class AggregatedWmsLayer implements RasterLayer {
 
 	private String id;
 
-	public AggregatedWmsLayer(List<WmsLayer> wmsLayers) {
+	private WmsLayerPainter painter;
+
+	public AggregatedWmsLayer(List<WmsLayer> wmsLayers, WmsLayerPainter painter) {
 		if (wmsLayers != null) {
 			this.wmsLayers = wmsLayers;
 		} else {
 			this.wmsLayers = Collections.emptyList();
 		}
 		id = generateId();
+		this.painter = painter;
 	}
 
 	@Override
@@ -61,8 +65,11 @@ public class AggregatedWmsLayer implements RasterLayer {
 	@Override
 	public List<RasterTile> paint(CoordinateReferenceSystem boundsCrs, Envelope bounds, double scale)
 			throws GeomajasException {
-		// TODO Auto-generated method stub
-		return null;
+		if (wmsLayers.isEmpty()) {
+			return Collections.emptyList();
+		}
+		WmsLayer firstLayer = wmsLayers.get(0);
+		return painter.paint(firstLayer.createWmsParams(), firstLayer.getResolutions(), this, boundsCrs, bounds, scale);
 	}
 
 	private String generateId() {
@@ -85,7 +92,7 @@ public class AggregatedWmsLayer implements RasterLayer {
 		}
 		return builder.toString();
 	}
-	
+
 	public List<WmsLayer> getWmsLayers() {
 		return wmsLayers;
 	}

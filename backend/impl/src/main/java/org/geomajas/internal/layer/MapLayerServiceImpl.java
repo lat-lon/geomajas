@@ -11,7 +11,6 @@
 package org.geomajas.internal.layer;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -27,8 +26,6 @@ import org.geomajas.layer.VectorLayerService;
 import org.geomajas.layer.tile.RasterTile;
 import org.geomajas.service.CacheService;
 import org.geomajas.service.ConfigurationService;
-import org.geomajas.service.pipeline.PipelineCode;
-import org.geomajas.service.pipeline.PipelineContext;
 import org.opengis.filter.Filter;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -133,12 +130,7 @@ public class MapLayerServiceImpl extends LayerServiceImpl implements MapLayerSer
 				}
 			}
 		}
-		RasterTile tile = aggregationService.getAggregatedLayerTile(rasterLayers);
-		if (tile != null) {
-			return Collections.singletonList(tile);
-		} else {
-			return Collections.emptyList();
-		}
+		return aggregationService.getAggregatedLayerTile(rasterLayers, bounds, scale,crs);
 	}
 
 }

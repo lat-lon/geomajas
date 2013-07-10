@@ -461,8 +461,8 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 		}
 	}
 
-	private WmsParams createWmsParams() {
-		return new WmsParams(format, useProxy, layerAuthentication, useCache, baseWmsUrl, styles, parameters, version);
+	WmsParams createWmsParams() {
+		return new WmsParams(format, useProxy, authentication, useCache, baseWmsUrl, styles, parameters, version);
 	}
 
 	private String retrieveFormatString(boolean isHtmlRequest) {
@@ -649,15 +649,6 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 	}
 
 	/**
-	 * Get WMS version to use.
-	 * 
-	 * @return WMS version. For allowed values, check your WMS server.
-	 */
-	public String getVersion() {
-		return version;
-	}
-
-	/**
 	 * Set the styles.
 	 * 
 	 * @param styles
@@ -667,15 +658,6 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 	@Api
 	public void setStyles(String styles) {
 		this.styles = styles;
-	}
-
-	/**
-	 * Get the styles.
-	 * 
-	 * @return styles. For allowed values, check your WMS server.
-	 */
-	public String getStyles() {
-		return styles;
 	}
 
 	/**
@@ -783,16 +765,6 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 	@Api
 	public void setUseProxy(boolean useProxy) {
 		this.useProxy = useProxy;
-	}
-
-	/**
-	 * If the WMS request should use a proxy. When the WMS request is proxied, the credentials and WMS base address are
-	 * hidden from the client.
-	 * 
-	 * @return true when request needs to use the proxy
-	 */
-	public boolean isUseProxy() {
-		return useProxy;
 	}
 
 	/**

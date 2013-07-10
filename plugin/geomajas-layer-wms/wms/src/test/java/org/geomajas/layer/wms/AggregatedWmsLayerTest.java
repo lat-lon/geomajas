@@ -26,28 +26,28 @@ public class AggregatedWmsLayerTest {
 	@Test
 	public void testCreateAggregatedLayerWithSingleWmsLayerShouldHaveCorrectDataSource() throws GeomajasException {
 		List<WmsLayer> layerList = createSingletonWmsLayerList();
-		AggregatedWmsLayer aggregatedLayer = new AggregatedWmsLayer(layerList);
+		AggregatedWmsLayer aggregatedLayer = new AggregatedWmsLayer(layerList, null);
 		assertEquals(DATA_SOURCE_NAME, aggregatedLayer.getLayerInfo().getDataSourceName());
 	}
 
 	@Test
 	public void testCreateAggregatedLayerWithSingleWmsLayerShouldHaveCorrectId() throws GeomajasException {
 		List<WmsLayer> layerList = createSingletonWmsLayerList();
-		AggregatedWmsLayer aggregatedLayer = new AggregatedWmsLayer(layerList);
+		AggregatedWmsLayer aggregatedLayer = new AggregatedWmsLayer(layerList, null);
 		assertEquals(LAYER_ID, aggregatedLayer.getId());
 	}
 
 	@Test
 	public void testCreateAggregatedLayerWithMultipleWmsLayerShouldHaveCorrectDataSource() throws GeomajasException {
 		List<WmsLayer> layerList = createConfiguredWmsLayerList();
-		AggregatedWmsLayer aggregatedLayer = new AggregatedWmsLayer(layerList);
+		AggregatedWmsLayer aggregatedLayer = new AggregatedWmsLayer(layerList, null);
 		assertEquals("ds1,ds2,ds3", aggregatedLayer.getLayerInfo().getDataSourceName());
 	}
 
 	@Test
 	public void testCreateAggregatedLayerWithMultipleWmsLayerShouldHaveCorrectId() throws GeomajasException {
 		List<WmsLayer> layerList = createConfiguredWmsLayerList();
-		AggregatedWmsLayer aggregatedLayer = new AggregatedWmsLayer(layerList);
+		AggregatedWmsLayer aggregatedLayer = new AggregatedWmsLayer(layerList, null);
 		assertEquals("id1id2id3", aggregatedLayer.getId());
 	}
 
