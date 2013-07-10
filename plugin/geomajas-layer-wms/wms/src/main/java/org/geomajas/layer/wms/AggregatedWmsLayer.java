@@ -11,6 +11,12 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import com.vividsolutions.jts.geom.Envelope;
 
+/**
+ * Encapsulates multiple {@link WmsLayer}s with a common service, enabling combined requests to the referenced WMS.
+ * 
+ * @author Alexander Erben
+ * @author Lyn Goltz
+ */
 public class AggregatedWmsLayer implements RasterLayer {
 
 	private List<WmsLayer> wmsLayers;
@@ -78,6 +84,10 @@ public class AggregatedWmsLayer implements RasterLayer {
 			builder.append(layer.getLayerInfo().getDataSourceName());
 		}
 		return builder.toString();
+	}
+	
+	public List<WmsLayer> getWmsLayers() {
+		return wmsLayers;
 	}
 
 }
