@@ -12,6 +12,7 @@ import org.geomajas.configuration.RasterLayerInfo;
 import org.geomajas.geometry.Bbox;
 import org.geomajas.geometry.CrsTransform;
 import org.geomajas.global.GeomajasException;
+import org.geomajas.layer.RasterLayer;
 import org.geomajas.layer.tile.RasterTile;
 import org.geomajas.layer.tile.TileCode;
 import org.geomajas.plugin.caching.service.CacheManagerService;
@@ -57,12 +58,12 @@ public class WmsLayerPainter {
 	 * @throws GeomajasException
 	 *             oops
 	 */
-	public List<RasterTile> paint(WmsLayer layer, CoordinateReferenceSystem targetCrs, Envelope bounds, double scale)
+	public List<RasterTile> paint(WmsParams params, List<Resolution> resolutions, RasterLayer layer, CoordinateReferenceSystem targetCrs, Envelope bounds, double scale)
 			throws GeomajasException {
 		CoordinateReferenceSystem crs = layer.getCrs();
 		boolean needTransform = !crs.equals(targetCrs);
 
-		PainterParameters painterParameters = calclatePainterParams(targetCrs, bounds, scale, crs, needTransform);
+		PainterParameters painterParameters = calculatePainterParams(targetCrs, bounds, scale, crs, needTransform);
 
 		Bbox bbox = layer.getLayerInfo().getMaxExtent();
 		Envelope clippedLayerBounds = clipBounds(bbox, painterParameters.layerBounds);
@@ -71,7 +72,7 @@ public class WmsLayerPainter {
 		}
 
 		// Grid is in layer coordinate space!
-		Resolution bestResolution = WmsLayerUtils.getResolutionForScale(layer.getResolutions(), layer.getLayerInfo(),
+		Resolution bestResolution = WmsLayerUtils.getResolutionForScale(resolutions, layer.getLayerInfo(),
 				painterParameters.layerScale);
 		RasterGrid grid = getRasterGrid(bbox, clippedLayerBounds, bestResolution.getTileWidth(),
 				bestResolution.getTileHeight());
@@ -80,7 +81,7 @@ public class WmsLayerPainter {
 		List<RasterTile> result = new ArrayList<RasterTile>();
 		for (int i = grid.getXmin(); i < grid.getXmax(); i++) {
 			for (int j = grid.getYmin(); j < grid.getYmax(); j++) {
-				RasterTile image = createRasterTile(layer, scale, painterParameters.layerToMap, needTransform,
+				RasterTile image = createRasterTile(params, layer, scale, painterParameters.layerToMap, needTransform,
 						bestResolution, grid, i, j);
 				result.add(image);
 			}
@@ -89,25 +90,7 @@ public class WmsLayerPainter {
 		return result;
 	}
 
-	public RasterTile paint(AggregatedWmsLayer layer, CoordinateReferenceSystem targetCrs, Envelope bounds, double scale)
-			throws GeomajasException {
-		CoordinateReferenceSystem crs = layer.getCrs();
-		boolean needTransform = !crs.equals(targetCrs);
-
-		PainterParameters painterParameters = calclatePainterParams(targetCrs, bounds, scale, crs, needTransform);
-
-		Bbox bbox = layer.getLayerInfo().getMaxExtent();
-		Envelope clippedLayerBounds = clipBounds(bbox, painterParameters.layerBounds);
-		if (clippedLayerBounds.isNull()) {
-			return null;
-		}
-
-		// return createRasterTile(layer, scale, painterParameters.layerToMap, needTransform, bestResolution, grid, 0,
-		// 0);
-		return null;
-	}
-
-	private PainterParameters calclatePainterParams(CoordinateReferenceSystem targetCrs, Envelope bounds, double scale,
+	private PainterParameters calculatePainterParams(CoordinateReferenceSystem targetCrs, Envelope bounds, double scale,
 			CoordinateReferenceSystem crs, boolean needTransform) throws GeomajasException {
 		PainterParameters painterParameters;
 		if (needTransform) {
@@ -137,7 +120,7 @@ public class WmsLayerPainter {
 		return bounds.getWidth() * scale / layerBounds.getWidth();
 	}
 
-	private RasterTile createRasterTile(WmsLayer layer, double scale, CrsTransform layerToMap, boolean needTransform,
+	private RasterTile createRasterTile(WmsParams params, RasterLayer layer, double scale, CrsTransform layerToMap, boolean needTransform,
 			Resolution bestResolution, RasterGrid grid, int xPosition, int yPosition) throws GeomajasException {
 		double x = grid.getLowerLeft().x + (xPosition - grid.getXmin()) * grid.getTileWidth();
 		double y = grid.getLowerLeft().y + (yPosition - grid.getYmin()) * grid.getTileHeight();
@@ -165,7 +148,7 @@ public class WmsLayerPainter {
 				+ "," + yPosition);
 
 		image.setCode(new TileCode(bestResolution.getLevel(), xPosition, yPosition));
-		String url = buildGetMapUrl(layer, bestResolution.getTileWidthPx(), bestResolution.getTileHeightPx(), layerBox);
+		String url = buildGetMapUrl(params, layer, bestResolution.getTileWidthPx(), bestResolution.getTileHeightPx(), layerBox);
 		image.setUrl(url);
 		return image;
 	}
@@ -196,8 +179,8 @@ public class WmsLayerPainter {
 		return bounds.intersection(maxExtent);
 	}
 
-	String buildGetMapUrl(WmsLayer layer, int width, int height, Bbox box) throws GeomajasException {
-		StringBuilder url = formatBaseUrl(layer, width, height, box);
+	String buildGetMapUrl(WmsParams params, RasterLayer layer, int width, int height, Bbox box) throws GeomajasException {
+		StringBuilder url = formatBaseUrl(params, layer, width, height, box);
 		url.append("&request=GetMap");
 		String token = securityContext.getToken();
 		if (null != token) {
@@ -207,9 +190,9 @@ public class WmsLayerPainter {
 		return url.toString();
 	}
 
-	private String getWmsTargetUrl(WmsLayer layer) {
+	private String getWmsTargetUrl(WmsParams params, RasterLayer layer) {
 		String id = layer.getId();
-		if (layer.isUseProxy() || null != layer.getAuthentication() || layer.isUseCache()) {
+		if (params.isUseProxy() || null != params.getAuthentication() || params.isUseCache()) {
 			if (null != dispatcherUrlService) {
 				String url = dispatcherUrlService.getDispatcherUrl();
 				if (!url.endsWith("/")) {
@@ -220,7 +203,7 @@ public class WmsLayerPainter {
 				return "./d/wms/" + id + "/";
 			}
 		} else {
-			return layer.getBaseWmsUrl();
+			return params.getBaseWmsUrl();
 		}
 	}
 
@@ -239,9 +222,9 @@ public class WmsLayerPainter {
 	 * @throws GeomajasException
 	 *             missing parameter
 	 */
-	StringBuilder formatBaseUrl(WmsLayer layer, int width, int height, Bbox box) throws GeomajasException {
+	StringBuilder formatBaseUrl(WmsParams params, RasterLayer layer, int width, int height, Bbox box) throws GeomajasException {
 		try {
-			String targetUrl = getWmsTargetUrl(layer);
+			String targetUrl = getWmsTargetUrl(params,layer);
 			StringBuilder url = new StringBuilder(targetUrl);
 			int pos = url.lastIndexOf("?");
 			if (pos > 0) {
@@ -251,7 +234,7 @@ public class WmsLayerPainter {
 			}
 			String layers = layer.getId();
 			RasterLayerInfo layerInfo = layer.getLayerInfo();
-			String format = layer.getFormat();
+			String format = params.getFormat();
 			if (layerInfo.getDataSourceName() != null) {
 				layers = layerInfo.getDataSourceName();
 			}
@@ -283,7 +266,7 @@ public class WmsLayerPainter {
 			url.append("&format=");
 			url.append(format);
 			url.append("&version=");
-			String version = layer.getVersion();
+			String version = params.getVersion();
 			url.append(version);
 			if ("1.3.0".equals(version)) {
 				url.append("&crs=");
@@ -292,8 +275,8 @@ public class WmsLayerPainter {
 			}
 			url.append(URLEncoder.encode(layerInfo.getCrs(), "UTF8"));
 			url.append("&styles=");
-			url.append(layer.getStyles());
-			List<Parameter> parameters = layer.getParameters();
+			url.append(params.getStyles());
+			List<Parameter> parameters = params.getParameters();
 			if (null != parameters) {
 				for (Parameter p : parameters) {
 					url.append("&");

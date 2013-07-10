@@ -428,7 +428,7 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 	 */
 	public List<RasterTile> paint(CoordinateReferenceSystem targetCrs, Envelope bounds, double scale)
 			throws GeomajasException {
-		return painter.paint(this, targetCrs, bounds, scale);
+		return painter.paint(createWmsParams(), resolutions, this, targetCrs, bounds, scale);
 	}
 
 	@Override
@@ -440,7 +440,7 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 			throws GeomajasException {
 		// Always use direct url
 		try {
-			StringBuilder url = painter.formatBaseUrl(this, width, height, box);
+			StringBuilder url = painter.formatBaseUrl(createWmsParams(), this, width, height, box);
 			String layers = getId();
 			if (layerInfo.getDataSourceName() != null) {
 				layers = layerInfo.getDataSourceName();
@@ -459,6 +459,10 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 		} catch (UnsupportedEncodingException uee) {
 			throw new IllegalStateException("Cannot find UTF8 encoding?", uee);
 		}
+	}
+
+	private WmsParams createWmsParams() {
+		return new WmsParams(format, useProxy, layerAuthentication, useCache, baseWmsUrl, styles, parameters, version);
 	}
 
 	private String retrieveFormatString(boolean isHtmlRequest) {
