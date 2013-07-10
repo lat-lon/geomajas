@@ -20,8 +20,8 @@ public class WmsAggregationLayerServiceImpl implements AggregationLayerService {
 
 	@Override
 	public RasterTile getAggregatedLayerTile(List<RasterLayer> rasterLayers) throws GeomajasException {
-		RasterLayer layer = getAggregatedLayer(rasterLayers);
-		List<RasterTile> tiles = getTiles(layer);
+		RasterLayer layer = createAggregatedLayer(rasterLayers);
+		List<RasterTile> tiles = createTiles(layer);
 		if (tiles != null && !tiles.isEmpty()) {
 			return tiles.get(0);
 		}
@@ -29,7 +29,7 @@ public class WmsAggregationLayerServiceImpl implements AggregationLayerService {
 	}
 
 	@SuppressWarnings("unchecked")
-	private List<RasterTile> getTiles(RasterLayer layer) throws GeomajasException {
+	private List<RasterTile> createTiles(RasterLayer layer) throws GeomajasException {
 		PipelineContext context = pipelineService.createContext();
 		String layerId = layer.getId();
 		context.put(PipelineCode.LAYER_ID_KEY, layerId);
@@ -39,7 +39,7 @@ public class WmsAggregationLayerServiceImpl implements AggregationLayerService {
 		return response;
 	}
 
-	private RasterLayer getAggregatedLayer(List<RasterLayer> rasterLayers) throws GeomajasException {
+	protected RasterLayer createAggregatedLayer(List<RasterLayer> rasterLayers) throws GeomajasException {
 		List<WmsLayer> wmsLayers = new ArrayList<WmsLayer>();
 		String baseWmsUrl = null;
 		for (RasterLayer layer : rasterLayers) {
@@ -55,19 +55,29 @@ public class WmsAggregationLayerServiceImpl implements AggregationLayerService {
 	}
 
 	private String checkBaseWmsUrl(String baseWmsUrl, WmsLayer wmsLayer) throws GeomajasException {
-		String currentWaseWmsUrl = wmsLayer.getBaseWmsUrl();
+		String currentBaseWmsUrl = wmsLayer.getBaseWmsUrl();
 		if (baseWmsUrl != null) {
-			if (baseWmsUrlsAreDifferent(baseWmsUrl, currentWaseWmsUrl)) {
+			if (baseWmsUrlsAreDifferent(baseWmsUrl, currentBaseWmsUrl)) {
 				throw new GeomajasException(/* TODO: code */);
 			}
 		} else {
-			baseWmsUrl = currentWaseWmsUrl;
+			baseWmsUrl = currentBaseWmsUrl;
 		}
 		return baseWmsUrl;
 	}
 
 	private boolean baseWmsUrlsAreDifferent(String baseWmsUrl, String currentWaseWmsUrl) {
 		return !baseWmsUrl.equalsIgnoreCase(currentWaseWmsUrl);
+	}
+
+	
+	public PipelineService getPipelineService() {
+		return pipelineService;
+	}
+
+	
+	public void setPipelineService(PipelineService pipelineService) {
+		this.pipelineService = pipelineService;
 	}
 
 }
