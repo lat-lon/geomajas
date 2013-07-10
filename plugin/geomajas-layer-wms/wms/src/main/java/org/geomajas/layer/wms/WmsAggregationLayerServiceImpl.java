@@ -18,31 +18,18 @@ public class WmsAggregationLayerServiceImpl implements AggregationLayerService {
 	@Autowired
 	private PipelineService pipelineService;
 
-	private RasterLayer getAggregatedLayer(List<RasterLayer> rasterLayers) {
-		List<WmsLayer> wmsLayers = new ArrayList<WmsLayer>();
-		for (RasterLayer layer : rasterLayers) {
-			if (layer instanceof WmsLayer) {
-				wmsLayers.add((WmsLayer) layer);
-			}
-		}
-		return new AggregatedWmsLayer(wmsLayers);
-	}
-
 	@Override
-	public RasterTile getAggregatedLayerTile(List<RasterLayer> rasterLayers) {
+	public RasterTile getAggregatedLayerTile(List<RasterLayer> rasterLayers) throws GeomajasException {
 		RasterLayer layer = getAggregatedLayer(rasterLayers);
-		try {
-			List<RasterTile> tiles = getTiles(layer);
-			if (tiles != null && !tiles.isEmpty()) {
-				return tiles.get(0);
-			} 
-		} catch (GeomajasException e) {
-			// TODO logging
+		List<RasterTile> tiles = getTiles(layer);
+		if (tiles != null && !tiles.isEmpty()) {
+			return tiles.get(0);
 		}
 		return null;
 	}
 
-	public List<RasterTile> getTiles(RasterLayer layer) throws GeomajasException {
+	@SuppressWarnings("unchecked")
+	private List<RasterTile> getTiles(RasterLayer layer) throws GeomajasException {
 		PipelineContext context = pipelineService.createContext();
 		String layerId = layer.getId();
 		context.put(PipelineCode.LAYER_ID_KEY, layerId);
@@ -51,4 +38,36 @@ public class WmsAggregationLayerServiceImpl implements AggregationLayerService {
 		pipelineService.execute(PipelineCode.PIPELINE_GET_RASTER_TILES, layerId, context, response);
 		return response;
 	}
+
+	private RasterLayer getAggregatedLayer(List<RasterLayer> rasterLayers) throws GeomajasException {
+		List<WmsLayer> wmsLayers = new ArrayList<WmsLayer>();
+		String baseWmsUrl = null;
+		for (RasterLayer layer : rasterLayers) {
+			if (layer instanceof WmsLayer) {
+				WmsLayer wmsLayer = (WmsLayer) layer;
+				baseWmsUrl = checkBaseWmsUrl(baseWmsUrl, wmsLayer);
+				wmsLayers.add(wmsLayer);
+			} else {
+				throw new GeomajasException(/* TODO: code */);
+			}
+		}
+		return new AggregatedWmsLayer(wmsLayers);
+	}
+
+	private String checkBaseWmsUrl(String baseWmsUrl, WmsLayer wmsLayer) throws GeomajasException {
+		String currentWaseWmsUrl = wmsLayer.getBaseWmsUrl();
+		if (baseWmsUrl != null) {
+			if (baseWmsUrlsAreDifferent(baseWmsUrl, currentWaseWmsUrl)) {
+				throw new GeomajasException(/* TODO: code */);
+			}
+		} else {
+			baseWmsUrl = currentWaseWmsUrl;
+		}
+		return baseWmsUrl;
+	}
+
+	private boolean baseWmsUrlsAreDifferent(String baseWmsUrl, String currentWaseWmsUrl) {
+		return !baseWmsUrl.equalsIgnoreCase(currentWaseWmsUrl);
+	}
+
 }
