@@ -10,20 +10,31 @@
  */
 package org.geomajas.internal.layer;
 
+import static java.util.Collections.singletonList;
+
+import java.awt.Graphics;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import javax.imageio.ImageIO;
+
 import org.geomajas.configuration.NamedStyleInfo;
+import org.geomajas.geometry.Bbox;
 import org.geomajas.global.GeomajasException;
 import org.geomajas.layer.AggregationLayerService;
 import org.geomajas.layer.Layer;
 import org.geomajas.layer.MapLayerService;
 import org.geomajas.layer.RasterLayer;
 import org.geomajas.layer.RasterLayerService;
-import org.geomajas.layer.VectorLayer;
 import org.geomajas.layer.VectorLayerService;
 import org.geomajas.layer.tile.RasterTile;
+import org.geomajas.layer.tile.TileCode;
 import org.geomajas.service.CacheService;
 import org.geomajas.service.ConfigurationService;
 import org.opengis.filter.Filter;
@@ -62,75 +73,75 @@ public class MapLayerServiceImpl extends LayerServiceImpl implements MapLayerSer
 			Map<String, NamedStyleInfo> vectorLayerStyleInfo, CoordinateReferenceSystem crs, Envelope bounds,
 			double scale) throws GeomajasException {
 
-		List<RasterTile> rasterTiles;
-
+		List<Layer<?>> layers = collectLayersFromIds(layerIds);
 		if (aggregationService != null) {
-			rasterTiles = aggregateRasterLayers(layerIds, crs, bounds, scale);
-		} else {
-			rasterTiles = requestSingleRasterTiles(layerIds, crs, bounds, scale);
-
+			layers = aggregateRasterLayers(layers);
 		}
 
 		// Save the List<MapLayer> configuration in the cache for each rastertile (using cacheService)
-//		cacheService.put(MapLayerServiceImpl.class.toString(), "some unique identifier, uuid", layers /*
-//																									 * or a meta object
-//																									 * if more
-//																									 * information is
-//																									 * needed
-//																									 */);
+		// cacheService.put(MapLayerServiceImpl.class.toString(), "some unique identifier, uuid", layers /*
+		// * or a meta object
+		// * if more
+		// * information is
+		// * needed
+		// */);
 
 		// next step is to set the url in the rastertile to a spring mvc controller where the image can be retrieved
 		// based on the given uuid.
 
-		return rasterTiles;
-
+		return generateTilesFromLayers(layers, crs, bounds, scale);
 	}
 
-	private List<RasterTile> requestSingleRasterTiles(List<String> layerIds, CoordinateReferenceSystem crs,
-			Envelope bounds, double scale)
-			throws GeomajasException {
-		List<RasterTile> tiles = new ArrayList<RasterTile>();
-		for (String layerId : layerIds) {
-			Layer<?> layer = configurationService.getLayer(layerId);
-			if (layer != null) {
-				if (layer instanceof RasterLayer) {
-					//MapLayer<RasterTile> rasterLayer = new MapLayer<RasterTile>();
-					tiles.addAll(rasterLayerService.getTiles(layerId, crs, bounds, scale));
-					//rasterLayer.getTiles().addAll(rasterTiles);
-					//layers.add(rasterLayer);
-				} else if (layer instanceof VectorLayer) {
-					// OM: there is no getTiles method in vectorlayer. Two options: calculate tilecode here, or add
-					// getvectorlayertiles to the the vectorlayer service.
-					// I would suggest adding getVectorTiles to the vectorlayerservice, because it is also required
-					// by
-					// issue http://jira.geomajas.org/browse/GBE-337.
-					// MapLayer<RasterTile> vectorLayer = new MapLayer<RasterTile>();
-					// vectorLayer.getTiles().addAll(vectorLayerService.getTiles());
-				}
-			}
-		}
-		return tiles;
-	}
-
-	private List<RasterTile> aggregateRasterLayers(List<String> layerIds, CoordinateReferenceSystem crs,
+	private List<RasterTile> generateTilesFromLayers(List<Layer<?>> layers, CoordinateReferenceSystem crs,
 			Envelope bounds, double scale) throws GeomajasException {
-		List<RasterLayer> rasterLayers = new ArrayList<RasterLayer>();
-		for (String layerId : layerIds) {
-			Layer<?> layer = configurationService.getLayer(layerId);
-			if (layer != null) {
-				if (layer instanceof RasterLayer) {
-					rasterLayers.add((RasterLayer) layer);
-				} else if (layer instanceof VectorLayer) {
-					// OM: there is no getTiles method in vectorlayer. Two options: calculate tilecode here, or add
-					// getvectorlayertiles to the the vectorlayer service.
-					// I would suggest adding getVectorTiles to the vectorlayerservice, because it is also required by
-					// issue http://jira.geomajas.org/browse/GBE-337.
-					// MapLayer<RasterTile> vectorLayer = new MapLayer<RasterTile>();
-					// vectorLayer.getTiles().addAll(vectorLayerService.getTiles());
+		String id;
+		int wholeImageWidth = (int) bounds.getWidth();
+		int wholeImageHeight = (int) bounds.getHeight();
+		BufferedImage aggregatedImage = new BufferedImage(wholeImageWidth, wholeImageHeight,
+				BufferedImage.TYPE_INT_ARGB);
+		Graphics aggregatedGraphics = aggregatedImage.getGraphics();
+		for (Layer<?> layer : layers) {
+			if (layer instanceof RasterLayer) {
+				List<RasterTile> tiles = rasterLayerService.getTiles(layer.getId(), crs, bounds, scale);
+
+				try {
+					BufferedImage wholeImage = createWholeImageFromTiles(wholeImageWidth, wholeImageHeight, tiles);
+					aggregatedGraphics.drawImage(wholeImage, 0, 0, null);
+				} catch (MalformedURLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 			}
 		}
-		return aggregationService.getAggregatedLayerTile(rasterLayers, bounds, scale,crs);
+		// TODO generate and return raster tiles
+		return null;
+		
+	}
+
+	private BufferedImage createWholeImageFromTiles(int wholeImageWidth, int wholeImageHeight, List<RasterTile> tiles)
+			throws IOException, MalformedURLException {
+		BufferedImage wholeImage = new BufferedImage(wholeImageWidth, wholeImageHeight, BufferedImage.TYPE_INT_ARGB);
+		Graphics wholeImageGraphics = wholeImage.getGraphics();
+		for (RasterTile tile : tiles) {
+			BufferedImage tileImage = ImageIO.read(new URL(tile.getUrl()));
+			wholeImageGraphics.drawImage(tileImage, (int) tile.getBounds().getX(), (int) tile.getBounds().getY(), null);
+		}
+		return wholeImage;
+	}
+
+	private List<Layer<?>> collectLayersFromIds(List<String> layerIds) {
+		List<Layer<?>> layers = new ArrayList<Layer<?>>();
+		for (String layerId : layerIds) {
+			layers.add(configurationService.getLayer(layerId));
+		}
+		return layers;
+	}
+
+	private List<Layer<?>> aggregateRasterLayers(List<Layer<?>> layers) throws GeomajasException {
+		return aggregationService.aggregate(layers);
 	}
 
 }

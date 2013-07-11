@@ -5,15 +5,10 @@ import java.util.List;
 
 import org.geomajas.global.GeomajasException;
 import org.geomajas.layer.AggregationLayerService;
+import org.geomajas.layer.Layer;
 import org.geomajas.layer.RasterLayer;
-import org.geomajas.layer.tile.RasterTile;
-import org.geomajas.service.pipeline.PipelineCode;
-import org.geomajas.service.pipeline.PipelineContext;
 import org.geomajas.service.pipeline.PipelineService;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import com.vividsolutions.jts.geom.Envelope;
 
 @SuppressWarnings("rawtypes")
 public class WmsAggregationLayerServiceImpl implements AggregationLayerService {
@@ -23,26 +18,43 @@ public class WmsAggregationLayerServiceImpl implements AggregationLayerService {
 
 	@Autowired
 	private WmsLayerPainter painter;
-
+	
 	@Override
-	public List<RasterTile> getAggregatedLayerTile(List<RasterLayer> rasterLayers, Envelope bounds, double scale, CoordinateReferenceSystem crs)
-			throws GeomajasException {
-		RasterLayer layer = createAggregatedLayer(rasterLayers);
-		return createTile(layer, bounds, scale, crs);
+	public List<Layer<?>> aggregate(List<Layer<?>> layers) throws GeomajasException {
+		if (layers.size() > 1) {
+			String currentBaseUrl = "";
+			List<Layer<?>> resultingLayers = new ArrayList<Layer<?>>();
+			List<WmsLayer> currentWmsLayerStreak = new ArrayList<WmsLayer>();
+
+			for (Layer<?> rasterLayer : layers) {
+				if (rasterLayer instanceof WmsLayer) {
+					WmsLayer wmsLayer = (WmsLayer) rasterLayer;
+					if (baseWmsUrlsAreDifferent(currentBaseUrl, wmsLayer.getBaseWmsUrl())) {
+						endStreak(resultingLayers, currentWmsLayerStreak);
+					}
+					currentWmsLayerStreak.add(wmsLayer);
+					currentBaseUrl = wmsLayer.getBaseWmsUrl();
+				} else {
+					endStreak(resultingLayers, currentWmsLayerStreak);
+					resultingLayers.add(rasterLayer);
+					currentBaseUrl = "";
+				}
+			}
+			endStreak(resultingLayers, currentWmsLayerStreak);
+			return resultingLayers;
+		} else {
+			return layers;
+		}
 	}
 
-	@SuppressWarnings("unchecked")
-	private List<RasterTile> createTile(RasterLayer layer, Envelope bounds, double scale, CoordinateReferenceSystem crs) throws GeomajasException {
-		PipelineContext context = pipelineService.createContext();
-		String layerId = layer.getId();
-		context.put(PipelineCode.LAYER_ID_KEY, layerId);
-		context.put(PipelineCode.LAYER_KEY, layer);
-		context.put(PipelineCode.CRS_KEY, crs);
-		context.put(PipelineCode.BOUNDS_KEY, bounds);
-		context.put(PipelineCode.SCALE_KEY, scale);
-		List<RasterTile> response = new ArrayList<RasterTile>();
-		pipelineService.execute(PipelineCode.PIPELINE_GET_RASTER_TILES, layerId, context, response);
-		return response;
+	private void endStreak(List<Layer<?>> wmsLayerList, List<WmsLayer> currentWmsLayerStreak) {
+		if (currentWmsLayerStreak.size() == 1) {
+			wmsLayerList.addAll(currentWmsLayerStreak);
+			currentWmsLayerStreak.clear();
+		} else if (currentWmsLayerStreak.size() > 1) {
+			wmsLayerList.add(new AggregatedWmsLayer(currentWmsLayerStreak, painter));
+			currentWmsLayerStreak.clear();
+		}
 	}
 
 	protected RasterLayer createAggregatedLayer(List<RasterLayer> rasterLayers) throws GeomajasException {
