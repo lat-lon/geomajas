@@ -28,6 +28,7 @@ import javax.imageio.ImageIO;
 
 import org.geomajas.configuration.NamedStyleInfo;
 import org.geomajas.geometry.Bbox;
+import org.geomajas.global.ExceptionCode;
 import org.geomajas.global.GeomajasException;
 import org.geomajas.layer.AggregationLayerService;
 import org.geomajas.layer.Layer;
@@ -37,10 +38,17 @@ import org.geomajas.layer.RasterLayerService;
 import org.geomajas.layer.VectorLayerService;
 import org.geomajas.layer.tile.RasterTile;
 import org.geomajas.layer.tile.TileCode;
+import org.geomajas.security.GeomajasSecurityException;
+import org.geomajas.security.SecurityContext;
 import org.geomajas.service.CacheService;
 import org.geomajas.service.ConfigurationService;
+import org.geomajas.service.pipeline.PipelineCode;
+import org.geomajas.service.pipeline.PipelineContext;
+import org.geomajas.service.pipeline.PipelineService;
 import org.opengis.filter.Filter;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -55,6 +63,8 @@ import com.vividsolutions.jts.geom.Envelope;
 @Component
 public class MapLayerServiceImpl extends LayerServiceImpl implements MapLayerService {
 
+	private final Logger log = LoggerFactory.getLogger(MapLayerServiceImpl.class);
+
 	@Autowired
 	private ConfigurationService configurationService;
 
@@ -67,6 +77,12 @@ public class MapLayerServiceImpl extends LayerServiceImpl implements MapLayerSer
 	@Autowired
 	private CacheService cacheService;
 
+	@Autowired
+	private SecurityContext securityContext;
+
+	@Autowired
+	private PipelineService pipelineService;
+
 	@Autowired(required = false)
 	private AggregationLayerService aggregationService;
 
@@ -74,25 +90,60 @@ public class MapLayerServiceImpl extends LayerServiceImpl implements MapLayerSer
 	public List<RasterTile> getTiles(List<String> layerIds, Map<String, Filter> vectorLayerFilters,
 			Map<String, NamedStyleInfo> vectorLayerStyleInfo, CoordinateReferenceSystem crs, Envelope bounds,
 			double scale) throws GeomajasException {
-
 		List<Layer<?>> layers = collectLayersFromIds(layerIds);
+		List<RasterTile> response = new ArrayList<RasterTile>();
 		if (aggregationService != null) {
-			layers = aggregateRasterLayers(layers);
+			Layer layer = aggregateRasterLayers(layers);
+			if (layer != null) {
+				log.debug("getTiles start on layer {}", layerIds);
+				long ts = System.currentTimeMillis();
+				PipelineContext context = pipelineService.createContext();
+				context.put(PipelineCode.LAYER_KEY, layer);
+				context.put(PipelineCode.CRS_KEY, crs);
+				context.put(PipelineCode.BOUNDS_KEY, bounds);
+				context.put(PipelineCode.SCALE_KEY, scale);
+				pipelineService.execute(PipelineCode.PIPELINE_GET_RASTER_TILES, layer.getId(), context, response);
+				log.debug("getTiles done on layer {}, time {}s", layer.getId(),
+						(System.currentTimeMillis() - ts) / 1000.0);
+			}
 		}
-
-		// Save the List<MapLayer> configuration in the cache for each rastertile (using cacheService)
-		// cacheService.put(MapLayerServiceImpl.class.toString(), "some unique identifier, uuid", layers /*
-		// * or a meta object
-		// * if more
-		// * information is
-		// * needed
-		// */);
-
-		// next step is to set the url in the rastertile to a spring mvc controller where the image can be retrieved
-		// based on the given uuid.
-
-		return generateTilesFromLayers(layers, crs, bounds, scale);
+		return response;
 	}
+
+	private RasterLayer getRasterLayer(String layerId) throws GeomajasException {
+		if (!securityContext.isLayerVisible(layerId)) {
+			throw new GeomajasSecurityException(ExceptionCode.LAYER_NOT_VISIBLE, layerId, securityContext.getUserId());
+		}
+		RasterLayer layer = configurationService.getRasterLayer(layerId);
+		if (null == layer) {
+			throw new GeomajasException(ExceptionCode.RASTER_LAYER_NOT_FOUND, layerId);
+		}
+		return layer;
+	}
+
+	// @Override
+	// public List<RasterTile> getTiles(List<String> layerIds, Map<String, Filter> vectorLayerFilters,
+	// Map<String, NamedStyleInfo> vectorLayerStyleInfo, CoordinateReferenceSystem crs, Envelope bounds,
+	// double scale) throws GeomajasException {
+	//
+	// List<Layer<?>> layers = collectLayersFromIds(layerIds);
+	// if (aggregationService != null) {
+	// layers = aggregateRasterLayers(layers);
+	// }
+	//
+	// // Save the List<MapLayer> configuration in the cache for each rastertile (using cacheService)
+	// // cacheService.put(MapLayerServiceImpl.class.toString(), "some unique identifier, uuid", layers /*
+	// // * or a meta object
+	// // * if more
+	// // * information is
+	// // * needed
+	// // */);
+	//
+	// // next step is to set the url in the rastertile to a spring mvc controller where the image can be retrieved
+	// // based on the given uuid.
+	//
+	// return generateTilesFromLayers(layers, crs, bounds, scale);
+	// }
 
 	private List<RasterTile> generateTilesFromLayers(List<Layer<?>> layers, CoordinateReferenceSystem crs,
 			Envelope bounds, double scale) throws GeomajasException {
@@ -181,7 +232,7 @@ public class MapLayerServiceImpl extends LayerServiceImpl implements MapLayerSer
 		return layers;
 	}
 
-	private List<Layer<?>> aggregateRasterLayers(List<Layer<?>> layers) throws GeomajasException {
+	private Layer<?> aggregateRasterLayers(List<Layer<?>> layers) throws GeomajasException {
 		return aggregationService.aggregate(layers);
 	}
 

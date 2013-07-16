@@ -1,31 +1,38 @@
 package org.geomajas.gwt.client.map.layer;
 
-import org.geomajas.gwt.client.gfx.Paintable;
+import java.util.List;
+
 import org.geomajas.gwt.client.gfx.PainterVisitor;
-import org.geomajas.gwt.client.map.MapModel;
 import org.geomajas.gwt.client.map.cache.tile.MapTile;
 import org.geomajas.gwt.client.map.cache.tile.TileFunction;
-import org.geomajas.gwt.client.map.store.DefaultMapLayerStore;
+import org.geomajas.gwt.client.map.event.LayerStyleChangeEvent;
+import org.geomajas.gwt.client.map.store.DefaultComboLayerStore;
 import org.geomajas.gwt.client.spatial.Bbox;
 
-public class MapLayer implements Paintable {
+public class ComboLayer extends AbstractLayer {
 
-	private MapModel mapModel;
-	private DefaultMapLayerStore store;
+	private List<Layer<?>> layers;
 
-	public MapLayer(MapModel mapModel) {
-		this.mapModel = mapModel;
-		this.store = new DefaultMapLayerStore(this);
+	private DefaultComboLayerStore store;
+
+	public ComboLayer(List<Layer<?>> layers) {
+		super(layers.get(0).getMapModel(), layers.get(0).getLayerInfo());
+		this.layers = layers;
+		this.store = new DefaultComboLayerStore(this);
 	}
-	
-	public MapModel getMapModel() {
-		return mapModel;
+
+	public List<Layer<?>> getLayers() {
+		return layers;
+	}
+
+	@Override
+	public void updateStyle() {
+		handlerManager.fireEvent(new LayerStyleChangeEvent(this));
 	}
 
 	@Override
 	public void accept(final PainterVisitor visitor, final Object group, final Bbox bounds, boolean recursive) {
 		visitor.visit(this, group);
-
 		// When visible, take care of fetching through an applyAndSync:
 		TileFunction<MapTile> onDelete = new TileFunction<MapTile>() {
 

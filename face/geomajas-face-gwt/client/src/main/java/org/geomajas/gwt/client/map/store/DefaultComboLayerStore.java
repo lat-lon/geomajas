@@ -25,7 +25,8 @@ import org.geomajas.gwt.client.command.GwtCommandDispatcher;
 import org.geomajas.gwt.client.map.MapViewState;
 import org.geomajas.gwt.client.map.cache.tile.MapTile;
 import org.geomajas.gwt.client.map.cache.tile.TileFunction;
-import org.geomajas.gwt.client.map.layer.MapLayer;
+import org.geomajas.gwt.client.map.layer.ComboLayer;
+import org.geomajas.gwt.client.map.layer.Layer;
 import org.geomajas.gwt.client.spatial.Bbox;
 import org.geomajas.gwt.client.spatial.Matrix;
 import org.geomajas.layer.tile.TileCode;
@@ -37,7 +38,7 @@ import org.geomajas.layer.tile.TileCode;
  * @author Jan De Moerloose
  * @author Oliver May
  */
-public class DefaultMapLayerStore  {
+public class DefaultComboLayerStore {
 
 	private Map<TileCode, MapTile> tiles = new HashMap<TileCode, MapTile>();
 
@@ -49,14 +50,14 @@ public class DefaultMapLayerStore  {
 
 	private Deferred deferred;
 
-	private MapLayer mapLayer;
+	private ComboLayer layer;
 
-	public DefaultMapLayerStore(MapLayer mapLayer) {
-	this.mapLayer = mapLayer;
+	public DefaultComboLayerStore(ComboLayer layer) {
+		this.layer = layer;
 	}
 
 	public void applyAndSync(Bbox bounds, TileFunction<MapTile> onDelete, TileFunction<MapTile> onUpdate) {
-		MapViewState viewState = mapLayer.getMapModel().getMapView().getViewState();
+		MapViewState viewState = layer.getMapModel().getMapView().getViewState(); 
 		boolean panning = lastViewState == null || viewState.isPannableFrom(lastViewState);
 		if (!panning || isDirty()) {
 			if (deferred != null) {
@@ -69,7 +70,7 @@ public class DefaultMapLayerStore  {
 			tileBounds = null;
 			dirty = false;
 		}
-		lastViewState = mapLayer.getMapModel().getMapView().getViewState();
+		lastViewState = layer.getMapModel().getMapView().getViewState();
 		if (tileBounds == null || !tileBounds.contains(bounds)) {
 			fetchAndUpdateTiles(bounds, onUpdate);
 		} else {
@@ -77,8 +78,8 @@ public class DefaultMapLayerStore  {
 		}
 	}
 
-	public MapLayer getLayer() {
-		return mapLayer;
+	public ComboLayer getLayer() {
+		return layer;
 	}
 
 	public void clear() {
@@ -107,19 +108,18 @@ public class DefaultMapLayerStore  {
 				tileBounds.getHeight()));
 		request.setCrs(getLayer().getMapModel().getCrs());
 		request.setScale(getLayer().getMapModel().getMapView().getCurrentScale());
-		for (org.geomajas.gwt.client.map.layer.Layer<?> layer : getLayer().getMapModel().getLayers()) {
+		for (org.geomajas.gwt.client.map.layer.Layer<?> layer : this.layer.getLayers()) {
 			if (layer.isShowing()) {
 				request.getVisibleLayers().add(layer.getServerLayerId());
-				//FIXME: add support for vectortiles here
+				// FIXME: add support for vectortiles here
 				// We should calculate and add all vectorlayer tile codes here, and add all requests for vectortiles
 				// For each vectorlayer we need:
-				//				request.setFilter(filter);
-				//				request.setPaintLabels(layer.isLabelsShowing() && !labelContent.isLoaded());
-				//				request.setStyleInfo(layer.getLayerInfo().getNamedStyleInfo());
-				
+				// request.setFilter(filter);
+				// request.setPaintLabels(layer.isLabelsShowing() && !labelContent.isLoaded());
+				// request.setStyleInfo(layer.getLayerInfo().getNamedStyleInfo());
+
 			}
 		}
-		
 		GwtCommand command = new GwtCommand(GetMapTilesRequest.COMMAND);
 		command.setCommandRequest(request);
 		RasterCallBack callBack = new RasterCallBack(worldToPan(bounds), onUpdate);
@@ -136,12 +136,12 @@ public class DefaultMapLayerStore  {
 	}
 
 	private Bbox worldToPan(Bbox bounds) {
-		Matrix t = mapLayer.getMapModel().getMapView().getWorldToPanTransformation();
+		Matrix t = layer.getMapModel().getMapView().getWorldToPanTransformation();
 		return bounds.transform(t);
 	}
 
 	private void addTiles(List<org.geomajas.layer.tile.RasterTile> images) {
-		Matrix t = mapLayer.getMapModel().getMapView().getWorldToPanTranslation();
+		Matrix t = layer.getMapModel().getMapView().getWorldToPanTranslation();
 		Bbox cacheBounds = null;
 		// flag and reference tile to realign the grid when new tiles come in (transformation shift!)
 		boolean newTiles = false;
@@ -184,8 +184,10 @@ public class DefaultMapLayerStore  {
 	 * Returns the difference in j index, taking orientation of y-axis into account. Some layers (WMS 1.8.0) have
 	 * different j-index orientation than screen coordinates (lower-left = (0,0) vs upper-left = (0,0)).
 	 * 
-	 * @param tile1 tile
-	 * @param tile2 tile
+	 * @param tile1
+	 *            tile
+	 * @param tile2
+	 *            tile
 	 * @return +/-(j2-j1)
 	 */
 	private int getOrientedJDiff(MapTile tile1, MapTile tile2) {

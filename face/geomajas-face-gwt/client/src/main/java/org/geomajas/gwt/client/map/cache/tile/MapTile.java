@@ -13,7 +13,7 @@ package org.geomajas.gwt.client.map.cache.tile;
 import org.geomajas.gwt.client.gfx.Paintable;
 import org.geomajas.gwt.client.gfx.PainterVisitor;
 import org.geomajas.gwt.client.gfx.style.PictureStyle;
-import org.geomajas.gwt.client.map.store.DefaultMapLayerStore;
+import org.geomajas.gwt.client.map.store.DefaultComboLayerStore;
 import org.geomajas.gwt.client.spatial.Bbox;
 import org.geomajas.layer.tile.TileCode;
 
@@ -32,7 +32,7 @@ public class MapTile implements Tile, Paintable {
 	protected Bbox bbox;
 
 	/** The store where this tile is kept. */
-	protected DefaultMapLayerStore store;
+	protected DefaultComboLayerStore store;
 
 	/** The image url. */
 	protected String url;
@@ -50,7 +50,7 @@ public class MapTile implements Tile, Paintable {
 	 * @param url tile URL
 	 * @param store raster layer store
 	 */
-	public MapTile(TileCode code, Bbox bbox, String url, DefaultMapLayerStore store) {
+	public MapTile(TileCode code, Bbox bbox, String url, DefaultComboLayerStore store) {
 		this.code = code;
 		this.bbox = bbox;
 		this.url = url;
@@ -106,7 +106,7 @@ public class MapTile implements Tile, Paintable {
 	 *
 	 * @return raster layer store
 	 */
-	public DefaultMapLayerStore getStore() {
+	public DefaultComboLayerStore getStore() {
 		return store;
 	}
 
