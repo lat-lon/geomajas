@@ -338,23 +338,25 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		visitor.visit(this, group);
 
 		// if (mapLayer != null) {
-		if (recursive) {
+		if (recursive) { // TODO is this neccessary here?
 			List<Layer<?>> currentServerLayerStreak = new ArrayList<Layer<?>>();
+			String currentAggregationId = "";
+			boolean isFirst = true;
 			for (Layer<?> layer : layers) {
-				String currentAggregationId = "";
-				boolean isFirst = true;
-
 				if (layer.getLayerInfo() instanceof ClientLayerInfo && layer.isShowing()) {
 					ClientLayerInfo layerInfo = (ClientLayerInfo) layer.getLayerInfo();
 					String aggregationId = layerInfo.getAggregationId();
-					if (!isFirst && aggregationId != currentAggregationId) {
-						ComboLayer combo = new ComboLayer(currentServerLayerStreak);
-						combo.accept(visitor, group, bounds, recursive);
-						currentServerLayerStreak.clear();
-					} else {
-						currentServerLayerStreak.add(layer);
-						currentAggregationId = aggregationId;
+					if (!isFirst) {
+						if (aggregationId == null || !aggregationId.equals(currentAggregationId)) {
+							if (currentServerLayerStreak.size() > 0) {
+								ComboLayer combo = new ComboLayer(currentServerLayerStreak);
+								combo.accept(visitor, group, bounds, recursive);
+								currentServerLayerStreak.clear();
+							}
+						}
 					}
+					currentServerLayerStreak.add(layer);
+					currentAggregationId = aggregationId;
 					isFirst = false;
 				}
 			}

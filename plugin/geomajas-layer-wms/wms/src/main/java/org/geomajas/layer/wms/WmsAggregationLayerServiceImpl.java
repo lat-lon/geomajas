@@ -55,7 +55,7 @@ public class WmsAggregationLayerServiceImpl implements AggregationLayerService {
 		StringBuilder dataSources = new StringBuilder();
 		boolean isFirst = true;
 		for (WmsLayer layer : currentWmsLayerStreak) {
-			if (isFirst) {
+			if (!isFirst) {
 				dataSources.append(",");
 				isFirst = false;
 			}
