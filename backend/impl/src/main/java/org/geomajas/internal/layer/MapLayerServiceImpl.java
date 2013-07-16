@@ -14,11 +14,13 @@ import static java.util.Collections.singletonList;
 
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -94,19 +96,13 @@ public class MapLayerServiceImpl extends LayerServiceImpl implements MapLayerSer
 
 	private List<RasterTile> generateTilesFromLayers(List<Layer<?>> layers, CoordinateReferenceSystem crs,
 			Envelope bounds, double scale) throws GeomajasException {
-		String id;
-		int wholeImageWidth = (int) bounds.getWidth();
-		int wholeImageHeight = (int) bounds.getHeight();
-		BufferedImage aggregatedImage = new BufferedImage(wholeImageWidth, wholeImageHeight,
-				BufferedImage.TYPE_INT_ARGB);
-		Graphics aggregatedGraphics = aggregatedImage.getGraphics();
+		List<BufferedImage> wholeImages = new ArrayList<BufferedImage>();
 		for (Layer<?> layer : layers) {
 			if (layer instanceof RasterLayer) {
-				List<RasterTile> tiles = rasterLayerService.getTiles(layer.getId(), crs, bounds, scale);
-
+				RasterLayer rasterLayer = (RasterLayer) layer;
+				List<RasterTile> tiles = rasterLayerService.getTiles(rasterLayer.getId(), crs, bounds, scale);
 				try {
-					BufferedImage wholeImage = createWholeImageFromTiles(wholeImageWidth, wholeImageHeight, tiles);
-					aggregatedGraphics.drawImage(wholeImage, 0, 0, null);
+					wholeImages.add(createWholeImageFromTiles(rasterLayer, tiles));
 				} catch (MalformedURLException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -116,20 +112,65 @@ public class MapLayerServiceImpl extends LayerServiceImpl implements MapLayerSer
 				}
 			}
 		}
-		// TODO generate and return raster tiles
+
+		BufferedImage aggregatedImage = new BufferedImage(wholeImages.get(0).getWidth(),
+				wholeImages.get(0).getHeight(), BufferedImage.TYPE_INT_ARGB);
+		Graphics aggregatedGraphics = aggregatedImage.getGraphics();
+		for (BufferedImage image : wholeImages) {
+			aggregatedGraphics.drawImage(image, 0, 0, null);
+		}
+		File imgFile = new File("/tmp/geomajas/tile" + layers.get(0).getId());
+		try {
+			ImageIO.write(aggregatedImage, "png", imgFile);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		return null;
-		
+
 	}
 
-	private BufferedImage createWholeImageFromTiles(int wholeImageWidth, int wholeImageHeight, List<RasterTile> tiles)
-			throws IOException, MalformedURLException {
-		BufferedImage wholeImage = new BufferedImage(wholeImageWidth, wholeImageHeight, BufferedImage.TYPE_INT_ARGB);
+	private BufferedImage createWholeImageFromTiles(RasterLayer rasterLayer, List<RasterTile> tiles)
+			throws MalformedURLException, IOException {
+		Collections.sort(tiles, new Comparator<RasterTile>() {
+
+			@Override
+			public int compare(RasterTile first, RasterTile second) {
+				TileCode firstCode = first.getCode();
+				TileCode secondCode = second.getCode();
+				if ((firstCode.getY() == secondCode.getY())) {
+					if ((firstCode.getX() < secondCode.getX()))
+						return -1;
+					if ((firstCode.getX() > secondCode.getX()))
+						return 1;
+					return 0;
+				} else {
+					if ((firstCode.getY() < secondCode.getY()))
+						return -1;
+					if ((firstCode.getY() > secondCode.getY()))
+						return 1;
+					return 0;
+				}
+			}
+		});
+
+		int rasterAxisSize = calculateRowSize(tiles);
+		int tileWidth = rasterLayer.getLayerInfo().getTileWidth();
+		int tileHeight = rasterLayer.getLayerInfo().getTileHeight();
+		System.out.println(rasterAxisSize);
+		BufferedImage wholeImage = new BufferedImage(tileWidth * rasterAxisSize, tileHeight * rasterAxisSize,
+				BufferedImage.TYPE_INT_ARGB);
 		Graphics wholeImageGraphics = wholeImage.getGraphics();
 		for (RasterTile tile : tiles) {
 			BufferedImage tileImage = ImageIO.read(new URL(tile.getUrl()));
-			wholeImageGraphics.drawImage(tileImage, (int) tile.getBounds().getX(), (int) tile.getBounds().getY(), null);
+			wholeImageGraphics.drawImage(tileImage, (int) tile.getCode().getX() * tileWidth, (int) tile.getCode()
+					.getY() * tileHeight, null);
 		}
 		return wholeImage;
+	}
+
+	private int calculateRowSize(List<RasterTile> tiles) {
+		int tileLevel = tiles.get(0).getCode().getTileLevel();
+		return new Double(Math.pow(2, tileLevel)).intValue();
 	}
 
 	private List<Layer<?>> collectLayersFromIds(List<String> layerIds) {
