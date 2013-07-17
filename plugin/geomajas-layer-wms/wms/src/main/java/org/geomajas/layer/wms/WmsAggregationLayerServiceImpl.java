@@ -20,50 +20,30 @@ public class WmsAggregationLayerServiceImpl implements AggregationLayerService {
 
 	@Override
 	public Layer<?> aggregate(List<Layer<?>> layers) throws GeomajasException {
+		if (layers == null) {
+			throw new GeomajasException();
+		}
 		if (layers.size() > 1) {
-			String currentBaseUrl = "";
-			boolean isFirst = true;
 			List<WmsLayer> currentWmsLayerStreak = new ArrayList<WmsLayer>();
-
+			String currentServiceUrl = null;
 			for (Layer<?> rasterLayer : layers) {
 				if (rasterLayer instanceof WmsLayer) {
 					WmsLayer wmsLayer = (WmsLayer) rasterLayer;
-					if (!isFirst && baseWmsUrlsAreDifferent(currentBaseUrl, wmsLayer.getBaseWmsUrl())) {
-						return endStreak(currentWmsLayerStreak);
+					String baseWmsUrl = wmsLayer.getBaseWmsUrl();
+					if (currentServiceUrl != null && baseWmsUrlsAreDifferent(currentServiceUrl,baseWmsUrl)) {
+						throw new GeomajasException(); // TODO exc code
 					}
-					isFirst = false;
+					currentServiceUrl = baseWmsUrl;
 					currentWmsLayerStreak.add(wmsLayer);
-					currentBaseUrl = wmsLayer.getBaseWmsUrl();
 				} else {
-					return endStreak(currentWmsLayerStreak);
+					throw new GeomajasException(); // TODO exc code
 				}
 			}
-		} else if (layers.size() == 1)
+			return new AggregatedWmsLayer(currentWmsLayerStreak, painter);
+		} else if (layers.size() == 1) {
 			return layers.get(0);
-		return null;
-	}
-
-	private Layer<?> endStreak(List<WmsLayer> currentWmsLayerStreak) {
-		if (currentWmsLayerStreak.size() == 1) {
-			return currentWmsLayerStreak.get(0);
-		} else {
-			return aggregateWmsLayers(currentWmsLayerStreak);
 		}
-	}
-
-	private Layer<?> aggregateWmsLayers(List<WmsLayer> currentWmsLayerStreak) {
-		StringBuilder dataSources = new StringBuilder();
-		boolean isFirst = true;
-		for (WmsLayer layer : currentWmsLayerStreak) {
-			if (!isFirst) {
-				dataSources.append(",");
-				isFirst = false;
-			}
-			dataSources.append(layer.getLayerInfo().getDataSourceName());
-		}
-		WmsLayer result = currentWmsLayerStreak.get(0);
-		result.getLayerInfo().setDataSourceName(dataSources.toString());
-		return result;
+		throw new GeomajasException(); // TODO exc code
 	}
 
 	private boolean baseWmsUrlsAreDifferent(String baseWmsUrl, String currentWaseWmsUrl) {

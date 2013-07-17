@@ -93,7 +93,7 @@ public class MapLayerServiceImpl extends LayerServiceImpl implements MapLayerSer
 		List<Layer<?>> layers = collectLayersFromIds(layerIds);
 		List<RasterTile> response = new ArrayList<RasterTile>();
 		if (aggregationService != null) {
-			Layer layer = aggregateRasterLayers(layers);
+			Layer<?> layer = aggregateRasterLayers(layers);
 			if (layer != null) {
 				log.debug("getTiles start on layer {}", layerIds);
 				long ts = System.currentTimeMillis();
@@ -107,121 +107,8 @@ public class MapLayerServiceImpl extends LayerServiceImpl implements MapLayerSer
 						(System.currentTimeMillis() - ts) / 1000.0);
 			}
 		}
+		// TODO no aggregation service
 		return response;
-	}
-
-	private RasterLayer getRasterLayer(String layerId) throws GeomajasException {
-		if (!securityContext.isLayerVisible(layerId)) {
-			throw new GeomajasSecurityException(ExceptionCode.LAYER_NOT_VISIBLE, layerId, securityContext.getUserId());
-		}
-		RasterLayer layer = configurationService.getRasterLayer(layerId);
-		if (null == layer) {
-			throw new GeomajasException(ExceptionCode.RASTER_LAYER_NOT_FOUND, layerId);
-		}
-		return layer;
-	}
-
-	// @Override
-	// public List<RasterTile> getTiles(List<String> layerIds, Map<String, Filter> vectorLayerFilters,
-	// Map<String, NamedStyleInfo> vectorLayerStyleInfo, CoordinateReferenceSystem crs, Envelope bounds,
-	// double scale) throws GeomajasException {
-	//
-	// List<Layer<?>> layers = collectLayersFromIds(layerIds);
-	// if (aggregationService != null) {
-	// layers = aggregateRasterLayers(layers);
-	// }
-	//
-	// // Save the List<MapLayer> configuration in the cache for each rastertile (using cacheService)
-	// // cacheService.put(MapLayerServiceImpl.class.toString(), "some unique identifier, uuid", layers /*
-	// // * or a meta object
-	// // * if more
-	// // * information is
-	// // * needed
-	// // */);
-	//
-	// // next step is to set the url in the rastertile to a spring mvc controller where the image can be retrieved
-	// // based on the given uuid.
-	//
-	// return generateTilesFromLayers(layers, crs, bounds, scale);
-	// }
-
-	private List<RasterTile> generateTilesFromLayers(List<Layer<?>> layers, CoordinateReferenceSystem crs,
-			Envelope bounds, double scale) throws GeomajasException {
-		List<BufferedImage> wholeImages = new ArrayList<BufferedImage>();
-		for (Layer<?> layer : layers) {
-			if (layer instanceof RasterLayer) {
-				RasterLayer rasterLayer = (RasterLayer) layer;
-				List<RasterTile> tiles = rasterLayerService.getTiles(rasterLayer.getId(), crs, bounds, scale);
-				try {
-					wholeImages.add(createWholeImageFromTiles(rasterLayer, tiles));
-				} catch (MalformedURLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		}
-
-		BufferedImage aggregatedImage = new BufferedImage(wholeImages.get(0).getWidth(),
-				wholeImages.get(0).getHeight(), BufferedImage.TYPE_INT_ARGB);
-		Graphics aggregatedGraphics = aggregatedImage.getGraphics();
-		for (BufferedImage image : wholeImages) {
-			aggregatedGraphics.drawImage(image, 0, 0, null);
-		}
-		File imgFile = new File("/tmp/geomajas/tile" + layers.get(0).getId());
-		try {
-			ImageIO.write(aggregatedImage, "png", imgFile);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return null;
-
-	}
-
-	private BufferedImage createWholeImageFromTiles(RasterLayer rasterLayer, List<RasterTile> tiles)
-			throws MalformedURLException, IOException {
-		Collections.sort(tiles, new Comparator<RasterTile>() {
-
-			@Override
-			public int compare(RasterTile first, RasterTile second) {
-				TileCode firstCode = first.getCode();
-				TileCode secondCode = second.getCode();
-				if ((firstCode.getY() == secondCode.getY())) {
-					if ((firstCode.getX() < secondCode.getX()))
-						return -1;
-					if ((firstCode.getX() > secondCode.getX()))
-						return 1;
-					return 0;
-				} else {
-					if ((firstCode.getY() < secondCode.getY()))
-						return -1;
-					if ((firstCode.getY() > secondCode.getY()))
-						return 1;
-					return 0;
-				}
-			}
-		});
-
-		int rasterAxisSize = calculateRowSize(tiles);
-		int tileWidth = rasterLayer.getLayerInfo().getTileWidth();
-		int tileHeight = rasterLayer.getLayerInfo().getTileHeight();
-		System.out.println(rasterAxisSize);
-		BufferedImage wholeImage = new BufferedImage(tileWidth * rasterAxisSize, tileHeight * rasterAxisSize,
-				BufferedImage.TYPE_INT_ARGB);
-		Graphics wholeImageGraphics = wholeImage.getGraphics();
-		for (RasterTile tile : tiles) {
-			BufferedImage tileImage = ImageIO.read(new URL(tile.getUrl()));
-			wholeImageGraphics.drawImage(tileImage, (int) tile.getCode().getX() * tileWidth, (int) tile.getCode()
-					.getY() * tileHeight, null);
-		}
-		return wholeImage;
-	}
-
-	private int calculateRowSize(List<RasterTile> tiles) {
-		int tileLevel = tiles.get(0).getCode().getTileLevel();
-		return new Double(Math.pow(2, tileLevel)).intValue();
 	}
 
 	private List<Layer<?>> collectLayersFromIds(List<String> layerIds) {

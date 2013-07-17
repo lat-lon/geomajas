@@ -26,6 +26,8 @@ public class AggregatedWmsLayer implements RasterLayer {
 
 	private WmsLayerPainter painter;
 
+	private RasterLayerInfo rasterLayerInfo;
+
 	public AggregatedWmsLayer(List<WmsLayer> wmsLayers, WmsLayerPainter painter) {
 		if (wmsLayers != null) {
 			this.wmsLayers = wmsLayers;
@@ -33,7 +35,22 @@ public class AggregatedWmsLayer implements RasterLayer {
 			this.wmsLayers = Collections.emptyList();
 		}
 		id = generateId();
+		rasterLayerInfo = createRasterLayerInfo(wmsLayers.get(0).getLayerInfo());
 		this.painter = painter;
+	}
+
+	private RasterLayerInfo createRasterLayerInfo(RasterLayerInfo layerInfo) {
+		RasterLayerInfo cloned = new RasterLayerInfo();
+		cloned.setDataSourceName(generateDatasourceString());
+		cloned.setTileWidth(layerInfo.getTileWidth());
+		cloned.setTileHeight(layerInfo.getTileHeight());
+		cloned.setResolutions(layerInfo.getResolutions());
+		cloned.setZoomLevels(layerInfo.getZoomLevels());
+		cloned.setLayerType(layerInfo.getLayerType());
+		cloned.setCrs(layerInfo.getCrs());
+		cloned.setMaxExtent(layerInfo.getMaxExtent());
+		cloned.setExtraInfo(layerInfo.getExtraInfo());
+		return cloned;
 	}
 
 	@Override
