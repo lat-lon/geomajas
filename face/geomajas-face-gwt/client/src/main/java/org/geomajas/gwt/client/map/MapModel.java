@@ -24,6 +24,7 @@ import org.geomajas.configuration.client.ClientVectorLayerInfo;
 import org.geomajas.configuration.client.ScaleConfigurationInfo;
 import org.geomajas.configuration.client.ScaleInfo;
 import org.geomajas.global.GeomajasConstant;
+import org.geomajas.global.GeomajasException;
 import org.geomajas.gwt.client.command.GwtCommandDispatcher;
 import org.geomajas.gwt.client.command.event.TokenChangedEvent;
 import org.geomajas.gwt.client.command.event.TokenChangedHandler;
@@ -61,6 +62,7 @@ import org.geomajas.gwt.client.spatial.Bbox;
 import org.geomajas.gwt.client.spatial.geometry.GeometryFactory;
 import org.geomajas.gwt.client.util.Log;
 
+import com.google.gwt.core.shared.GWT;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 
@@ -337,54 +339,53 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		// Paint the MapModel itself (see MapModelPainter):
 		visitor.visit(this, group);
 
-		// if (mapLayer != null) {
-		if (recursive) { // TODO is this neccessary here?
-			List<Layer<?>> currentServerLayerStreak = new ArrayList<Layer<?>>();
-			String currentAggregationId = "";
-			boolean isFirst = true;
-			for (Layer<?> layer : layers) {
-				if (layer.getLayerInfo() instanceof ClientLayerInfo && layer.isShowing()) {
-					ClientLayerInfo layerInfo = (ClientLayerInfo) layer.getLayerInfo();
-					String aggregationId = layerInfo.getAggregationId();
-					if (!isFirst) {
-						if (aggregationId == null || !aggregationId.equals(currentAggregationId)) {
-							if (currentServerLayerStreak.size() > 0) {
-								ComboLayer combo = new ComboLayer(currentServerLayerStreak);
-								combo.accept(visitor, group, bounds, recursive);
-								currentServerLayerStreak.clear();
-							}
-						}
-					}
-					currentServerLayerStreak.add(layer);
-					currentAggregationId = aggregationId;
-					isFirst = false;
-				}
-			}
-			if (currentServerLayerStreak.size() > 0) {
-				ComboLayer combo = new ComboLayer(currentServerLayerStreak);
-				combo.accept(visitor, group, bounds, recursive);
-			}
+		if (recursive) {
+			aggregateAndVisitAllLayeres(visitor, group, bounds, recursive);
 		}
-		// } else {
-		// //
-		// // Paint the layers:
-		// if (recursive) {
-		// for (Layer<?> layer : layers) {
-		// if (layer.isShowing()) {
-		// layer.accept(visitor, group, bounds, recursive);
-		// } else {
-		// // JDM: paint the top part of the layer, if not we loose the map order
-		// layer.accept(visitor, group, bounds, false);
-		// }
-		// }
-		// }
-		// }
 
-		// }
 		// Paint the editing of a feature (if a feature is being edited):
 		if (featureEditor.getFeatureTransaction() != null) {
 			featureEditor.getFeatureTransaction().accept(visitor, group, bounds, recursive);
 		}
+	}
+
+	private void aggregateAndVisitAllLayeres(PainterVisitor visitor, Object group, Bbox bounds, boolean recursive) {
+		List<Layer<?>> unvisitedLayers = new ArrayList<Layer<?>>();
+		String currentAggregationId = null;
+		for (Layer<?> layer : layers) {
+			GWT.log("Aggregating layer with id "+layer.getId());
+			if (layer.isShowing()) {
+				if (layer.getLayerInfo() instanceof ClientLayerInfo) {
+					ClientLayerInfo layerInfo = (ClientLayerInfo) layer.getLayerInfo();
+					String aggregationId = layerInfo.getAggregationId();
+					if (aggregationId == null) {
+						endStreak(visitor, group, bounds, recursive, unvisitedLayers);
+						layer.accept(visitor, group, bounds, recursive);
+						currentAggregationId = null;
+					} else {
+						if (!aggregationId.equals(currentAggregationId) && currentAggregationId != null) {
+							endStreak(visitor, group, bounds, recursive, unvisitedLayers);
+							currentAggregationId = aggregationId;
+						}
+						unvisitedLayers.add(layer);
+					}
+				} else {
+					layer.accept(visitor, group, bounds, recursive);
+				}
+			}
+		}
+		endStreak(visitor, group, bounds, recursive, unvisitedLayers);
+	}
+
+	private void endStreak(PainterVisitor visitor, Object group, Bbox bounds, boolean recursive,
+			List<Layer<?>> unvisitedLayers) {
+		if (unvisitedLayers.size() == 1) {
+			unvisitedLayers.get(0).accept(visitor, group, bounds, recursive);
+		} else if (unvisitedLayers.size() > 1) {
+			ComboLayer comboLayer = new ComboLayer(unvisitedLayers);
+			comboLayer.accept(visitor, group, bounds, recursive);
+		}
+		unvisitedLayers.clear();
 	}
 
 	/**

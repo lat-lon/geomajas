@@ -43,6 +43,13 @@ public class AggregatedWmsLayerTest {
 		AggregatedWmsLayer aggregatedLayer = new AggregatedWmsLayer(layerList, null);
 		assertEquals("ds1,ds2,ds3", aggregatedLayer.getLayerInfo().getDataSourceName());
 	}
+	
+	@Test
+	public void testCreateAggregatedLayerWithDuplicateDataSourceShouldHaveCorrectedDataSource() throws GeomajasException {
+		List<WmsLayer> layerList = createDuplicateDataSourceLayerList();
+		AggregatedWmsLayer aggregatedLayer = new AggregatedWmsLayer(layerList, null);
+		assertEquals("ds1,ds2", aggregatedLayer.getLayerInfo().getDataSourceName());
+	}
 
 	@Test
 	public void testCreateAggregatedLayerWithMultipleWmsLayerShouldHaveCorrectId() throws GeomajasException {
@@ -69,6 +76,14 @@ public class AggregatedWmsLayerTest {
 		layerList.add(createConfiguredWmsLayer("ds1", "id1"));
 		layerList.add(createConfiguredWmsLayer("ds2", "id2"));
 		layerList.add(createConfiguredWmsLayer("ds3", "id3"));
+		return layerList;
+	}
+	
+	private List<WmsLayer> createDuplicateDataSourceLayerList() throws LayerException {
+		List<WmsLayer> layerList = new ArrayList<WmsLayer>();
+		layerList.add(createConfiguredWmsLayer("ds1", "id1"));
+		layerList.add(createConfiguredWmsLayer("ds2", "id2"));
+		layerList.add(createConfiguredWmsLayer("ds2", "id3"));
 		return layerList;
 	}
 

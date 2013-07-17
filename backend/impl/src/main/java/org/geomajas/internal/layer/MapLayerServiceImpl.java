@@ -111,10 +111,14 @@ public class MapLayerServiceImpl extends LayerServiceImpl implements MapLayerSer
 		return response;
 	}
 
-	private List<Layer<?>> collectLayersFromIds(List<String> layerIds) {
+	private List<Layer<?>> collectLayersFromIds(List<String> layerIds) throws GeomajasException {
 		List<Layer<?>> layers = new ArrayList<Layer<?>>();
 		for (String layerId : layerIds) {
-			layers.add(configurationService.getLayer(layerId));
+			RasterLayer rasterLayer = configurationService.getRasterLayer(layerId);
+			if (rasterLayer == null) {
+				throw new GeomajasException(ExceptionCode.RASTER_LAYER_NOT_FOUND, layerId);
+			}
+			layers.add(rasterLayer);
 		}
 		return layers;
 	}

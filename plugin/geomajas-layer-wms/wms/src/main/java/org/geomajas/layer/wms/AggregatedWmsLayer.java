@@ -1,5 +1,6 @@
 package org.geomajas.layer.wms;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,20 +29,20 @@ public class AggregatedWmsLayer implements RasterLayer {
 
 	private RasterLayerInfo rasterLayerInfo;
 
-	public AggregatedWmsLayer(List<WmsLayer> wmsLayers, WmsLayerPainter painter) {
-		if (wmsLayers != null) {
-			this.wmsLayers = wmsLayers;
-		} else {
-			this.wmsLayers = Collections.emptyList();
+	public AggregatedWmsLayer(List<WmsLayer> wmsLayers, WmsLayerPainter painter) throws GeomajasException {
+		if (wmsLayers == null || wmsLayers.isEmpty()) {
+			throw new GeomajasException(); // TODO code
 		}
-		id = generateId();
-		rasterLayerInfo = createRasterLayerInfo(wmsLayers.get(0).getLayerInfo());
+		this.wmsLayers = wmsLayers;
 		this.painter = painter;
+		this.id = generateId();
+		this.rasterLayerInfo = createRasterLayerInfo(wmsLayers);
 	}
 
-	private RasterLayerInfo createRasterLayerInfo(RasterLayerInfo layerInfo) {
+	private RasterLayerInfo createRasterLayerInfo(List<WmsLayer> layers) {
+		RasterLayerInfo layerInfo = layers.get(0).getLayerInfo();
 		RasterLayerInfo cloned = new RasterLayerInfo();
-		cloned.setDataSourceName(generateDatasourceString());
+		cloned.setDataSourceName(generateDatasourceString(layers));
 		cloned.setTileWidth(layerInfo.getTileWidth());
 		cloned.setTileHeight(layerInfo.getTileHeight());
 		cloned.setResolutions(layerInfo.getResolutions());
@@ -55,13 +56,7 @@ public class AggregatedWmsLayer implements RasterLayer {
 
 	@Override
 	public RasterLayerInfo getLayerInfo() {
-		if (!wmsLayers.isEmpty()) {
-			RasterLayerInfo template = wmsLayers.get(0).getLayerInfo();
-			template.setDataSourceName(generateDatasourceString());
-			return template;
-		} else {
-			return null;
-		}
+		return rasterLayerInfo;
 	}
 
 	@Override
@@ -97,15 +92,20 @@ public class AggregatedWmsLayer implements RasterLayer {
 		return builder.toString();
 	}
 
-	private String generateDatasourceString() {
+	private String generateDatasourceString(List<WmsLayer> wmsLayers) {
 		StringBuilder builder = new StringBuilder();
 		boolean isFirst = true;
+		List<String> alreadyUsedDataSources = new ArrayList<String>();
 		for (WmsLayer layer : wmsLayers) {
-			if (!isFirst) {
-				builder.append(",");
+			String dataSourceName = layer.getLayerInfo().getDataSourceName();
+			if (!alreadyUsedDataSources.contains(dataSourceName)) {
+				if (!isFirst) {
+					builder.append(",");
+				}
+				isFirst = false;
+				builder.append(dataSourceName);
+				alreadyUsedDataSources.add(dataSourceName);
 			}
-			isFirst = false;
-			builder.append(layer.getLayerInfo().getDataSourceName());
 		}
 		return builder.toString();
 	}

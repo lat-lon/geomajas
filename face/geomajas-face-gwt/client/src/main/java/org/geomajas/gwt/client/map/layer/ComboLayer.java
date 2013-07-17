@@ -49,5 +49,10 @@ public class ComboLayer extends AbstractLayer {
 		};
 		store.applyAndSync(bounds, onDelete, onUpdate);
 	}
+	
+	@Override
+	public boolean isShowing() {
+		return true;
+	}
 
 }
