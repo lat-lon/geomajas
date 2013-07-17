@@ -52,7 +52,7 @@ import org.geomajas.gwt.client.map.feature.Feature;
 import org.geomajas.gwt.client.map.feature.FeatureEditor;
 import org.geomajas.gwt.client.map.feature.FeatureTransaction;
 import org.geomajas.gwt.client.map.feature.LazyLoadCallback;
-import org.geomajas.gwt.client.map.layer.ComboLayer;
+import org.geomajas.gwt.client.map.layer.ComboRasterLayer;
 import org.geomajas.gwt.client.map.layer.Layer;
 import org.geomajas.gwt.client.map.layer.RasterLayer;
 import org.geomajas.gwt.client.map.layer.VectorLayer;
@@ -382,7 +382,7 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		if (unvisitedLayers.size() == 1) {
 			unvisitedLayers.get(0).accept(visitor, group, bounds, recursive);
 		} else if (unvisitedLayers.size() > 1) {
-			ComboLayer comboLayer = new ComboLayer(unvisitedLayers);
+			ComboRasterLayer comboLayer = new ComboRasterLayer(unvisitedLayers);
 			comboLayer.accept(visitor, group, bounds, recursive);
 		}
 		unvisitedLayers.clear();

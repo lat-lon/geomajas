@@ -10,14 +10,18 @@
  */
 package org.geomajas.gwt.client.map.store;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.geomajas.command.CommandRequest;
 import org.geomajas.command.CommandResponse;
+import org.geomajas.command.dto.GetMapTilesRequest;
 import org.geomajas.command.dto.GetRasterTilesRequest;
 import org.geomajas.command.dto.GetRasterTilesResponse;
+import org.geomajas.command.render.GetMapTilesCommand;
 import org.geomajas.gwt.client.command.CommandCallback;
 import org.geomajas.gwt.client.command.Deferred;
 import org.geomajas.gwt.client.command.GwtCommand;
@@ -25,6 +29,8 @@ import org.geomajas.gwt.client.command.GwtCommandDispatcher;
 import org.geomajas.gwt.client.map.MapViewState;
 import org.geomajas.gwt.client.map.cache.tile.RasterTile;
 import org.geomajas.gwt.client.map.cache.tile.TileFunction;
+import org.geomajas.gwt.client.map.layer.ComboRasterLayer;
+import org.geomajas.gwt.client.map.layer.Layer;
 import org.geomajas.gwt.client.map.layer.RasterLayer;
 import org.geomajas.gwt.client.spatial.Bbox;
 import org.geomajas.gwt.client.spatial.Matrix;
@@ -54,6 +60,7 @@ public class DefaultRasterLayerStore implements RasterLayerStore {
 		this.rasterLayer = rasterLayer;
 	}
 
+	@Override
 	public void applyAndSync(Bbox bounds, TileFunction<RasterTile> onDelete, TileFunction<RasterTile> onUpdate) {
 		MapViewState viewState = rasterLayer.getMapModel().getMapView().getViewState();
 		boolean panning = lastViewState == null || viewState.isPannableFrom(lastViewState);
@@ -98,18 +105,42 @@ public class DefaultRasterLayerStore implements RasterLayerStore {
 	}
 
 	private void fetchAndUpdateTiles(Bbox bounds, final TileFunction<RasterTile> onUpdate) {
-		// fetch a bigger area to avoid server requests while panning
 		tileBounds = bounds.scale(3);
-		GetRasterTilesRequest request = new GetRasterTilesRequest();
-		request.setBbox(new org.geomajas.geometry.Bbox(tileBounds.getX(), tileBounds.getY(), tileBounds.getWidth(),
-				tileBounds.getHeight()));
-		request.setCrs(getLayer().getMapModel().getCrs());
-		request.setLayerId(getLayer().getServerLayerId());
-		request.setScale(getLayer().getMapModel().getMapView().getCurrentScale());
-		GwtCommand command = new GwtCommand(GetRasterTilesRequest.COMMAND);
-		command.setCommandRequest(request);
-		RasterCallBack callBack = new RasterCallBack(worldToPan(bounds), onUpdate);
-		deferred = GwtCommandDispatcher.getInstance().execute(command, callBack);
+		if (rasterLayer instanceof ComboRasterLayer) {
+			GetMapTilesRequest request = new GetMapTilesRequest();
+			request.setBbox(new org.geomajas.geometry.Bbox(tileBounds.getX(), tileBounds.getY(), tileBounds.getWidth(),
+					tileBounds.getHeight()));
+			request.setCrs(getLayer().getMapModel().getCrs());
+			List<String> layerIds = extractServerLayerIdsForComboLayer();
+			request.setVisibleLayers(layerIds);
+			request.setScale(getLayer().getMapModel().getMapView().getCurrentScale());
+			GwtCommand command = new GwtCommand(GetMapTilesRequest.COMMAND);
+			command.setCommandRequest(request);
+			RasterCallBack callBack = new RasterCallBack(worldToPan(bounds), onUpdate);
+			deferred = GwtCommandDispatcher.getInstance().execute(command, callBack);
+		} else {
+			// fetch a bigger area to avoid server requests while panning
+			GetRasterTilesRequest request = new GetRasterTilesRequest();
+
+			request.setBbox(new org.geomajas.geometry.Bbox(tileBounds.getX(), tileBounds.getY(), tileBounds.getWidth(),
+					tileBounds.getHeight()));
+			request.setCrs(getLayer().getMapModel().getCrs());
+			request.setLayerId(getLayer().getServerLayerId());
+			request.setScale(getLayer().getMapModel().getMapView().getCurrentScale());
+			GwtCommand command = new GwtCommand(GetRasterTilesRequest.COMMAND);
+			command.setCommandRequest(request);
+			RasterCallBack callBack = new RasterCallBack(worldToPan(bounds), onUpdate);
+			deferred = GwtCommandDispatcher.getInstance().execute(command, callBack);
+		}
+	}
+
+	private List<String> extractServerLayerIdsForComboLayer() {
+		ComboRasterLayer combo = (ComboRasterLayer) rasterLayer;
+		List<String> layerIds = new ArrayList<String>();
+		for (Layer layer : combo.getLayers()) {
+			layerIds.add(layer.getServerLayerId());
+		}
+		return layerIds;
 	}
 
 	private void updateTiles(Bbox bounds, final TileFunction<RasterTile> onUpdate) {
@@ -170,8 +201,10 @@ public class DefaultRasterLayerStore implements RasterLayerStore {
 	 * Returns the difference in j index, taking orientation of y-axis into account. Some layers (WMS 1.8.0) have
 	 * different j-index orientation than screen coordinates (lower-left = (0,0) vs upper-left = (0,0)).
 	 * 
-	 * @param tile1 tile
-	 * @param tile2 tile
+	 * @param tile1
+	 *            tile
+	 * @param tile2
+	 *            tile
 	 * @return +/-(j2-j1)
 	 */
 	private int getOrientedJDiff(RasterTile tile1, RasterTile tile2) {

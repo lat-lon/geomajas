@@ -294,6 +294,8 @@ public class MapWidget extends VLayout {
 		painterVisitor.registerPainter(new MapModelPainter(this));
 		painterVisitor.registerPainter(new RasterLayerPainter(this));
 		painterVisitor.registerPainter(new RasterTilePainter());
+		painterVisitor.registerPainter(new ComboRasterLayerPainter(this));
+
 		painterVisitor.registerPainter(new VectorLayerPainter(this));
 		painterVisitor.registerPainter(new VectorTilePainter(this.getMapModel().getMapView()));
 		painterVisitor.registerPainter(new FeatureTransactionPainter(this));
