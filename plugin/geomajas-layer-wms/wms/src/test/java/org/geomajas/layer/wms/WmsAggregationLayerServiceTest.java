@@ -12,6 +12,8 @@
 package org.geomajas.layer.wms;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -81,6 +83,18 @@ public class WmsAggregationLayerServiceTest {
 	public void testAggregateMixedLayerTypeShouldFail() throws GeomajasException {
 		List<Layer<?>> list = createConfiguredWmsLayerNonWmsLayerWithin();
 		service.aggregate(list);
+	}
+	
+	@Test
+	public void testCanHandleWmsLayerListShouldReturnTrue() throws LayerException {
+		List<Layer<?>> layerList = createConfiguredWmsLayerListSameBaseUrls();
+		assertTrue(service.canHandle(layerList));
+	}
+	
+	@Test
+	public void testCanHandleNonWmsLayerListShouldReturnFalse() throws LayerException {
+		List<Layer<?>> layerList = createConfiguredWmsLayerNonWmsLayerWithin();
+		assertFalse(service.canHandle(layerList));
 	}
 
 	private Layer<?> createConfiguredWmsLayer() throws LayerException {

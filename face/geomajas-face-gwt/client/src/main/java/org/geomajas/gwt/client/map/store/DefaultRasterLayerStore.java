@@ -16,12 +16,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.geomajas.command.CommandRequest;
 import org.geomajas.command.CommandResponse;
 import org.geomajas.command.dto.GetMapTilesRequest;
 import org.geomajas.command.dto.GetRasterTilesRequest;
 import org.geomajas.command.dto.GetRasterTilesResponse;
-import org.geomajas.command.render.GetMapTilesCommand;
 import org.geomajas.gwt.client.command.CommandCallback;
 import org.geomajas.gwt.client.command.Deferred;
 import org.geomajas.gwt.client.command.GwtCommand;

@@ -9,7 +9,6 @@ import org.geomajas.global.GeomajasException;
 import org.geomajas.layer.RasterLayer;
 import org.geomajas.layer.tile.RasterTile;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vividsolutions.jts.geom.Envelope;
 

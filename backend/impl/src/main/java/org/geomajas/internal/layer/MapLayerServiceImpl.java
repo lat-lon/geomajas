@@ -92,23 +92,41 @@ public class MapLayerServiceImpl extends LayerServiceImpl implements MapLayerSer
 			double scale) throws GeomajasException {
 		List<Layer<?>> layers = collectLayersFromIds(layerIds);
 		List<RasterTile> response = new ArrayList<RasterTile>();
-		if (aggregationService != null) {
-			Layer<?> layer = aggregateRasterLayers(layers);
-			if (layer != null) {
-				log.debug("getTiles start on layer {}", layerIds);
-				long ts = System.currentTimeMillis();
-				PipelineContext context = pipelineService.createContext();
-				context.put(PipelineCode.LAYER_KEY, layer);
-				context.put(PipelineCode.CRS_KEY, crs);
-				context.put(PipelineCode.BOUNDS_KEY, bounds);
-				context.put(PipelineCode.SCALE_KEY, scale);
-				pipelineService.execute(PipelineCode.PIPELINE_GET_RASTER_TILES, layer.getId(), context, response);
-				log.debug("getTiles done on layer {}, time {}s", layer.getId(),
-						(System.currentTimeMillis() - ts) / 1000.0);
+		if (layerIds.size() > 0) {
+			if (aggregationService != null) {
+				aggregateAndFillResponseWithTiles(crs, bounds, scale, layers, response);
+			} else {
+				Layer<?> firstLayer = layers.get(0);
+				takeFirstLayerAndFillResponseWithTiles(layerIds.get(0), crs, bounds, scale, firstLayer, response);
 			}
 		}
-		// TODO no aggregation service
 		return response;
+	}
+
+	private void takeFirstLayerAndFillResponseWithTiles(String string, CoordinateReferenceSystem crs, Envelope bounds,
+			double scale, Layer<?> layer, List<RasterTile> response) throws GeomajasException {
+		fillResponse(crs, bounds, scale, response, layer);
+	}
+
+	private void aggregateAndFillResponseWithTiles(CoordinateReferenceSystem crs, Envelope bounds, double scale,
+			List<Layer<?>> layers, List<RasterTile> response) throws GeomajasException {
+		Layer<?> layer = aggregateRasterLayers(layers);
+		fillResponse(crs, bounds, scale, response, layer);
+	}
+
+	private void fillResponse(CoordinateReferenceSystem crs, Envelope bounds, double scale, List<RasterTile> response,
+			Layer<?> layer) throws GeomajasException {
+		if (layer != null) {
+			// log.debug("getTiles start on layer {}", layerIds);
+			long ts = System.currentTimeMillis();
+			PipelineContext context = pipelineService.createContext();
+			context.put(PipelineCode.LAYER_KEY, layer);
+			context.put(PipelineCode.CRS_KEY, crs);
+			context.put(PipelineCode.BOUNDS_KEY, bounds);
+			context.put(PipelineCode.SCALE_KEY, scale);
+			pipelineService.execute(PipelineCode.PIPELINE_GET_RASTER_TILES, layer.getId(), context, response);
+			log.debug("getTiles done on layer {}, time {}s", layer.getId(), (System.currentTimeMillis() - ts) / 1000.0);
+		}
 	}
 
 	private List<Layer<?>> collectLayersFromIds(List<String> layerIds) throws GeomajasException {

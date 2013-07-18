@@ -10,6 +10,12 @@ import org.geomajas.gwt.client.map.event.LayerStyleChangeEvent;
 import org.geomajas.gwt.client.map.store.DefaultRasterLayerStore;
 import org.geomajas.gwt.client.spatial.Bbox;
 
+/**
+ * Client side combined {@link RasterLayer}
+ * 
+ * @author Alexander Erben
+ *
+ */
 public class ComboRasterLayer extends RasterLayer {
 
 	private List<Layer<?>> layers;
