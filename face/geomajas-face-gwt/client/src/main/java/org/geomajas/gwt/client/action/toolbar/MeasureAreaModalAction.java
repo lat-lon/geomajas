@@ -29,8 +29,8 @@ public class MeasureAreaModalAction extends ToolbarModalAction {
 	private MapWidget mapWidget;
 
 	public MeasureAreaModalAction(MapWidget mapWidget) {
-		super(WidgetLayout.iconMeasureLength, I18nProvider.getToolbar().measureSelectTitle(),
-				I18nProvider.getToolbar().measureSelectTooltip());
+		super(WidgetLayout.iconMeasureArea, I18nProvider.getToolbar().measureAreaSelectTitle(),
+				I18nProvider.getToolbar().measureAreaSelectTooltip());
 		this.mapWidget = mapWidget;
 	}
 
