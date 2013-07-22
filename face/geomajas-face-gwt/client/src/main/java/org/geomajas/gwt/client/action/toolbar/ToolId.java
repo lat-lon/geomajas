@@ -39,6 +39,9 @@ public interface ToolId {
 
 	/** Tool id for the measure distance toolbar button. */
 	String TOOL_MEASURE_DISTANCE_MODE = "MeasureDistanceMode";
+	
+	/** Tool id for the measure area toolbar button. */
+	String TOOL_MEASURE_AREA_MODE = "MeasureAreaMode";
 
 	/** Tool id for the pan toolbar button. */
 	String TOOL_PAN_MODE = "PanMode";
