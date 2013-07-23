@@ -69,7 +69,7 @@
 			<dependency>
 				<groupId>org.geomajas.plugin</groupId>
 				<artifactId>geomajas-layer-wms</artifactId>
-				<version>1.11.0-SNAPSHOT</version>
+				<version>1.11.0-latlon-SNAPSHOT</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -88,7 +88,7 @@
 		<dependency>
 			<groupId>org.geomajas.plugin</groupId>
 			<artifactId>geomajas-layer-wms</artifactId>
-			<version>1.11.0-SNAPSHOT</version>
+			<version>1.11.0-latlon-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.geomajas.plugin</groupId>

@@ -13,7 +13,7 @@
 	<parent>
 		<groupId>org.geomajas</groupId>
 		<artifactId>geomajas-parent</artifactId>
-		<version>1.1.0</version>
+		<version>1.2.0-latlon-SNAPSHOT</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.geomajas.plugin</groupId>
@@ -145,8 +145,8 @@
 	</profiles>
 
 	<properties>
-		<geotools-layer-backend-version>1.13.0-SNAPSHOT</geotools-layer-backend-version>
-		<geotools-gwt-face-version>1.14.0-SNAPSHOT</geotools-gwt-face-version>
+		<geotools-layer-backend-version>1.13.0-latlon-SNAPSHOT</geotools-layer-backend-version>
+		<geotools-gwt-face-version>1.14.0-latlon-SNAPSHOT</geotools-gwt-face-version>
 		<geotools-version>9.2</geotools-version>
 		<geodb-version>0.7</geodb-version>
 		<google-gwt-version>2.5.0</google-gwt-version>

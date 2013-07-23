@@ -15,7 +15,7 @@
 	<parent>
 		<groupId>org.geomajas</groupId>
 		<artifactId>geomajas-al-parent</artifactId>
-		<version>1.1.0</version>
+		<version>1.1.0-latlon-SNAPSHOT</version>
 	</parent>
 
 	<groupId>org.geomajas.project</groupId>

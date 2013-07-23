@@ -32,12 +32,37 @@
 		<url>http://ci.geomajas.org/svn/repos/Geomajas/list/trunk/project</url>
 	</scm>
 
+<repositories>
+    <repository>
+      <id>latlon-repo</id>
+      <url>http://repo.lat-lon/nexus/content/groups/public/</url>
+    </repository>
+  </repositories>
+
+  <distributionManagement>
+    <repository>
+      <id>latlon-releases</id>
+      <url>http://repo.lat-lon/nexus/content/repositories/releases/</url>
+    </repository>
+    <snapshotRepository>
+      <id>latlon-snapshots</id>
+      <url>http://repo.lat-lon/nexus/content/repositories/snapshots/</url>
+    </snapshotRepository>
+  </distributionManagement>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>latlon-repo</id>
+      <url>http://repo.lat-lon/nexus/content/groups/public/</url>
+    </pluginRepository>
+  </pluginRepositories>
+
 	<modules>
 		<module>geomajas-project-api</module>
 		<module>geomajas-project-geometry</module>
 		<module>geomajas-project-sld</module>
 		<module>geomajas-project-sld-editor</module>
-		<module>geomajas-project-profiling</module>
+	<!--	<module>geomajas-project-profiling</module> -->
 		<module>geomajas-project-codemirror-gwt</module>
 	</modules>
 
