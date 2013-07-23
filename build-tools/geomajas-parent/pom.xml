@@ -10,15 +10,15 @@
   -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<parent>
+<!--	<parent>
 		<groupId>org.sonatype.oss</groupId>
 		<artifactId>oss-parent</artifactId>
 		<version>7</version>
-	</parent>
+	</parent>-->
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.geomajas</groupId>
 	<artifactId>geomajas-parent</artifactId>
-	<version>1.2.0-SNAPSHOT</version>
+	<version>1.2.0-latlon-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>Geomajas parent module, contains some maven settings</name>
 	<description>
@@ -33,6 +33,31 @@
 		<developerConnection>scm:svn:https://svn.geomajas.org/majas/trunk/build-tools/geomajas-parent</developerConnection>
 		<url>http://ci.geomajas.org/svn/repos/Geomajas/list/trunk/build-tools/geomajas-parent</url>
 	</scm>
+  
+  <repositories>
+    <repository>
+      <id>latlon-repo</id>
+      <url>http://repo.lat-lon/nexus/content/groups/public/</url>
+    </repository>
+  </repositories>
+
+  <distributionManagement>
+    <repository>
+      <id>latlon-releases</id>
+      <url>http://repo.lat-lon/nexus/content/repositories/releases/</url>
+    </repository>
+    <snapshotRepository>
+      <id>latlon-snapshots</id>
+      <url>http://repo.lat-lon/nexus/content/repositories/snapshots/</url>
+    </snapshotRepository>
+  </distributionManagement>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>latlon-repo</id>
+      <url>http://repo.lat-lon/nexus/content/groups/public/</url>
+    </pluginRepository>
+  </pluginRepositories>
 
 	<organization>
 		<name>Geosparc</name>
@@ -357,6 +382,8 @@
 			</plugins>
 		</pluginManagement>
 	</build>
+  
+  
 
 	<profiles>
 		<profile>

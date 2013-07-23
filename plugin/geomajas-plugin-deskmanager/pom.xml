@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>org.geomajas</groupId>
 		<artifactId>geomajas-parent</artifactId>
-		<version>1.1.0</version>
+		<version>1.2.0-latlon-SNAPSHOT</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.geomajas.plugin</groupId>
@@ -81,7 +81,7 @@
 			<dependency>
 				<groupId>org.geomajas.plugin</groupId>
 				<artifactId>geomajas-plugin-wms-all</artifactId>
-				<version>1.11.0-SNAPSHOT</version>
+				<version>1.11.0-latlon-SNAPSHOT</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -282,8 +282,8 @@
 	</dependencyManagement>
 
 	<properties>
-		<gdm-backend-version>1.13.0-SNAPSHOT</gdm-backend-version>
-		<gdm-gwt-version>1.14.0-SNAPSHOT</gdm-gwt-version>
+		<gdm-backend-version>1.13.0-latlon-SNAPSHOT</gdm-backend-version>
+		<gdm-gwt-version>1.14.0-latlon-SNAPSHOT</gdm-gwt-version>
 		<gdm-sldeditor-version>1.0.0-SNAPSHOT</gdm-sldeditor-version>
 		<gdm-geotools-version>9.2</gdm-geotools-version>
 	</properties>

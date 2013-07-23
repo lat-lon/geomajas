@@ -13,12 +13,12 @@
 	<parent>
 		<groupId>org.geomajas</groupId>
 		<artifactId>geomajas-parent</artifactId>
-		<version>1.0.9</version>
+		<version>1.2.0-latlon-SNAPSHOT</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.geomajas</groupId>
 	<artifactId>geomajas-face-common-gwt-all</artifactId>
-	<version>1.5.0-SNAPSHOT</version>
+	<version>1.5.0-latlon-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>common-gwt plug-in parent</name>
 	<description>common-gwt plug-in grouping module</description>
@@ -100,7 +100,7 @@
 	</profiles>
 
 	<properties>
-		<common-gwt-backend-version>1.11.0</common-gwt-backend-version>
+		<common-gwt-backend-version>1.13.0-latlon-SNAPSHOT</common-gwt-backend-version>
 		<common-gwt-gwt-version>2.5.0</common-gwt-gwt-version>
 	</properties>	
 </project>
