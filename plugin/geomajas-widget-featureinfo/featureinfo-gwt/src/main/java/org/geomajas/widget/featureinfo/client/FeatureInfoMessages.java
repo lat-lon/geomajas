@@ -46,4 +46,7 @@ public interface FeatureInfoMessages extends Messages {
 	
 	String multiLayerFeatureInfoNoResult();
 	String multiLayerFeatureInfoLayerNotFound();
+	String nearbyLayersListTooltip();
+	String featureInfoNoHtmlAvailableMessage();
+	String layerHtmlWindowTitleMessage();
 }

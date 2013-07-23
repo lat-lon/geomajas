@@ -4,3 +4,41 @@
 *.jar
 *.war
 *.ear
+/build-tools/geomajas-parent/target/
+/backend/target/
+/backend/api/target/
+/backend/testdata/target/
+/backend/api-experimental/target/
+/backend/impl/target/
+/backend/common-servlet/target/
+/backend/command/target/
+/project/geomajas-project-api/target/
+/build-tools/geomajas-al-parent/target/
+/project/geomajas-project-api/annotation/target/
+/project/geomajas-project-geometry/target/
+/project/geomajas-project-geometry/core/target/
+/project/geomajas-project-geometry/jts/target/
+/project/geomajas-project-geometry/documentation/target/
+<<<<<<< HEAD
+
+# Eclipse stuff
+*.classpath
+*.project
+*.settings
+
+# Mvn target
+target
+
+/build-tools/geomajas-doc-parent/target/
+/project/geomajas-project-sld/target/
+/project/geomajas-project-sld/api/target/
+/project/geomajas-project-sld/impl/target/
+/project/geomajas-project-sld/documentation/target/
+/project/geomajas-project-sld-editor/target/
+/project/geomajas-project-sld-editor/common-gwt/target/
+/project/geomajas-project-sld-editor/gwt/target/
+/project/geomajas-project-sld-editor/puregwt/target/
+/project/geomajas-project-sld-editor/webapp/target/
+/project/geomajas-project-codemirror-gwt/target/
+/project/geomajas-project-codemirror-gwt/codemirror/target/
+/project/geomajas-project-codemirror-gwt/documentation/target/
