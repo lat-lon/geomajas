@@ -56,7 +56,13 @@ public interface MenuMessages extends Messages {
 
 	String getMeasureDistanceString(String distance, String radius);
 
+	String getMeasureAreaString(String totalArea, String currentArea);
+	
 	String distance();
+
+	String area();
+	
+	String invalidGeometryToMeasure();
 
 	// Constants for menu actions regarding measuring distances:
 

@@ -63,6 +63,12 @@ public final class ToolbarRegistry {
 				return new MeasureModalAction(mapWidget);
 			}
 		});
+		REGISTRY.put(ToolId.TOOL_MEASURE_AREA_MODE, new ToolCreator() {
+
+			public ToolbarBaseAction createTool(MapWidget mapWidget) {
+				return new MeasureAreaModalAction(mapWidget);
+			}
+		});
 		REGISTRY.put(ToolId.TOOL_PAN_MODE, new ToolCreator() {
 
 			public ToolbarBaseAction createTool(MapWidget mapWidget) {

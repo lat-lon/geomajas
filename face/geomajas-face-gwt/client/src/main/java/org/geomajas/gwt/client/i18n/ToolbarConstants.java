@@ -111,6 +111,8 @@ public interface ToolbarConstants extends Constants {
 
 	String measureSelectTitle();
 
+	String measureAreaSelectTitle();
+
 	String selectionSelectTitle();
 
 	String zoomInTitle();
@@ -141,6 +143,8 @@ public interface ToolbarConstants extends Constants {
 
 	String measureSelectTooltip();
 
+	String measureAreaSelectTooltip();
+	
 	String selectionSelectTooltip();
 
 	String zoomInTooltip();
