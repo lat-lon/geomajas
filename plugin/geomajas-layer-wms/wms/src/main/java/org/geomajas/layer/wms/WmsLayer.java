@@ -352,7 +352,7 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 		String line;
 		try {
 
-			br = new BufferedReader(new InputStreamReader(is));
+			br = new BufferedReader(new InputStreamReader(is, "utf-8"));
 			while ((line = br.readLine()) != null) {
 				sb.append(line);
 			}
