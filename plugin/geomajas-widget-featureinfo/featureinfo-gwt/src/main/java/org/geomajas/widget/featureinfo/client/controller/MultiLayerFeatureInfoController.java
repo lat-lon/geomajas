@@ -51,4 +51,8 @@ public class MultiLayerFeatureInfoController extends ListenerController {
 	public void setFeaturesListLabels(Map<String, String> featuresListLabels) {
 		((MultiLayerFeatureInfoListener) getListener()).setFeaturesListLabels(featuresListLabels);
 	}
+	
+	public void setFeatureInfoFormat(String fiFormat) {
+		((MultiLayerFeatureInfoListener) getListener()).setFeatureInfoFormat(fiFormat);
+	}
 }

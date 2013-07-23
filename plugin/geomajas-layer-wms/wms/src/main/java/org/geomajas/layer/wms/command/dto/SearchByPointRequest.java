@@ -72,6 +72,9 @@ public class SearchByPointRequest extends LayerIdsCommandRequest {
 	/** Map that contains the client to server layer mapping.*/
 	private Map<String, String> layerMapping;
 	
+	/** Format of the GFI request that is to be sent to the layer **/
+	private String featureInfoFormat;
+	
 	// -------------------------------------------------------------------------
 	// Command fields:
 	// -------------------------------------------------------------------------
@@ -238,6 +241,24 @@ public class SearchByPointRequest extends LayerIdsCommandRequest {
 		for (String s : layerIds) {
 			layerMapping.put(s, s);
 		}
+	}
+
+	/**
+	 * ...
+	 * @return  featureInfoFormat
+	 * @since 1.11.0
+	 */
+	public String getFeatureInfoFormat() {
+		return featureInfoFormat;
+	}
+
+	/**
+	 * ...
+	 * @param featureInfoFormat
+	 * @since 1.11.0
+	 */
+	public void setFeatureInfoFormat(String featureInfoFormat) {
+		this.featureInfoFormat = featureInfoFormat;
 	}
 	
 }

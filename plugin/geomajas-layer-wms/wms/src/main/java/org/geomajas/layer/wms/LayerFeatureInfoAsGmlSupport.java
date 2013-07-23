@@ -19,20 +19,16 @@ import org.geomajas.layer.feature.Feature;
 import java.util.List;
 
 /**
- * Extension for any type of layer that supports retrieving feature info.
+ * Extension for any type of layer that supports retrieving feature info as GML features.
  *
- * @author Oliver May
- * @since 1.8.0
- * 
- * @deprecated Use {@link LayerFeatureInfoAsGmlSupport} instead
+ * @author Alexander Erben
  */
 @FutureApi(allMethods = true)
 @UserImplemented
-@Deprecated
-public interface LayerFeatureInfoSupport extends LayerFeatureInfoAsGmlSupport {
+public interface LayerFeatureInfoAsGmlSupport {
 
 	/**
-	 * Return the list of features that lay within a given coordinate and buffer for the given view scale.
+	 * Return the list of features as gml that lay within a given coordinate and buffer for the given view scale.
 	 *
 	 * @param coordinate coordinate used to search for features in the layer coordinate space
 	 * @param layerScale the scale of the layer
@@ -40,14 +36,14 @@ public interface LayerFeatureInfoSupport extends LayerFeatureInfoAsGmlSupport {
 	 * @return features a list of features
 	 * @throws LayerException oops
 	 */
-	List<Feature> getFeaturesByLocation(Coordinate coordinate, double layerScale, int pixelTolerance)
+	List<Feature> getFeatureInfoAsGml(Coordinate coordinate, double layerScale, int pixelTolerance)
 			throws LayerException;
 	
 	/**
-	 * Return whether the layer should support feature info support.
+	 * Return whether the layer should support feature info support as gml.
 	 *
-	 * @return the enableFeatureInfoSupport true if feature info support is enabled
+	 * @return the enableFeatureInfoSupport true if feature info gml support is enabled
 	 */
-	boolean isEnableFeatureInfoSupport();
+	boolean isEnableFeatureInfoAsGmlSupport();
 
 }

@@ -11,6 +11,8 @@
 
 package org.geomajas.layer.wms;
 
+import static org.fest.assertions.Assertions.assertThat;
+
 import java.util.List;
 
 import junit.framework.Assert;
@@ -21,6 +23,7 @@ import org.geomajas.global.GeomajasException;
 import org.geomajas.layer.tile.RasterTile;
 import org.geomajas.service.GeoService;
 import org.geotools.geometry.jts.JTS;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,8 +35,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.vividsolutions.jts.geom.Envelope;
-
-import static org.fest.assertions.Assertions.assertThat;
 
 /**
  * Test for {@link WmsLayer}.
@@ -77,6 +78,11 @@ public class WmsLayerTest {
 	@Autowired
 	private GeoService geoService;
 
+	@After
+	public void cleanupWmsClient(){
+		wms.setStyles("");
+	}
+	
 	@Test
 	public void testLevels() throws Exception {
 		// this test failed before http://jira.geomajas.org/browse/WMS-18
@@ -112,15 +118,19 @@ public class WmsLayerTest {
 		Assert.assertEquals(1, tiles.size());
 		RasterTile tile = tiles.get(0);
 
-		// ZOOMED_IN_SCALE 1E-4 corresponds to level 4 with current algorithm !!!!
-		Assert.assertEquals("http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=bluemarble&"
+		// ZOOMED_IN_SCALE 1E-4 corresponds to level 4 with current algorithm
+		// !!!!
+		Assert.assertEquals("http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=geosparc%3Abluemarble&"
 				+ "WIDTH=512&HEIGHT=512&bbox=-20,-28,12,4&format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&"
 				+ "styles=&request=GetMap", tile.getUrl());
 
 		// Assert.assertEquals("http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&"
 		// + "layers=bluemarble&WIDTH=512&HEIGHT=512&"
-		// + "bbox=-20.032430835865227,-28.207099921352835,11.947593278789554,3.7729241933019466&"
-		// + "format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap", tile.getUrl());
+		// +
+		// "bbox=-20.032430835865227,-28.207099921352835,11.947593278789554,3.7729241933019466&"
+		// +
+		// "format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap",
+		// tile.getUrl());
 		Assert.assertEquals(4, tile.getCode().getTileLevel());
 		Assert.assertEquals(5, tile.getCode().getX());
 		Assert.assertEquals(12, tile.getCode().getY());
@@ -151,10 +161,13 @@ public class WmsLayerTest {
 		Assert.assertEquals(1, tiles.size());
 		RasterTile tile = tiles.get(0);
 
-		// ZOOMED_IN_SCALE 1E-4 corresponds to level 4 with current algorithm !!!!
-		assertThat(tile.getUrl()).isEqualTo("http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&" +
-				"layers=geomajas%3Abluemarble&WIDTH=512&HEIGHT=512&bbox=0,0,45,45&format=image/png&version=1.1.1&" +
-				"srs=EPSG%3A4326&styles=&what%3F=value%2Bmore%21&request=GetMap");
+		// ZOOMED_IN_SCALE 1E-4 corresponds to level 4 with current algorithm
+		// !!!!
+		assertThat(tile.getUrl())
+				.isEqualTo(
+						"http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&"
+								+ "layers=geomajas%3Abluemarble&WIDTH=512&HEIGHT=512&bbox=0,0,45,45&format=image/png&version=1.1.1&"
+								+ "srs=EPSG%3A4326&styles=&what%3F=value%2Bmore%21&request=GetMap");
 
 	}
 
@@ -177,12 +190,14 @@ public class WmsLayerTest {
 		// Assert.assertEquals(4, tiles.size());
 		Assert.assertEquals(2, tiles.size());
 
-		Assert.assertEquals("http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=bluemarble&WIDTH=512&"
-				+ "HEIGHT=512&bbox=0.0859375,47.3828125,0.09375,47.390625&format=image/jpeg&version=1.1.1&"
-				+ "srs=EPSG%3A4326&styles=&request=GetMap", tiles.get(0).getUrl());
-		Assert.assertEquals("http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=bluemarble&WIDTH=512&"
-				+ "HEIGHT=512&bbox=0.09375,47.3828125,0.1015625,47.390625&format=image/jpeg&version=1.1.1&"
-				+ "srs=EPSG%3A4326&styles=&request=GetMap", tiles.get(1).getUrl());
+		Assert.assertEquals(
+				"http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=geosparc%3Abluemarble&WIDTH=512&"
+						+ "HEIGHT=512&bbox=0.0859375,47.3828125,0.09375,47.390625&format=image/jpeg&version=1.1.1&"
+						+ "srs=EPSG%3A4326&styles=&request=GetMap", tiles.get(0).getUrl());
+		Assert.assertEquals(
+				"http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=geosparc%3Abluemarble&WIDTH=512&"
+						+ "HEIGHT=512&bbox=0.09375,47.3828125,0.1015625,47.390625&format=image/jpeg&version=1.1.1&"
+						+ "srs=EPSG%3A4326&styles=&request=GetMap", tiles.get(1).getUrl());
 
 		RasterTile tile = tiles.get(1);
 		Assert.assertEquals(16, tile.getCode().getTileLevel());
@@ -194,23 +209,34 @@ public class WmsLayerTest {
 		Assert.assertEquals(348.0, tile.getBounds().getWidth(), DELTA);
 
 		// Assert.assertEquals("http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=bluemarble&"
-		// + "WIDTH=512&HEIGHT=512&bbox=0.08895567100992707,47.37804639974752,0.09677101398176689,"
-		// + "47.38586174271936&format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap", tiles
+		// +
+		// "WIDTH=512&HEIGHT=512&bbox=0.08895567100992707,47.37804639974752,0.09677101398176689,"
+		// +
+		// "47.38586174271936&format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap",
+		// tiles
 		// .get(0).getUrl());
 		// Assert.assertEquals("http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=bluemarble&"
-		// + "WIDTH=512&HEIGHT=512&bbox=0.08895567100992707,47.38586174271936,0.09677101398176689,"
-		// + "47.393677085691195&format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap",
+		// +
+		// "WIDTH=512&HEIGHT=512&bbox=0.08895567100992707,47.38586174271936,0.09677101398176689,"
+		// +
+		// "47.393677085691195&format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap",
 		// tiles.get(1).getUrl());
 		// Assert.assertEquals("http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=bluemarble&"
-		// + "WIDTH=512&HEIGHT=512&bbox=0.09677101398176689,47.37804639974752,0.10458635695360671,"
-		// + "47.38586174271936&format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap", tiles
+		// +
+		// "WIDTH=512&HEIGHT=512&bbox=0.09677101398176689,47.37804639974752,0.10458635695360671,"
+		// +
+		// "47.38586174271936&format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap",
+		// tiles
 		// .get(2).getUrl());
 		// Assert.assertEquals("http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=bluemarble&"
-		// + "WIDTH=512&HEIGHT=512&bbox=0.09677101398176689,47.38586174271936,0.10458635695360671,"
-		// + "47.393677085691195&format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap",
+		// +
+		// "WIDTH=512&HEIGHT=512&bbox=0.09677101398176689,47.38586174271936,0.10458635695360671,"
+		// +
+		// "47.393677085691195&format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap",
 		// tiles.get(3).getUrl());
 		// RasterTile tile = tiles.get(3);
-		// // MAX_LEVEL_SCALE 0.4 corresponds to level 16 with current algorithm !!!!
+		// // MAX_LEVEL_SCALE 0.4 corresponds to level 16 with current algorithm
+		// !!!!
 		// Assert.assertEquals(16, tile.getCode().getTileLevel());
 		// Assert.assertEquals(23044, tile.getCode().getX());
 		// Assert.assertEquals(58780, tile.getCode().getY());
@@ -229,9 +255,10 @@ public class WmsLayerTest {
 		List<RasterTile> tiles = wms.paint(google, googleEnvelope, ZOOMED_IN_SCALE);
 		Assert.assertEquals(1, tiles.size());
 		RasterTile tile = tiles.get(0);
-		Assert.assertEquals("http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=bluemarble&WIDTH=512&"
-				+ "HEIGHT=512&bbox=-20,-28,12,4&format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&"
-				+ "styles=&request=GetMap", tile.getUrl());
+		Assert.assertEquals(
+				"http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=geosparc%3Abluemarble&WIDTH=512&"
+						+ "HEIGHT=512&bbox=-20,-28,12,4&format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&"
+						+ "styles=&request=GetMap", tile.getUrl());
 		Assert.assertEquals(4, tile.getCode().getTileLevel());
 		Assert.assertEquals(5, tile.getCode().getX());
 		Assert.assertEquals(12, tile.getCode().getY());
@@ -244,8 +271,11 @@ public class WmsLayerTest {
 
 		// Assert.assertEquals("http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&"
 		// + "layers=bluemarble&WIDTH=512&HEIGHT=512&"
-		// + "bbox=-20.032430835865227,-28.207099921352835,11.947593278789554,3.7729241933019466&"
-		// + "format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap", tile.getUrl());
+		// +
+		// "bbox=-20.032430835865227,-28.207099921352835,11.947593278789554,3.7729241933019466&"
+		// +
+		// "format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap",
+		// tile.getUrl());
 		// Assert.assertEquals(4, tile.getCode().getTileLevel());
 		// Assert.assertEquals(5, tile.getCode().getX());
 		// Assert.assertEquals(12, tile.getCode().getY());
@@ -267,12 +297,14 @@ public class WmsLayerTest {
 		List<RasterTile> tiles = wms.paint(google, googleEnvelope, MAX_LEVEL_SCALE);
 
 		Assert.assertEquals(2, tiles.size());
-		Assert.assertEquals("http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=bluemarble&WIDTH=512&"
-				+ "HEIGHT=512&bbox=0.0859375,47.3828125,0.09375,47.390625&format=image/jpeg&version=1.1.1&"
-				+ "srs=EPSG%3A4326&styles=&request=GetMap", tiles.get(0).getUrl());
-		Assert.assertEquals("http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=bluemarble&WIDTH=512&"
-				+ "HEIGHT=512&bbox=0.09375,47.3828125,0.1015625,47.390625&format=image/jpeg&version=1.1.1&"
-				+ "srs=EPSG%3A4326&styles=&request=GetMap", tiles.get(1).getUrl());
+		Assert.assertEquals(
+				"http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=geosparc%3Abluemarble&WIDTH=512&"
+						+ "HEIGHT=512&bbox=0.0859375,47.3828125,0.09375,47.390625&format=image/jpeg&version=1.1.1&"
+						+ "srs=EPSG%3A4326&styles=&request=GetMap", tiles.get(0).getUrl());
+		Assert.assertEquals(
+				"http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=geosparc%3Abluemarble&WIDTH=512&"
+						+ "HEIGHT=512&bbox=0.09375,47.3828125,0.1015625,47.390625&format=image/jpeg&version=1.1.1&"
+						+ "srs=EPSG%3A4326&styles=&request=GetMap", tiles.get(1).getUrl());
 
 		RasterTile tile = tiles.get(1);
 		Assert.assertEquals(16, tile.getCode().getTileLevel());
@@ -285,20 +317,30 @@ public class WmsLayerTest {
 
 		// Assert.assertEquals(4, tiles.size());
 		// Assert.assertEquals("http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=bluemarble&"
-		// + "WIDTH=512&HEIGHT=512&bbox=0.08895567100992707,47.37804639974752,0.09677101398176689,"
-		// + "47.38586174271936&format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap", tiles
+		// +
+		// "WIDTH=512&HEIGHT=512&bbox=0.08895567100992707,47.37804639974752,0.09677101398176689,"
+		// +
+		// "47.38586174271936&format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap",
+		// tiles
 		// .get(0).getUrl());
 		// Assert.assertEquals("http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=bluemarble&"
-		// + "WIDTH=512&HEIGHT=512&bbox=0.08895567100992707,47.38586174271936,0.09677101398176689,"
-		// + "47.393677085691195&format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap",
+		// +
+		// "WIDTH=512&HEIGHT=512&bbox=0.08895567100992707,47.38586174271936,0.09677101398176689,"
+		// +
+		// "47.393677085691195&format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap",
 		// tiles.get(1).getUrl());
 		// Assert.assertEquals("http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=bluemarble&"
-		// + "WIDTH=512&HEIGHT=512&bbox=0.09677101398176689,47.37804639974752,0.10458635695360671,"
-		// + "47.38586174271936&format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap", tiles
+		// +
+		// "WIDTH=512&HEIGHT=512&bbox=0.09677101398176689,47.37804639974752,0.10458635695360671,"
+		// +
+		// "47.38586174271936&format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap",
+		// tiles
 		// .get(2).getUrl());
 		// Assert.assertEquals("http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=bluemarble&"
-		// + "WIDTH=512&HEIGHT=512&bbox=0.09677101398176689,47.38586174271936,0.10458635695360671,"
-		// + "47.393677085691195&format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap",
+		// +
+		// "WIDTH=512&HEIGHT=512&bbox=0.09677101398176689,47.38586174271936,0.10458635695360671,"
+		// +
+		// "47.393677085691195&format=image/jpeg&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap",
 		// tiles.get(3).getUrl());
 		// RasterTile tile = tiles.get(3);
 		// // MAX_LEVEL_SCALE 0.4 corresponds to level 16 !!!!
@@ -318,10 +360,14 @@ public class WmsLayerTest {
 		// double height = tiles.get(0).getBounds().getHeight();
 		// for (int i = 0; i < 1; i++) {
 		// for (int j = 0; j <= 1; j++) {
-		// Assert.assertEquals(x + i * width, tiles.get(2 * i + j).getBounds().getX(), DELTA);
-		// Assert.assertEquals(y - j * height, tiles.get(2 * i + j).getBounds().getY(), DELTA);
-		// Assert.assertEquals(width, tiles.get(2 * i + j).getBounds().getWidth(), DELTA);
-		// Assert.assertEquals(height, tiles.get(2 * i + j).getBounds().getHeight(), DELTA);
+		// Assert.assertEquals(x + i * width, tiles.get(2 * i +
+		// j).getBounds().getX(), DELTA);
+		// Assert.assertEquals(y - j * height, tiles.get(2 * i +
+		// j).getBounds().getY(), DELTA);
+		// Assert.assertEquals(width, tiles.get(2 * i +
+		// j).getBounds().getWidth(), DELTA);
+		// Assert.assertEquals(height, tiles.get(2 * i +
+		// j).getBounds().getHeight(), DELTA);
 		// }
 		// }
 	}
@@ -344,7 +390,7 @@ public class WmsLayerTest {
 		Assert.assertEquals(1, tiles.size());
 		RasterTile tile = tiles.get(0);
 
-		Assert.assertEquals("./d/wms/proxyBlue/?SERVICE=WMS&layers=bluemarble&WIDTH=512&HEIGHT=512&bbox"
+		Assert.assertEquals("./d/wms/proxyBlue/?SERVICE=WMS&layers=geosparc%3Abluemarble&WIDTH=512&HEIGHT=512&bbox"
 				+ "=-20,-28,12,4&format=image/jpeg&version=1.3.0&crs=EPSG%3A4326&styles=&request=GetMap", tile.getUrl());
 		Assert.assertEquals(4, tile.getCode().getTileLevel());
 		Assert.assertEquals(5, tile.getCode().getX());
@@ -355,8 +401,11 @@ public class WmsLayerTest {
 		Assert.assertEquals(357.0, tile.getBounds().getWidth(), DELTA);
 
 		// Assert.assertEquals("./d/wms/proxyBlue/?SERVICE=WMS&layers=bluemarble&WIDTH=512&HEIGHT=512&"
-		// + "bbox=-20.032430835865227,-28.207099921352835,11.947593278789554,3.7729241933019466&"
-		// + "format=image/jpeg&version=1.3.0&crs=EPSG%3A4326&styles=&request=GetMap", tile.getUrl());
+		// +
+		// "bbox=-20.032430835865227,-28.207099921352835,11.947593278789554,3.7729241933019466&"
+		// +
+		// "format=image/jpeg&version=1.3.0&crs=EPSG%3A4326&styles=&request=GetMap",
+		// tile.getUrl());
 		// Assert.assertEquals(4, tile.getCode().getTileLevel());
 		// Assert.assertEquals(5, tile.getCode().getX());
 		// Assert.assertEquals(12, tile.getCode().getY());
@@ -384,8 +433,9 @@ public class WmsLayerTest {
 		Assert.assertEquals(1, tiles.size());
 		RasterTile tile = tiles.get(0);
 
-		Assert.assertEquals("http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=bluemarble&WIDTH=512&HEIGHT"
-				+ "=512&bbox=-20,-28,12,4&format=image/png&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap",
+		Assert.assertEquals(
+				"http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=geosparc%3Abluemarble&WIDTH=512&HEIGHT"
+						+ "=512&bbox=-20,-28,12,4&format=image/png&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap",
 				tile.getUrl());
 		Assert.assertEquals(4, tile.getCode().getTileLevel());
 		Assert.assertEquals(5, tile.getCode().getX());
@@ -396,8 +446,10 @@ public class WmsLayerTest {
 		Assert.assertEquals(357.0, tile.getBounds().getWidth(), DELTA);
 
 		// Assert.assertEquals("http://apps.geomajas.org/geoserver/wms?SERVICE=WMS&layers=bluemarble&"
-		// + "WIDTH=512&HEIGHT=512&bbox=-20.032430835865227,-28.207099921352835,11.947593278789554,"
-		// + "3.7729241933019466&format=image/png&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap",
+		// +
+		// "WIDTH=512&HEIGHT=512&bbox=-20.032430835865227,-28.207099921352835,11.947593278789554,"
+		// +
+		// "3.7729241933019466&format=image/png&version=1.1.1&srs=EPSG%3A4326&styles=&request=GetMap",
 		// tile.getUrl());
 		// Assert.assertEquals(4, tile.getCode().getTileLevel());
 		// Assert.assertEquals(5, tile.getCode().getX());
@@ -417,15 +469,19 @@ public class WmsLayerTest {
 			Assert.assertEquals(ExceptionCode.PARAMETER_MISSING, ge.getExceptionCode());
 		}
 	}
-	
+
 	@Test
 	@DirtiesContext
 	public void testNoCache() throws Exception {
-		cachedWms.clearCacheManagerService(); // provided scope makes it available at compile/test time
+		cachedWms.clearCacheManagerService(); // provided scope makes it
+												// available at compile/test
+												// time
 		cachedWms.setUseCache(false);
 		Assert.assertFalse(cachedWms.isUseCache());
 		cachedWms.setUseCache(true);
-		Assert.assertFalse(cachedWms.isUseCache()); // enabling should fail without cache manager service
+		Assert.assertFalse(cachedWms.isUseCache()); // enabling should fail
+													// without cache manager
+													// service
 	}
 
 	private ApplicationContext loadApplicationContext(String location) throws Exception {
@@ -444,6 +500,27 @@ public class WmsLayerTest {
 			}
 			throw ex;
 		}
+	}
+
+	@Test
+	public void testGetLegendImageUrl() {
+		String expectedImageUrl = "http://apps.geomajas.org:80/geoserver/wms?"
+				+ "request=GetLegendGraphic&format=image%2Fpng&" + "width=20&height=20&layer=bluemarble";
+		String actualImageUrl = wms.getLegendImageUrl();
+		assertThat(actualImageUrl).isEqualTo(expectedImageUrl);
+	}
+
+	@Test
+	public void testGetLegendImageStyleNameNotFound() {
+		// it is expected that the first style for the layer is used if the style name of the WmsLayer does not match
+		// any styles in the capabilities
+		String wrongStyleName = "willNotBeFound";
+		wms.setStyles(wrongStyleName);
+
+		String firstImageUrl = "http://apps.geomajas.org:80/geoserver/wms?"
+				+ "request=GetLegendGraphic&format=image%2Fpng&" + "width=20&height=20&layer=bluemarble";
+		String actualImageUrl = wms.getLegendImageUrl();
+		assertThat(actualImageUrl).isEqualTo(firstImageUrl);
 	}
 
 }

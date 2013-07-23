@@ -10,9 +10,13 @@
  */
 package org.geomajas.layer.wms;
 
+import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -22,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
+import javax.imageio.ImageIO;
 
 import org.geomajas.annotation.Api;
 import org.geomajas.configuration.Parameter;
@@ -33,6 +38,7 @@ import org.geomajas.geometry.CrsTransform;
 import org.geomajas.global.ExceptionCode;
 import org.geomajas.global.GeomajasException;
 import org.geomajas.layer.LayerException;
+import org.geomajas.layer.LayerLegendImageSupport;
 import org.geomajas.layer.RasterLayer;
 import org.geomajas.layer.common.proxy.LayerAuthentication;
 import org.geomajas.layer.common.proxy.LayerAuthenticationMethod;
@@ -49,8 +55,15 @@ import org.geomajas.service.DtoConverterService;
 import org.geomajas.service.GeoService;
 import org.geotools.GML;
 import org.geotools.GML.Version;
+import org.geotools.data.ows.HTTPClient;
+import org.geotools.data.ows.Layer;
+import org.geotools.data.ows.SimpleHttpClient;
+import org.geotools.data.ows.StyleImpl;
+import org.geotools.data.ows.WMSCapabilities;
+import org.geotools.data.wms.WebMapServer;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
+import org.geotools.ows.ServiceException;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.type.AttributeDescriptor;
 import org.opengis.geometry.MismatchedDimensionException;
@@ -90,24 +103,42 @@ import com.vividsolutions.jts.geom.Envelope;
  * @since 1.7.1
  */
 @Api
-public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
+public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeatureInfoSupport,
+		LayerFeatureInfoAsHtmlSupport, LayerFeatureInfoAsGmlSupport {
 
+	private static final String GFI_UNAVAILABLE_MSG = "GetFeatureInfo-support not available on this layer";
+
+	private static final int DEFAULT_CAPABILITIES_CONNECTION_TIMEOUT_MS = 10000;
+
+	private static final int EMPTY_LEGEND_WIDTH = -1;
+
+	private static final int EMPTY_LEGEND_HEIGHT = -1;
+
+	private static final String EMPTY_LEGENDURL = "";
+
+	private static final boolean IS_GML_REQUEST = false;
+
+	private static final boolean IS_HTML_REQUEST = true;
+	
 	private final Logger log = LoggerFactory.getLogger(WmsLayer.class);
 
 	private final List<Resolution> resolutions = new ArrayList<Resolution>();
 
-	// @NotNull this seems to cause problems, it is tested in @PostConstruct anyway
+	// @NotNull this seems to cause problems, it is tested in @PostConstruct
+	// anyway
 	private String baseWmsUrl;
 
 	private String format = "image/png";
 
 	private String version = "1.1.1";
 
-	private String styles = "";
+	private String styles = EMPTY_LEGENDURL;
 
 	private List<Parameter> parameters;
-	
+
 	private boolean enableFeatureInfoSupport;
+
+	private boolean enableFeatureInfoSupportAsHtml;
 
 	private RasterLayerInfo layerInfo;
 
@@ -120,11 +151,11 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 	 */
 	@Deprecated
 	private WmsAuthentication authentication;
-	 
+
 	private LayerAuthentication layerAuthentication;
 
 	private boolean useProxy;
-	
+
 	private boolean useCache;
 
 	@Autowired
@@ -141,9 +172,17 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 
 	@Autowired(required = false)
 	private CacheManagerService cacheManagerService;
-	
+
 	@Autowired
 	private SecurityContext securityContext;
+
+	private boolean enableFeatureInfoSupportAsGml;
+
+	private String legendImageUrl;
+
+	private int legendImageHeight;
+
+	private int legendImageWidth;
 
 	/**
 	 * Return the layers identifier.
@@ -210,6 +249,7 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 						.add(new Resolution(resolution, level++, layerInfo.getTileWidth(), layerInfo.getTileHeight()));
 			}
 		}
+		retrieveAndSetLegendImageParameters(baseWmsUrl);
 	}
 
 	/**
@@ -232,9 +272,7 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 		if (!isEnableFeatureInfoSupport()) {
 			return Collections.emptyList();
 		}
-
 		List<Feature> features = new ArrayList<Feature>();
-
 		Resolution bestResolution = getResolutionForScale(layerScale);
 		RasterGrid grid = getRasterGrid(new Envelope(layerCoordinate), bestResolution.getTileWidth(),
 				bestResolution.getTileHeight());
@@ -248,8 +286,7 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 
 		InputStream stream = null;
 		try {
-			String url = formatGetFeatureInfoUrl(bestResolution.getTileWidthPx(), bestResolution.getTileHeightPx(),
-					layerBox, x, y);
+			String url = buildRequestUrl(layerCoordinate, layerScale, IS_GML_REQUEST);
 			log.debug("getFeaturesByLocation: {} {} {} {}", new Object[] { layerCoordinate, layerScale, pixelTolerance,
 					url });
 			GML gml = new GML(Version.GML3);
@@ -276,6 +313,81 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 		}
 
 		return features;
+	}
+
+	@Override
+	public List<Feature> getFeatureInfoAsGml(Coordinate coordinate, double layerScale, int pixelTolerance)
+			throws LayerException {
+		if (!isEnableFeatureInfoAsGmlSupport()) {
+			return Collections.emptyList();
+		}
+		return getFeaturesByLocation(coordinate, layerScale, pixelTolerance);
+	}
+
+	@Override
+	public String getFeatureInfoAsHtml(Coordinate coordinate, double layerScale, int pixelTolerance)
+			throws LayerException {
+		if (!isEnableFeatureInfoAsHtmlSupport()) {
+			return GFI_UNAVAILABLE_MSG;
+		}
+		InputStream stream = null;
+		String url;
+		try {
+			url = buildRequestUrl(coordinate, layerScale, IS_HTML_REQUEST);
+
+			log.debug("getFeaturesByLocation: {} {} {} {}",
+					new Object[] { coordinate, layerScale, pixelTolerance, url });
+			stream = httpService.getStream(url, getLayerAuthentication(), getId());
+		} catch (Exception e) {
+			throw new LayerException(e, ExceptionCode.UNEXPECTED_PROBLEM);
+		}
+		return getStringFromInputStream(stream);
+	}
+
+	private static String getStringFromInputStream(InputStream is) {
+
+		BufferedReader br = null;
+		StringBuilder sb = new StringBuilder();
+
+		String line;
+		try {
+
+			br = new BufferedReader(new InputStreamReader(is, "utf-8"));
+			while ((line = br.readLine()) != null) {
+				sb.append(line);
+			}
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			if (br != null) {
+				try {
+					br.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+		return sb.toString();
+
+	}
+
+	protected String buildRequestUrl(Coordinate layerCoordinate, double layerScale, boolean isHtmlRequest)
+			throws GeomajasException {
+		Resolution bestResolution = getResolutionForScale(layerScale);
+		RasterGrid grid = getRasterGrid(new Envelope(layerCoordinate), bestResolution.getTileWidth(),
+				bestResolution.getTileHeight());
+		int x = (int) (((layerCoordinate.x - grid.getLowerLeft().x) * bestResolution.getTileWidthPx()) / grid
+				.getTileWidth());
+		int y = (int) (bestResolution.getTileHeightPx() - (((layerCoordinate.y - grid.getLowerLeft().y) * bestResolution
+				.getTileHeightPx()) / grid.getTileHeight()));
+
+		Bbox layerBox = new Bbox(grid.getLowerLeft().x, grid.getLowerLeft().y, grid.getTileWidth(),
+				grid.getTileHeight());
+		String url = formatGetFeatureInfoUrl(bestResolution.getTileWidthPx(), bestResolution.getTileHeightPx(),
+				layerBox, x, y, isHtmlRequest);
+		return url;
 	}
 
 	private Feature toDto(SimpleFeature feature) {
@@ -322,14 +434,17 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 		boolean needTransform = !crs.equals(targetCrs);
 
 		try {
-			// We don't necessarily need to split into same CRS and different CRS cases, the latter implementation uses
-			// identity transform if crs's are equal for map and layer but might introduce bugs in rounding and/or
+			// We don't necessarily need to split into same CRS and different
+			// CRS cases, the latter implementation uses
+			// identity transform if crs's are equal for map and layer but might
+			// introduce bugs in rounding and/or
 			// conversions.
 			if (needTransform) {
 				layerToMap = geoService.getCrsTransform(crs, targetCrs);
 				CrsTransform mapToLayer = geoService.getCrsTransform(targetCrs, crs);
 
-				// Translate the map coordinates to layer coordinates, assumes equal x-y orientation
+				// Translate the map coordinates to layer coordinates, assumes
+				// equal x-y orientation
 				layerBounds = geoService.transform(bounds, mapToLayer);
 				layerScale = bounds.getWidth() * scale / layerBounds.getWidth();
 			}
@@ -356,14 +471,16 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 				Bbox layerBox;
 				if (needTransform) {
 					layerBox = new Bbox(x, y, grid.getTileWidth(), grid.getTileHeight());
-					// Transforming back to map coordinates will only result in a proper grid if the transformation
+					// Transforming back to map coordinates will only result in
+					// a proper grid if the transformation
 					// is nearly affine
 					worldBox = geoService.transform(layerBox, layerToMap);
 				} else {
 					worldBox = new Bbox(x, y, grid.getTileWidth(), grid.getTileHeight());
 					layerBox = worldBox;
 				}
-				// Rounding to avoid white space between raster tiles lower-left becomes upper-left in inverted y-space
+				// Rounding to avoid white space between raster tiles lower-left
+				// becomes upper-left in inverted y-space
 				Bbox screenBox = new Bbox(Math.round(scale * worldBox.getX()), -Math.round(scale * worldBox.getMaxY()),
 						Math.round(scale * worldBox.getMaxX()) - Math.round(scale * worldBox.getX()), Math.round(scale
 								* worldBox.getMaxY())
@@ -382,6 +499,11 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 		return result;
 	}
 
+	@Override
+	public String getLegendImageUrl() {
+		return legendImageUrl;
+	}
+
 	private String getWmsTargetUrl() {
 		if (useProxy || null != authentication || useCache) {
 			if (null != dispatcherUrlService) {
@@ -398,7 +520,8 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 		}
 	}
 
-	private String formatGetFeatureInfoUrl(int width, int height, Bbox box, int x, int y) throws GeomajasException {
+	private String formatGetFeatureInfoUrl(int width, int height, Bbox box, int x, int y, boolean isHtmlRequest)
+			throws GeomajasException {
 		// Always use direct url
 		try {
 			StringBuilder url = formatBaseUrl(baseWmsUrl, width, height, box);
@@ -413,10 +536,20 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 			url.append(Integer.toString(x));
 			url.append("&Y=");
 			url.append(Integer.toString(y));
-			url.append("&INFO_FORMAT=application/vnd.ogc.gml");
+			url.append("&INFO_FORMAT=");
+			url.append(retrieveFormatString(isHtmlRequest));
+			log.debug("Requesting GetFeatureInfo with URL {}", url);
 			return url.toString();
 		} catch (UnsupportedEncodingException uee) {
 			throw new IllegalStateException("Cannot find UTF8 encoding?", uee);
+		}
+	}
+
+	private String retrieveFormatString(boolean isHtmlRequest) {
+		if (isHtmlRequest) {
+			return ("text/html");
+		} else {
+			return ("application/vnd.ogc.gml");
 		}
 	}
 
@@ -465,7 +598,9 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 			url.append(Integer.toString(width));
 			url.append("&HEIGHT=");
 			url.append(Integer.toString(height));
-			DecimalFormat decimalFormat = new DecimalFormat(); // create new as this is not thread safe
+			DecimalFormat decimalFormat = new DecimalFormat(); // create new as
+																// this is not
+																// thread safe
 			decimalFormat.setDecimalSeparatorAlwaysShown(false);
 			decimalFormat.setGroupingUsed(false);
 			decimalFormat.setMinimumFractionDigits(0);
@@ -508,6 +643,137 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 		}
 	}
 
+	private String formatGetCapabilitiesUrl(String targetUrl) {
+		StringBuilder url = new StringBuilder(targetUrl);
+		int pos = url.lastIndexOf("?");
+		if (pos > 0) {
+			url.append("&SERVICE=WMS");
+		} else {
+			url.append("?SERVICE=WMS");
+		}
+		url.append("&version=");
+		url.append(version);
+		url.append("&REQUEST=");
+		url.append("getCapabilities");
+		return url.toString();
+	}
+
+	private void retrieveAndSetLegendImageParameters(String baseWmsUrl) {
+		// set default values
+		setDefaultLegendImageValues();
+		String capabilitiesUrl = formatGetCapabilitiesUrl(baseWmsUrl);
+		try {
+			HTTPClient httpClient = createConfiguredWmsHttpClient();
+			WebMapServer wms = new WebMapServer(new URL(capabilitiesUrl), httpClient);
+			WMSCapabilities capabilities = wms.getCapabilities();
+			String searchedLayerId = getId();
+			if (layerInfo.getDataSourceName() != null) {
+				searchedLayerId = layerInfo.getDataSourceName();
+			}
+			String searchedStyleName = styles;
+			parseNodeLayer(searchedStyleName, searchedLayerId, capabilities.getLayer());
+		} catch (IOException e) {
+			log.warn(e.getMessage());
+		} catch (ServiceException e) {
+			log.warn("Could not parse capabilities from {}", capabilitiesUrl);
+		}
+	}
+
+	private HTTPClient createConfiguredWmsHttpClient() {
+		HTTPClient httpClient = new SimpleHttpClient();
+		httpClient.setConnectTimeout(DEFAULT_CAPABILITIES_CONNECTION_TIMEOUT_MS);
+		if (layerAuthentication != null) {
+			httpClient.setUser(layerAuthentication.getUser());
+			httpClient.setPassword(layerAuthentication.getPassword());
+		}
+		return httpClient;
+	}
+
+	private void setDefaultLegendImageValues() {
+		legendImageUrl = EMPTY_LEGENDURL;
+		legendImageHeight = EMPTY_LEGEND_HEIGHT;
+		legendImageWidth = EMPTY_LEGEND_WIDTH;
+	}
+
+	private boolean parseNodeLayer(String searchedStyleName, String searchedLayerId, Layer layer) {
+		// check if the layer itself matches the given id
+		boolean isThisLayerMatched = parseLeafLayer(searchedStyleName, searchedLayerId, layer);
+		if (isThisLayerMatched) {
+			return true; // the layer is matched. stop search.
+		}
+
+		List<Layer> childLayers = layer.getLayerChildren();
+		for (Layer childLayer : childLayers) {
+			boolean isChildMatched = false;
+			if (layer.getChildren().length > 0) {
+				isChildMatched = parseNodeLayer(searchedStyleName, searchedLayerId, childLayer);
+			} else {
+				isChildMatched = parseLeafLayer(searchedStyleName, searchedLayerId, childLayer);
+			}
+			if (isChildMatched) {
+				return true; // A child layer matched. stop search.
+			}
+		}
+		// neither the layer itself nor its childs matched. return to parent layer.
+		return false;
+	}
+
+	private boolean parseLeafLayer(String searchedStyleName, String searchedLayerId, Layer layer) {
+		if (searchedLayerId.equals(layer.getName())) {
+			legendImageUrl = retrieveStyleForLayer(searchedStyleName, layer);
+			// this layer matched. stop search.
+			return true;
+		}
+		return false; // this leaf did not match.
+	}
+
+	private String retrieveStyleForLayer(String searchedStyleName, Layer layer) {
+		List<StyleImpl> layerStyles = layer.getStyles();
+		if (layerStyles != null && !layerStyles.isEmpty()) {
+			String retrievedLegendUrl = searchStyle(searchedStyleName, layerStyles);
+			if (!EMPTY_LEGENDURL.equals(retrievedLegendUrl)) {
+				return retrievedLegendUrl;
+			}
+			return retrieveFirstStyle(layerStyles);
+		} else {
+			return EMPTY_LEGENDURL;
+		}
+	}
+
+	private String retrieveFirstStyle(List<StyleImpl> layerStyles) {
+		String legendUrl = EMPTY_LEGENDURL;
+		StyleImpl style = layerStyles.get(0);
+		List<?> legendURLs = style.getLegendURLs();
+		if (legendURLs != null && !legendURLs.isEmpty()) {
+			legendUrl = legendURLs.get(0).toString();
+			retrieveAndSetHeightAndWidth(legendUrl);
+		}
+		return legendUrl;
+	}
+
+	private String searchStyle(String styleName, List<StyleImpl> layerStyles) {
+		String legendUrl = EMPTY_LEGENDURL;
+		for (StyleImpl style : layerStyles) {
+			List<?> legendUrls = style.getLegendURLs();
+			if (styleName.equals(style.getName()) && legendUrls != null && !legendUrls.isEmpty()) {
+				legendUrl = legendUrls.get(0).toString();
+				retrieveAndSetHeightAndWidth(legendUrl);
+			}
+		}
+		return legendUrl;
+	}
+
+	private void retrieveAndSetHeightAndWidth(String legendUrl) {
+		try {
+			InputStream stream = httpService.getStream(legendUrl, null, null);
+			BufferedImage img = ImageIO.read(stream);
+			setLegendImageHeight(img.getHeight());
+			setLegendImageWidth(img.getWidth());
+		} catch (IOException e) {
+			log.debug("Could not retrieve legend image height and size. Reason: ", e);
+		}
+	}
+
 	private Resolution getResolutionForScale(double scale) {
 		if (null == resolutions || resolutions.size() == 0) {
 			return calculateBestQuadTreeResolution(scale);
@@ -522,8 +788,7 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 					Resolution upper = resolutions.get(i);
 					Resolution lower = resolutions.get(i + 1);
 					if (screenResolution <= upper.getResolution() && screenResolution >= lower.getResolution()) {
-						if ((upper.getResolution() - screenResolution) > 2 * (screenResolution - 
-								lower.getResolution())) {
+						if ((upper.getResolution() - screenResolution) > 2 * (screenResolution - lower.getResolution())) {
 							return lower;
 						} else {
 							return upper;
@@ -740,8 +1005,9 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 
 	/**
 	 * Set whether the WMS tiles should be cached for later use. This implies that the WMS tiles will be proxied.
-	 *
-	 * @param useCache true when request needs to be cached
+	 * 
+	 * @param useCache
+	 *            true when request needs to be cached
 	 * @since 1.9.0
 	 */
 	@Api
@@ -755,7 +1021,7 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 
 	/**
 	 * Set whether the WMS tiles should be cached for later use. This implies that the WMS tiles will be proxied.
-	 *
+	 * 
 	 * @return true when request needs to be cached
 	 * @since 1.9.0
 	 */
@@ -781,9 +1047,52 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 	 * Get whether the WMS layer should support feature info support.
 	 * 
 	 * @return the enableFeatureInfoSupport true if feature info support is enabled
+	 * 
+	 * @deprecated use {@link #isEnableFeatureInfoAsGmlSupport()} instead
 	 */
+	@Deprecated
 	public boolean isEnableFeatureInfoSupport() {
 		return enableFeatureInfoSupport;
+	}
+
+	/**
+	 * Get whether the WMS layer should support feature info HTML support.
+	 * 
+	 * @return the enableFeatureInfoSupportAsHtml true if feature info html support is enabled
+	 * 
+	 * @since 1.11.0
+	 */
+	@Api
+	public boolean isEnableFeatureInfoAsHtmlSupport() {
+		return enableFeatureInfoSupportAsHtml;
+	}
+
+	public void setEnableFeatureInfoAsHtmlSupport(boolean enableFeatureInfoSupportAsHtml) {
+		this.enableFeatureInfoSupportAsHtml = enableFeatureInfoSupportAsHtml;
+	}
+
+	/**
+	 * Get whether the WMS layer should support feature info GML support.
+	 * 
+	 * @return the enableFeatureInfoSupportAsHtml true if feature info gml support is enabled
+	 * 
+	 * @since 1.11.0
+	 */
+	@Api
+	public boolean isEnableFeatureInfoAsGmlSupport() {
+		return enableFeatureInfoSupportAsHtml;
+	}
+
+	public void setEnableFeatureInfoAsGmlSupport(boolean enableFeatureInfoSupportAsGml) {
+		this.setEnableFeatureInfoSupportAsGml(enableFeatureInfoSupportAsGml);
+	}
+
+	protected LayerHttpService getHttpService() {
+		return httpService;
+	}
+
+	protected void setHttpService(LayerHttpService httpService) {
+		this.httpService = httpService;
 	}
 
 	/**
@@ -914,6 +1223,30 @@ public class WmsLayer implements RasterLayer, LayerFeatureInfoSupport {
 	 */
 	void clearCacheManagerService() {
 		this.cacheManagerService = null;
+	}
+
+	public boolean isEnableFeatureInfoSupportAsGml() {
+		return enableFeatureInfoSupportAsGml;
+	}
+
+	public void setEnableFeatureInfoSupportAsGml(boolean enableFeatureInfoSupportAsGml) {
+		this.enableFeatureInfoSupportAsGml = enableFeatureInfoSupportAsGml;
+	}
+
+	public int getLegendImageHeight() {
+		return legendImageHeight;
+	}
+
+	public void setLegendImageHeight(int legendImageHeight) {
+		this.legendImageHeight = legendImageHeight;
+	}
+
+	public int getLegendImageWidth() {
+		return legendImageWidth;
+	}
+
+	public void setLegendImageWidth(int legendImageWidth) {
+		this.legendImageWidth = legendImageWidth;
 	}
 
 }
