@@ -27,11 +27,6 @@ import com.smartgwt.client.widgets.Img;
  */
 public final class LayerIconUtil {
 
-
-	private static final String LEGEND_ICONS_PATH = "legendgraphic";
-
-	private static final String LEGEND_ICONS_TYPE = ".png";
-	
 	private LayerIconUtil() {
 		// utility class, hide constructor
 	}
@@ -76,12 +71,7 @@ public final class LayerIconUtil {
 			return new Img(eli.getLargeLayerIconUrl());
 		} else {
 			if (layer instanceof RasterLayer) {
-				UrlBuilder url = new UrlBuilder(Geomajas.getDispatcherUrl());
-				url.addPath(LEGEND_ICONS_PATH);
-				url.addPath(layer.getServerLayerId() + LEGEND_ICONS_TYPE);
-				Img legendImage = new Img(url.toString());
-				legendImage.setBackgroundColor("white");
-				return legendImage;
+				return new Img(GltLayout.layerRasterIconLargeUrl);
 			} else if (layer instanceof VectorLayer) {
 				LayerType layerType = ((VectorLayer) layer).getLayerInfo().getLayerType();
 				switch (layerType) {
