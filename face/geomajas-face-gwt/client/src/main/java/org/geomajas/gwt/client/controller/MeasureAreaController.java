@@ -56,7 +56,13 @@ public class MeasureAreaController extends MeasureController {
 
 	@Override
 	protected String createLabelContent(double totalArea, double currentArea) {
-		String total = DistanceFormat.asMapArea(mapWidget, totalArea);
+		String total;
+		if (totalArea < 0) {
+			total = I18nProvider.getMenu().invalidGeometryToMeasure();
+		}
+		else {
+			total = DistanceFormat.asMapArea(mapWidget, totalArea);
+		}
 		String current = DistanceFormat.asMapArea(mapWidget, currentArea);
 		String dist = I18nProvider.getMenu().getMeasureAreaString(total, current);
 		return "<div><b>" + I18nProvider.getMenu().area() + "</b>:</div><div style='margin-top:5px;'>" + dist

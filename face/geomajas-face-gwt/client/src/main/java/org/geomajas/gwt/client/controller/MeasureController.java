@@ -108,14 +108,13 @@ public abstract class MeasureController extends AbstractSnappingController {
 				Geometry geometry = (Geometry) geometryToCalculate.getOriginalLocation();
 				InsertCoordinateOperation op = new InsertCoordinateOperation(geometry.getNumPoints(), worldPosition);
 				geometry = op.execute(geometry);
+				geometryToCalculate.setGeometry(geometry);
 				if (isGeometryValid(geometry)) {
-					geometryToCalculate.setGeometry(geometry);
 					actualMeasurementResult = calculateTotalMeasurementResult();
-					updateLabel(actualMeasurementResult, 0);
 				} else {
-					SC.say(I18nProvider.getMenu().invalidGeometryToMeasure());
+					actualMeasurementResult = -1;
 				}
-
+				updateLabel(actualMeasurementResult, 0);
 			}
 			mapWidget.render(mapWidget.getMapModel(), RenderGroup.VECTOR, RenderStatus.UPDATE);
 		}
