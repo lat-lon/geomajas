@@ -22,11 +22,8 @@ import org.geomajas.widget.layer.client.util.LayerIconUtil;
 import org.geomajas.widget.layer.configuration.client.ClientExtraLayerInfo;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.LoadEvent;
-import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.ui.Anchor;
-import com.google.gwt.user.client.ui.Image;
 import com.smartgwt.client.data.RecordList;
 import com.smartgwt.client.types.ImageStyle;
 import com.smartgwt.client.types.Overflow;
