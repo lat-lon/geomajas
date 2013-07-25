@@ -18,7 +18,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.geomajas.plugin</groupId>
 	<artifactId>geomajas-widget-layer-all</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
+	<version>1.0.0-latlon-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>geomajas-widget-layer plug-in parent</name>
 	<description>geomajas-widget-layer plug-in grouping module</description>
@@ -135,8 +135,8 @@
 	</profiles>
 
 	<properties>
-		<geomajas-widget-layer-backend-version>1.11.1</geomajas-widget-layer-backend-version>
-		<geomajas-widget-layer-gwt-face-version>1.12.0</geomajas-widget-layer-gwt-face-version>
+		<geomajas-widget-layer-backend-version>1.13.0-latlon-SNAPSHOT</geomajas-widget-layer-backend-version>
+		<geomajas-widget-layer-gwt-face-version>1.14.0-latlon-SNAPSHOT</geomajas-widget-layer-gwt-face-version>
 		<geomajas-widget-layer-gwt-version>2.5.0</geomajas-widget-layer-gwt-version>
 		<geomajas-plugin-deskmanager-version>1.0.0-M4</geomajas-plugin-deskmanager-version>
 	</properties>

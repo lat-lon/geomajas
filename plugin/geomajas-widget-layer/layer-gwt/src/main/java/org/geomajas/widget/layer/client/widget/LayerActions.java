@@ -12,9 +12,11 @@
 package org.geomajas.widget.layer.client.widget;
 
 import org.geomajas.configuration.client.ScaleInfo;
+import org.geomajas.gwt.client.Geomajas;
 import org.geomajas.gwt.client.map.layer.Layer;
 import org.geomajas.gwt.client.map.layer.RasterLayer;
 import org.geomajas.gwt.client.map.layer.VectorLayer;
+import org.geomajas.gwt.client.util.UrlBuilder;
 import org.geomajas.widget.layer.client.LayerMessages;
 import org.geomajas.widget.layer.client.util.LayerIconUtil;
 import org.geomajas.widget.layer.configuration.client.ClientExtraLayerInfo;
@@ -52,6 +54,12 @@ import com.smartgwt.client.widgets.layout.VLayout;
  * @author Kristof Heirwegh
  */
 public class LayerActions extends Window {
+
+	private static final String SAMPLE_MAP_HEIGHT_WIDTH = "89";
+
+	private static final String LEGEND_ICONS_PATH = "legendgraphic";
+
+	private static final String LEGEND_ICONS_TYPE = ".png";
 
 	private static final String BTN_SHOWLEGEND_IMG = "[ISOMORPHIC]/geomajas/silk/information.png";
 
@@ -126,7 +134,7 @@ public class LayerActions extends Window {
 					a.setText(eli.getLegendUrlTitle());
 				}
 				a.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
-					
+
 					@Override
 					public void onClick(com.google.gwt.event.dom.client.ClickEvent event) {
 						Window window = new Window();
@@ -251,10 +259,9 @@ public class LayerActions extends Window {
 		layerImg = LayerIconUtil.getLargeLayerIcon(layer);
 		layerImg.setImageType(ImageStyle.NORMAL);
 
-		Canvas sampleMap = new Canvas();
-		sampleMap.setAutoHeight();
-		sampleMap.setAutoWidth();
-		// sampleMap.setSize("89px", "89px");
+		final Canvas sampleMap = new Canvas();
+		sampleMap.setHeight(SAMPLE_MAP_HEIGHT_WIDTH);
+		sampleMap.setWidth(SAMPLE_MAP_HEIGHT_WIDTH);
 
 		if (vectorLayer != null) {
 			layerLabelOverlay = LayerIconUtil.getLabelOverlayImg();
@@ -262,13 +269,14 @@ public class LayerActions extends Window {
 			sampleMap.addChild(layerImg);
 			sampleMap.addChild(layerLabelOverlay);
 		} else {
-			Img layerOpacityUnderlay = LayerIconUtil.getOpacityUnderlayImg();
-			layerOpacityUnderlay.setImageType(ImageStyle.NORMAL);
-			layerImg.setUseOpacityFilter(true);
-			sampleMap.addChild(layerOpacityUnderlay);
-			sampleMap.addChild(layerImg);
+			UrlBuilder url = new UrlBuilder(Geomajas.getDispatcherUrl());
+			url.addPath(LEGEND_ICONS_PATH);
+			url.addPath(layer.getServerLayerId() + LEGEND_ICONS_TYPE);
+			String urlString = url.toString();
+			Img legendImage = new Img(urlString);
+			legendImage.setBackgroundColor("white");
+			sampleMap.addChild(legendImage);
 		}
-
 		return sampleMap;
 	}
 
