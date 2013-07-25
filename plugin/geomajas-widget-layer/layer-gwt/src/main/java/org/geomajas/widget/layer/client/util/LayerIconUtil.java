@@ -10,9 +10,11 @@
  */
 package org.geomajas.widget.layer.client.util;
 
+import org.geomajas.gwt.client.Geomajas;
 import org.geomajas.gwt.client.map.layer.Layer;
 import org.geomajas.gwt.client.map.layer.RasterLayer;
 import org.geomajas.gwt.client.map.layer.VectorLayer;
+import org.geomajas.gwt.client.util.UrlBuilder;
 import org.geomajas.layer.LayerType;
 import org.geomajas.widget.layer.configuration.client.ClientExtraLayerInfo;
 
