@@ -22,8 +22,11 @@ import org.geomajas.widget.layer.client.util.LayerIconUtil;
 import org.geomajas.widget.layer.configuration.client.ClientExtraLayerInfo;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.ui.Anchor;
+import com.google.gwt.user.client.ui.Image;
 import com.smartgwt.client.data.RecordList;
 import com.smartgwt.client.types.ImageStyle;
 import com.smartgwt.client.types.Overflow;
@@ -54,6 +57,8 @@ import com.smartgwt.client.widgets.layout.VLayout;
  * @author Kristof Heirwegh
  */
 public class LayerActions extends Window {
+
+	private static final String SAMPLE_MAP_HEIGHT_WIDTH = "89";
 
 	private static final String LEGEND_ICONS_PATH = "legendgraphic";
 
@@ -132,7 +137,7 @@ public class LayerActions extends Window {
 					a.setText(eli.getLegendUrlTitle());
 				}
 				a.addClickHandler(new com.google.gwt.event.dom.client.ClickHandler() {
-					
+
 					@Override
 					public void onClick(com.google.gwt.event.dom.client.ClickEvent event) {
 						Window window = new Window();
@@ -257,10 +262,9 @@ public class LayerActions extends Window {
 		layerImg = LayerIconUtil.getLargeLayerIcon(layer);
 		layerImg.setImageType(ImageStyle.NORMAL);
 
-		Canvas sampleMap = new Canvas();
-		sampleMap.setAutoHeight();
-		sampleMap.setAutoWidth();
-		// sampleMap.setSize("89px", "89px");
+		final Canvas sampleMap = new Canvas();
+		sampleMap.setHeight(SAMPLE_MAP_HEIGHT_WIDTH);
+		sampleMap.setWidth(SAMPLE_MAP_HEIGHT_WIDTH);
 
 		if (vectorLayer != null) {
 			layerLabelOverlay = LayerIconUtil.getLabelOverlayImg();
@@ -271,11 +275,11 @@ public class LayerActions extends Window {
 			UrlBuilder url = new UrlBuilder(Geomajas.getDispatcherUrl());
 			url.addPath(LEGEND_ICONS_PATH);
 			url.addPath(layer.getServerLayerId() + LEGEND_ICONS_TYPE);
-			Img legendImage = new Img(url.toString());
+			String urlString = url.toString();
+			Img legendImage = new Img(urlString);
 			legendImage.setBackgroundColor("white");
-			sampleMap.addChild(layerImg);
+			sampleMap.addChild(legendImage);
 		}
-
 		return sampleMap;
 	}
 
