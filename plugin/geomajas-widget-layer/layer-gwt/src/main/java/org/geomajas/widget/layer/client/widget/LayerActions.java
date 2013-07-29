@@ -331,7 +331,7 @@ public class LayerActions extends Window {
 
 			public void onValueChanged(ValueChangedEvent event) {
 				double val = opacitySlider.getValue();
-				layerImg.setOpacity((int) val);
+				// layerImg.setOpacity((int) val);
 				if (val > 0) {
 					val /= 100;
 				}
