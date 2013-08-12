@@ -411,6 +411,7 @@ public class MapWidget extends VLayout {
 	 */
 	@Api
 	public void render(Paintable paintable, RenderGroup renderGroup, RenderStatus status) {
+		cleanComboLayers();
 		if (!graphics.isReady() || !mapViewRenderer.isViewPortKnown() || !mapModelRenderer.isReadyToDraw()) {
 			return;
 		}
@@ -451,6 +452,13 @@ public class MapWidget extends VLayout {
 				paintable.accept(painterVisitor, group, mapModel.getMapView().getBounds(), false);
 			}
 		}
+	}
+
+	private void cleanComboLayers() {
+		for (Layer layer : mapModel.activeComboRasterLayers) {
+			graphics.getRasterContext().deleteGroup(layer);
+		}
+		mapModel.activeComboRasterLayers.clear();
 	}
 
 	/**

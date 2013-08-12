@@ -115,6 +115,8 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 
 	private State state = State.IDLE;
 
+	public List<Layer<?>> activeComboRasterLayers = new ArrayList<Layer<?>>();
+
 	/**
 	 * Internal configuration state of the map.
 	 * 
@@ -350,6 +352,7 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 	}
 
 	private void aggregateAndVisitAllLayeres(PainterVisitor visitor, Object group, Bbox bounds, boolean recursive) {
+		clearActiveComboRasterLayers(visitor, group);
 		List<Layer<?>> unvisitedLayers = new ArrayList<Layer<?>>();
 		String currentAggregationId = null;
 		for (Layer<?> layer : layers) {
@@ -377,6 +380,12 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		endStreak(visitor, group, bounds, recursive, unvisitedLayers);
 	}
 
+	private void clearActiveComboRasterLayers(PainterVisitor visitor, Object group) {
+		for (Layer layer : activeComboRasterLayers) {
+			visitor.remove(layer, group);
+		}
+	}
+
 	private void endStreak(PainterVisitor visitor, Object group, Bbox bounds, boolean recursive,
 			List<Layer<?>> unvisitedLayers) {
 		if (unvisitedLayers.size() == 1) {
@@ -384,6 +393,7 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		} else if (unvisitedLayers.size() > 1) {
 			ComboRasterLayer comboLayer = new ComboRasterLayer(unvisitedLayers);
 			comboLayer.accept(visitor, group, bounds, recursive);
+			activeComboRasterLayers.add(comboLayer);
 		}
 		unvisitedLayers.clear();
 	}
