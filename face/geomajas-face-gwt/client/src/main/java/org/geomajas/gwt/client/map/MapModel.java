@@ -1242,4 +1242,18 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		}
 	}
 
+	
+	public List<Layer<?>> getActiveComboRasterLayers() {
+		return activeComboRasterLayers;
+	}
+
+	
+	public void setActiveComboRasterLayers(List<Layer<?>> activeComboRasterLayers) {
+		this.activeComboRasterLayers = activeComboRasterLayers;
+	}
+
+	public void clearActiveComboRasterLayers() {
+		activeComboRasterLayers.clear();
+	}
+
 }

@@ -411,7 +411,6 @@ public class MapWidget extends VLayout {
 	 */
 	@Api
 	public void render(Paintable paintable, RenderGroup renderGroup, RenderStatus status) {
-		cleanComboLayers();
 		if (!graphics.isReady() || !mapViewRenderer.isViewPortKnown() || !mapModelRenderer.isReadyToDraw()) {
 			return;
 		}
@@ -421,6 +420,9 @@ public class MapWidget extends VLayout {
 		}
 		if (paintable == null) {
 			paintable = this.mapModel;
+		}
+		if (paintable == mapModel) {
+			cleanComboLayers();
 		}
 		if (RenderStatus.DELETE.equals(status)) {
 			List<Painter> painters = painterVisitor.getPaintersForObject(paintable);
@@ -455,10 +457,10 @@ public class MapWidget extends VLayout {
 	}
 
 	private void cleanComboLayers() {
-		for (Layer layer : mapModel.activeComboRasterLayers) {
+		for (Layer<?> layer : mapModel.getActiveComboRasterLayers()) {
 			graphics.getRasterContext().deleteGroup(layer);
 		}
-		mapModel.activeComboRasterLayers.clear();
+		mapModel.clearActiveComboRasterLayers();
 	}
 
 	/**
