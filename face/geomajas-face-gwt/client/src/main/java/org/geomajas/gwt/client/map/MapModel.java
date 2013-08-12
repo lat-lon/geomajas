@@ -13,6 +13,7 @@ package org.geomajas.gwt.client.map;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.geomajas.annotation.Api;
@@ -115,7 +116,7 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 
 	private State state = State.IDLE;
 
-	public List<Layer<?>> activeComboRasterLayers = new ArrayList<Layer<?>>();
+	private List<ComboRasterLayer> activeComboRasterLayers = new ArrayList<ComboRasterLayer>();
 
 	/**
 	 * Internal configuration state of the map.
@@ -1243,17 +1244,18 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 	}
 
 	
-	public List<Layer<?>> getActiveComboRasterLayers() {
-		return activeComboRasterLayers;
-	}
-
-	
-	public void setActiveComboRasterLayers(List<Layer<?>> activeComboRasterLayers) {
-		this.activeComboRasterLayers = activeComboRasterLayers;
+	public List<ComboRasterLayer> getActiveComboRasterLayers() {
+		return Collections.unmodifiableList(activeComboRasterLayers);
 	}
 
 	public void clearActiveComboRasterLayers() {
 		activeComboRasterLayers.clear();
 	}
 
+	public boolean isLayerPartOfActiveComboRasterLayers (Layer<?> layerToCheck){
+		for (ComboRasterLayer currentComboLayer : activeComboRasterLayers) {
+			if (currentComboLayer.getLayers().contains(layerToCheck)) return true;
+		}
+		return false;
+	}
 }

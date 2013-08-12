@@ -1,5 +1,7 @@
 package org.geomajas.gwt.client.map.layer;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.geomajas.configuration.client.ClientRasterLayerInfo;
@@ -24,12 +26,12 @@ public class ComboRasterLayer extends RasterLayer {
 
 	public ComboRasterLayer(List<Layer<?>> layers) {
 		super(layers.get(0).getMapModel(), (ClientRasterLayerInfo) layers.get(0).getLayerInfo());
-		this.layers = layers;
+		this.layers = new ArrayList<Layer<?>>(layers);
 		this.store = new DefaultRasterLayerStore(this);
 	}
 
 	public List<Layer<?>> getLayers() {
-		return layers;
+		return Collections.unmodifiableList(layers);
 	}
 
 	@Override

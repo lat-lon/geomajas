@@ -421,6 +421,12 @@ public class MapWidget extends VLayout {
 		if (paintable == null) {
 			paintable = this.mapModel;
 		}
+		if (paintable instanceof Layer<?>) {
+			Layer<?> layer = (Layer<?>) paintable;
+			if (mapModel.isLayerPartOfActiveComboRasterLayers(layer)) {
+				paintable = mapModel;
+			}
+		}
 		if (paintable == mapModel) {
 			cleanComboLayers();
 		}
