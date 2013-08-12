@@ -9,6 +9,8 @@ import org.geomajas.global.GeomajasException;
 import org.geomajas.layer.RasterLayer;
 import org.geomajas.layer.tile.RasterTile;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.vividsolutions.jts.geom.Envelope;
 
@@ -19,6 +21,8 @@ import com.vividsolutions.jts.geom.Envelope;
  * @author Lyn Goltz
  */
 public class AggregatedWmsLayer implements RasterLayer {
+
+	private final Logger log = LoggerFactory.getLogger(AggregatedWmsLayer.class);
 
 	private List<WmsLayer> wmsLayers;
 
@@ -106,6 +110,8 @@ public class AggregatedWmsLayer implements RasterLayer {
 				alreadyUsedDataSources.add(dataSourceName);
 			}
 		}
+		String msg = "# of filtered layers: " + (wmsLayers.size() - alreadyUsedDataSources.size());
+		log.info(msg);
 		return builder.toString();
 	}
 
