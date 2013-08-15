@@ -13,6 +13,7 @@ package org.geomajas.gwt.client.map;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.geomajas.annotation.Api;
@@ -24,6 +25,7 @@ import org.geomajas.configuration.client.ClientVectorLayerInfo;
 import org.geomajas.configuration.client.ScaleConfigurationInfo;
 import org.geomajas.configuration.client.ScaleInfo;
 import org.geomajas.global.GeomajasConstant;
+import org.geomajas.global.GeomajasException;
 import org.geomajas.gwt.client.command.GwtCommandDispatcher;
 import org.geomajas.gwt.client.command.event.TokenChangedEvent;
 import org.geomajas.gwt.client.command.event.TokenChangedHandler;
@@ -51,6 +53,7 @@ import org.geomajas.gwt.client.map.feature.Feature;
 import org.geomajas.gwt.client.map.feature.FeatureEditor;
 import org.geomajas.gwt.client.map.feature.FeatureTransaction;
 import org.geomajas.gwt.client.map.feature.LazyLoadCallback;
+import org.geomajas.gwt.client.map.layer.ComboRasterLayer;
 import org.geomajas.gwt.client.map.layer.Layer;
 import org.geomajas.gwt.client.map.layer.RasterLayer;
 import org.geomajas.gwt.client.map.layer.VectorLayer;
@@ -60,6 +63,7 @@ import org.geomajas.gwt.client.spatial.Bbox;
 import org.geomajas.gwt.client.spatial.geometry.GeometryFactory;
 import org.geomajas.gwt.client.util.Log;
 
+import com.google.gwt.core.shared.GWT;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 
@@ -107,11 +111,13 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 	private boolean mapModelEventFired; // assures MapModelEvent is only fired once
 
 	private LayerSelectionPropagator selectionPropagator = new LayerSelectionPropagator();
-	
+
 	private List<Runnable> whenInitializedRunnables = new ArrayList<Runnable>();
-	
+
 	private State state = State.IDLE;
-	
+
+	private List<ComboRasterLayer> activeComboRasterLayers = new ArrayList<ComboRasterLayer>();
+
 	/**
 	 * Internal configuration state of the map.
 	 * 
@@ -123,16 +129,17 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		INITIALIZING, // waiting for configuration callback (1st time)
 		INITIALIZED, // configuration applied
 		REFRESHING // waiting for configuration callback (> 1st time)
-	}	
-	
+	}
+
 	// -------------------------------------------------------------------------
 	// Constructors:
 	// -------------------------------------------------------------------------
 
 	/**
 	 * Initialize map model, coordinate system has to be filled in later (from configuration).
-	 *
-	 * @param mapId map id
+	 * 
+	 * @param mapId
+	 *            map id
 	 * @since 1.6.0
 	 * @deprecated use {@link #MapModel(String, String)}, this assume "app" as applicationId
 	 */
@@ -142,11 +149,14 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		this(mapId, "app");
 		Log.logWarn("Using deprecated MapModel constructor, assuming application id is 'app'");
 	}
+
 	/**
 	 * Initialize map model, coordinate system has to be filled in later (from configuration).
 	 * 
-	 * @param mapId map id
-	 * @param applicationId application id
+	 * @param mapId
+	 *            map id
+	 * @param applicationId
+	 *            application id
 	 * @since 1.10.0
 	 */
 	@Api
@@ -160,6 +170,7 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 
 		// refresh the map when the token changes
 		GwtCommandDispatcher.getInstance().addTokenChangedHandler(new TokenChangedHandler() {
+
 			public void onTokenChanged(TokenChangedEvent event) {
 				if (event.isLoginPending()) {
 					// avoid double refresh on re-login
@@ -187,8 +198,9 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 
 	/**
 	 * Run some code once when the map is initialized.
-	 *
-	 * @param runnable code to run
+	 * 
+	 * @param runnable
+	 *            code to run
 	 * @since 1.10.0
 	 */
 	@Api
@@ -219,8 +231,9 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 
 	/**
 	 * Remove map model handler.
-	 *
-	 * @param handler handler to be removed
+	 * 
+	 * @param handler
+	 *            handler to be removed
 	 * @since 1.6.0
 	 */
 	@Api
@@ -230,8 +243,9 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 
 	/**
 	 * Add a handler which listens to all changes in the map model.
-	 *
-	 * @param handler handler
+	 * 
+	 * @param handler
+	 *            handler
 	 * @return {@link com.google.gwt.event.shared.HandlerRegistration} used to remove the handler
 	 * @since 1.10.0
 	 */
@@ -242,8 +256,9 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 
 	/**
 	 * Remove map model changed handler.
-	 *
-	 * @param handler handler to be removed
+	 * 
+	 * @param handler
+	 *            handler to be removed
 	 * @since 1.10.0
 	 */
 	@Api
@@ -253,8 +268,9 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 
 	/**
 	 * Add a handler which listens to clearing the map model.
-	 *
-	 * @param handler handler
+	 * 
+	 * @param handler
+	 *            handler
 	 * @return {@link com.google.gwt.event.shared.HandlerRegistration} used to remove the handler
 	 * @since 1.10.0
 	 */
@@ -265,8 +281,9 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 
 	/**
 	 * Remove map model clear handler.
-	 *
-	 * @param handler handler to be removed
+	 * 
+	 * @param handler
+	 *            handler to be removed
 	 * @since 1.10.0
 	 */
 	@Api
@@ -289,7 +306,7 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 
 	/**
 	 * Add layer selection handler.
-	 *
+	 * 
 	 * @param handler
 	 *            the handler to be registered
 	 * @return handler registration
@@ -325,22 +342,61 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		// Paint the MapModel itself (see MapModelPainter):
 		visitor.visit(this, group);
 
-		// Paint the layers:
 		if (recursive) {
-			for (Layer<?> layer : layers) {
-				if (layer.isShowing()) {
-					layer.accept(visitor, group, bounds, recursive);
-				} else {
-					// JDM: paint the top part of the layer, if not we loose the map order
-					layer.accept(visitor, group, bounds, false);
-				}
-			}
+			aggregateAndVisitAllLayeres(visitor, group, bounds, recursive);
 		}
 
 		// Paint the editing of a feature (if a feature is being edited):
 		if (featureEditor.getFeatureTransaction() != null) {
 			featureEditor.getFeatureTransaction().accept(visitor, group, bounds, recursive);
 		}
+	}
+
+	private void aggregateAndVisitAllLayeres(PainterVisitor visitor, Object group, Bbox bounds, boolean recursive) {
+		clearActiveComboRasterLayers(visitor, group);
+		List<Layer<?>> unvisitedLayers = new ArrayList<Layer<?>>();
+		String currentAggregationId = null;
+		for (Layer<?> layer : layers) {
+			GWT.log("Aggregating layer with id "+layer.getId());
+			if (layer.isShowing()) {
+				if (layer.getLayerInfo() instanceof ClientLayerInfo) {
+					ClientLayerInfo layerInfo = (ClientLayerInfo) layer.getLayerInfo();
+					String aggregationId = layerInfo.getAggregationId();
+					if (aggregationId == null) {
+						endStreak(visitor, group, bounds, recursive, unvisitedLayers);
+						layer.accept(visitor, group, bounds, recursive);
+						currentAggregationId = null;
+					} else {
+						if (!aggregationId.equals(currentAggregationId) && currentAggregationId != null) {
+							endStreak(visitor, group, bounds, recursive, unvisitedLayers);
+							currentAggregationId = aggregationId;
+						}
+						unvisitedLayers.add(layer);
+					}
+				} else {
+					layer.accept(visitor, group, bounds, recursive);
+				}
+			}
+		}
+		endStreak(visitor, group, bounds, recursive, unvisitedLayers);
+	}
+
+	private void clearActiveComboRasterLayers(PainterVisitor visitor, Object group) {
+		for (Layer layer : activeComboRasterLayers) {
+			visitor.remove(layer, group);
+		}
+	}
+
+	private void endStreak(PainterVisitor visitor, Object group, Bbox bounds, boolean recursive,
+			List<Layer<?>> unvisitedLayers) {
+		if (unvisitedLayers.size() == 1) {
+			unvisitedLayers.get(0).accept(visitor, group, bounds, recursive);
+		} else if (unvisitedLayers.size() > 1) {
+			ComboRasterLayer comboLayer = new ComboRasterLayer(unvisitedLayers);
+			comboLayer.accept(visitor, group, bounds, recursive);
+			activeComboRasterLayers.add(comboLayer);
+		}
+		unvisitedLayers.clear();
 	}
 
 	/**
@@ -383,7 +439,7 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 	 * Refresh the map model. This will re-read the configuration and update the map model, toolbar etc.
 	 * <p/>
 	 * This should be called if you want the map to redraw itself. it is automatically called when the token changes.
-	 *
+	 * 
 	 * @since 1.10.0
 	 */
 	@Api
@@ -402,7 +458,7 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 	 * Make sure the handler are registered before initializing the map model or you may miss events.
 	 * <p/>
 	 * Only works the first time, use {@link #refresh()} later on.
-	 *
+	 * 
 	 * @since 1.10.0
 	 */
 	@Api
@@ -415,7 +471,7 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 
 	/**
 	 * Clear the map model. Removes all layers and tools.
-	 *
+	 * 
 	 * @since 1.10.0
 	 */
 	@Api
@@ -425,8 +481,8 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 	}
 
 	private void refreshFromConfiguration() {
-		ClientConfigurationService.getApplicationWidgetInfo(applicationId, id, new
-				WidgetConfigurationCallback<ClientMapInfo>() {
+		ClientConfigurationService.getApplicationWidgetInfo(applicationId, id,
+				new WidgetConfigurationCallback<ClientMapInfo>() {
 
 					public void execute(ClientMapInfo mapInfo) {
 						if (null == mapInfo) {
@@ -439,10 +495,11 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 	}
 
 	/**
-	 * Refresh the MapModel object, using a configuration object acquired from the server. This will automatically
-	 * build the list of layers.
-	 *
-	 * @param mapInfo The configuration object.
+	 * Refresh the MapModel object, using a configuration object acquired from the server. This will automatically build
+	 * the list of layers.
+	 * 
+	 * @param mapInfo
+	 *            The configuration object.
 	 */
 	private void refresh(final ClientMapInfo mapInfo) {
 		actualRefresh(mapInfo);
@@ -453,7 +510,7 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		}
 		state = State.INITIALIZED;
 		fireRefreshEvents();
-		
+
 		while (whenInitializedRunnables.size() > 0) {
 			Runnable runnable = whenInitializedRunnables.remove(0);
 			runnable.run();
@@ -470,9 +527,9 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 	}
 
 	/**
-	 * Refresh the MapModel object, using a configuration object acquired from the server. This will automatically
-	 * build the list of layers.
-	 *
+	 * Refresh the MapModel object, using a configuration object acquired from the server. This will automatically build
+	 * the list of layers.
+	 * 
 	 * @param mapInfo
 	 *            The configuration object.
 	 */
@@ -519,7 +576,7 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 			}
 		}
 		mapView.setMaxBounds(maxBounds);
-		
+
 		if (null == mapInfo.getViewBoundsLimitOption()) {
 			mapView.setViewBoundsLimitOption(BoundsLimitOption.COMPLETELY_WITHIN_MAX_BOUNDS);
 		} else {
@@ -638,7 +695,7 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 
 	/**
 	 * Return a list containing all vector layers within this model.
-	 *
+	 * 
 	 * @return vector layers
 	 */
 	public List<VectorLayer> getVectorLayers() {
@@ -660,7 +717,7 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 
 	/**
 	 * Return the total number of selected features in all vector layers.
-	 *
+	 * 
 	 * @return number of selected features
 	 */
 	public int getNrSelectedFeatures() {
@@ -670,7 +727,7 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		}
 		return count;
 	}
-	
+
 	/**
 	 * Return the selected feature if there is 1 selected feature.
 	 * 
@@ -686,11 +743,12 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Pan to the center of the bounds of the specified features.
 	 * 
-	 * @param features list of features, will be lazy-loaded if necessary
+	 * @param features
+	 *            list of features, will be lazy-loaded if necessary
 	 * @since 1.11.0
 	 */
 	@Api
@@ -702,15 +760,16 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 				callback.execute(Arrays.asList(feature));
 			} else {
 				feature.getLayer().getFeatureStore()
-						.getFeature(feature.getId(), GeomajasConstant.FEATURE_INCLUDE_GEOMETRY, callback);			
+						.getFeature(feature.getId(), GeomajasConstant.FEATURE_INCLUDE_GEOMETRY, callback);
 			}
 		}
 	}
-	
+
 	/**
 	 * Zoom to the bounds of the specified features.
 	 * 
-	 * @param features list of features, will be lazy-loaded if necessary
+	 * @param features
+	 *            list of features, will be lazy-loaded if necessary
 	 * @since 1.11.0
 	 */
 	@Api
@@ -720,17 +779,16 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		double zoomToPointScale = getMapInfo().getScaleConfiguration().getMaximumScale().getPixelPerUnit();
 		for (Feature feature : features) {
 			double scale = feature.getLayer().getLayerInfo().getZoomToPointScale().getPixelPerUnit();
-			zoomToPointScale = Math.min(zoomToPointScale,  scale);
+			zoomToPointScale = Math.min(zoomToPointScale, scale);
 		}
-		ZoomToFeaturesLazyLoadCallback callback = new ZoomToFeaturesLazyLoadCallback(features.size(), 
-				zoomToPointScale);
+		ZoomToFeaturesLazyLoadCallback callback = new ZoomToFeaturesLazyLoadCallback(features.size(), zoomToPointScale);
 		for (Feature feature : features) {
 			// no need to fetch if we already have the geometry !
 			if (feature.isGeometryLoaded()) {
 				callback.execute(Arrays.asList(feature));
 			} else {
 				feature.getLayer().getFeatureStore()
-						.getFeature(feature.getId(), GeomajasConstant.FEATURE_INCLUDE_GEOMETRY, callback);			
+						.getFeature(feature.getId(), GeomajasConstant.FEATURE_INCLUDE_GEOMETRY, callback);
 			}
 		}
 	}
@@ -1028,7 +1086,7 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 	/**
 	 * Return a factory for geometries that is suited perfectly for geometries within this model. The SRID and precision
 	 * will for the factory will be correct.
-	 *
+	 * 
 	 * @return geometry factory
 	 */
 	public GeometryFactory getGeometryFactory() {
@@ -1078,7 +1136,7 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 
 	/**
 	 * Count the total number of raster layers in this model.
-	 *
+	 * 
 	 * @return number of raster layers
 	 */
 	private int rasterLayerCount() {
@@ -1111,7 +1169,7 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 			handlerManager.fireEvent(event);
 		}
 	}
-	
+
 	/**
 	 * Stateful callback that zooms to bounds when all features have been retrieved.
 	 * 
@@ -1121,12 +1179,14 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 	private class ZoomToFeaturesLazyLoadCallback implements LazyLoadCallback {
 
 		private int featureCount;
+
 		private Bbox bounds;
+
 		private double pointScale;
 
 		public ZoomToFeaturesLazyLoadCallback(int featureCount, double pointScale) {
 			this.featureCount = featureCount;
-			this.pointScale  = pointScale;
+			this.pointScale = pointScale;
 		}
 
 		public void execute(List<Feature> response) {
@@ -1159,6 +1219,7 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 	private class PanToFeaturesLazyLoadCallback implements LazyLoadCallback {
 
 		private int featureCount;
+
 		private Bbox bounds;
 
 		public PanToFeaturesLazyLoadCallback(int featureCount) {
@@ -1182,4 +1243,19 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		}
 	}
 
+	
+	public List<ComboRasterLayer> getActiveComboRasterLayers() {
+		return Collections.unmodifiableList(activeComboRasterLayers);
+	}
+
+	public void clearActiveComboRasterLayers() {
+		activeComboRasterLayers.clear();
+	}
+
+	public boolean isLayerPartOfActiveComboRasterLayers (Layer<?> layerToCheck){
+		for (ComboRasterLayer currentComboLayer : activeComboRasterLayers) {
+			if (currentComboLayer.getLayers().contains(layerToCheck)) return true;
+		}
+		return false;
+	}
 }

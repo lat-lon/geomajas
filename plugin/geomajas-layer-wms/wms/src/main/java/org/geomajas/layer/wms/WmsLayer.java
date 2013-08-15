@@ -18,8 +18,6 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,7 +32,6 @@ import org.geomajas.configuration.RasterLayerInfo;
 import org.geomajas.configuration.client.ScaleInfo;
 import org.geomajas.geometry.Bbox;
 import org.geomajas.geometry.Crs;
-import org.geomajas.geometry.CrsTransform;
 import org.geomajas.global.ExceptionCode;
 import org.geomajas.global.GeomajasException;
 import org.geomajas.layer.LayerException;
@@ -47,7 +44,6 @@ import org.geomajas.layer.feature.Attribute;
 import org.geomajas.layer.feature.Feature;
 import org.geomajas.layer.feature.attribute.StringAttribute;
 import org.geomajas.layer.tile.RasterTile;
-import org.geomajas.layer.tile.TileCode;
 import org.geomajas.plugin.caching.service.CacheManagerService;
 import org.geomajas.security.SecurityContext;
 import org.geomajas.service.DispatcherUrlService;
@@ -66,7 +62,6 @@ import org.geotools.feature.FeatureIterator;
 import org.geotools.ows.ServiceException;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.type.AttributeDescriptor;
-import org.opengis.geometry.MismatchedDimensionException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -176,6 +171,9 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 	@Autowired
 	private SecurityContext securityContext;
 
+	@Autowired
+	private WmsLayerPainter painter;
+
 	private boolean enableFeatureInfoSupportAsGml;
 
 	private String legendImageUrl;
@@ -273,8 +271,10 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 			return Collections.emptyList();
 		}
 		List<Feature> features = new ArrayList<Feature>();
-		Resolution bestResolution = getResolutionForScale(layerScale);
-		RasterGrid grid = getRasterGrid(new Envelope(layerCoordinate), bestResolution.getTileWidth(),
+		Resolution bestResolution = WmsLayerUtils.getResolutionForScale(resolutions, layerInfo, layerScale);
+		Bbox bbox = getLayerInfo().getMaxExtent();
+
+		RasterGrid grid = painter.getRasterGrid(bbox, new Envelope(layerCoordinate), bestResolution.getTileWidth(),
 				bestResolution.getTileHeight());
 		int x = (int) (((layerCoordinate.x - grid.getLowerLeft().x) * bestResolution.getTileWidthPx()) / grid
 				.getTileWidth());
@@ -286,7 +286,7 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 
 		InputStream stream = null;
 		try {
-			String url = buildRequestUrl(layerCoordinate, layerScale, IS_GML_REQUEST);
+			String url = buildGetFeatureInfoRequestUrl(layerCoordinate, layerScale, IS_GML_REQUEST);
 			log.debug("getFeaturesByLocation: {} {} {} {}", new Object[] { layerCoordinate, layerScale, pixelTolerance,
 					url });
 			GML gml = new GML(Version.GML3);
@@ -333,7 +333,7 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 		InputStream stream = null;
 		String url;
 		try {
-			url = buildRequestUrl(coordinate, layerScale, IS_HTML_REQUEST);
+			url = buildGetFeatureInfoRequestUrl(coordinate, layerScale, IS_HTML_REQUEST);
 
 			log.debug("getFeaturesByLocation: {} {} {} {}",
 					new Object[] { coordinate, layerScale, pixelTolerance, url });
@@ -373,16 +373,16 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 
 	}
 
-	protected String buildRequestUrl(Coordinate layerCoordinate, double layerScale, boolean isHtmlRequest)
+	protected String buildGetFeatureInfoRequestUrl(Coordinate layerCoordinate, double layerScale, boolean isHtmlRequest)
 			throws GeomajasException {
-		Resolution bestResolution = getResolutionForScale(layerScale);
-		RasterGrid grid = getRasterGrid(new Envelope(layerCoordinate), bestResolution.getTileWidth(),
+		Resolution bestResolution = WmsLayerUtils.getResolutionForScale(resolutions, layerInfo, layerScale);
+		Bbox bbox = getLayerInfo().getMaxExtent();
+		RasterGrid grid = painter.getRasterGrid(bbox, new Envelope(layerCoordinate), bestResolution.getTileWidth(),
 				bestResolution.getTileHeight());
 		int x = (int) (((layerCoordinate.x - grid.getLowerLeft().x) * bestResolution.getTileWidthPx()) / grid
 				.getTileWidth());
 		int y = (int) (bestResolution.getTileHeightPx() - (((layerCoordinate.y - grid.getLowerLeft().y) * bestResolution
 				.getTileHeightPx()) / grid.getTileHeight()));
-
 		Bbox layerBox = new Bbox(grid.getLowerLeft().x, grid.getLowerLeft().y, grid.getTileWidth(),
 				grid.getTileHeight());
 		String url = formatGetFeatureInfoUrl(bestResolution.getTileWidthPx(), bestResolution.getTileHeightPx(),
@@ -428,75 +428,7 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 	 */
 	public List<RasterTile> paint(CoordinateReferenceSystem targetCrs, Envelope bounds, double scale)
 			throws GeomajasException {
-		Envelope layerBounds = bounds;
-		double layerScale = scale;
-		CrsTransform layerToMap = null;
-		boolean needTransform = !crs.equals(targetCrs);
-
-		try {
-			// We don't necessarily need to split into same CRS and different
-			// CRS cases, the latter implementation uses
-			// identity transform if crs's are equal for map and layer but might
-			// introduce bugs in rounding and/or
-			// conversions.
-			if (needTransform) {
-				layerToMap = geoService.getCrsTransform(crs, targetCrs);
-				CrsTransform mapToLayer = geoService.getCrsTransform(targetCrs, crs);
-
-				// Translate the map coordinates to layer coordinates, assumes
-				// equal x-y orientation
-				layerBounds = geoService.transform(bounds, mapToLayer);
-				layerScale = bounds.getWidth() * scale / layerBounds.getWidth();
-			}
-		} catch (MismatchedDimensionException e) {
-			throw new GeomajasException(e, ExceptionCode.RENDER_DIMENSION_MISMATCH);
-		}
-		layerBounds = clipBounds(layerBounds);
-		if (layerBounds.isNull()) {
-			return new ArrayList<RasterTile>(0);
-		}
-
-		// Grid is in layer coordinate space!
-		Resolution bestResolution = getResolutionForScale(layerScale);
-		RasterGrid grid = getRasterGrid(layerBounds, bestResolution.getTileWidth(), bestResolution.getTileHeight());
-
-		// We calculate the first tile's screen box with this assumption
-		List<RasterTile> result = new ArrayList<RasterTile>();
-		for (int i = grid.getXmin(); i < grid.getXmax(); i++) {
-			for (int j = grid.getYmin(); j < grid.getYmax(); j++) {
-				double x = grid.getLowerLeft().x + (i - grid.getXmin()) * grid.getTileWidth();
-				double y = grid.getLowerLeft().y + (j - grid.getYmin()) * grid.getTileHeight();
-				// layer coordinates
-				Bbox worldBox;
-				Bbox layerBox;
-				if (needTransform) {
-					layerBox = new Bbox(x, y, grid.getTileWidth(), grid.getTileHeight());
-					// Transforming back to map coordinates will only result in
-					// a proper grid if the transformation
-					// is nearly affine
-					worldBox = geoService.transform(layerBox, layerToMap);
-				} else {
-					worldBox = new Bbox(x, y, grid.getTileWidth(), grid.getTileHeight());
-					layerBox = worldBox;
-				}
-				// Rounding to avoid white space between raster tiles lower-left
-				// becomes upper-left in inverted y-space
-				Bbox screenBox = new Bbox(Math.round(scale * worldBox.getX()), -Math.round(scale * worldBox.getMaxY()),
-						Math.round(scale * worldBox.getMaxX()) - Math.round(scale * worldBox.getX()), Math.round(scale
-								* worldBox.getMaxY())
-								- Math.round(scale * worldBox.getY()));
-
-				RasterTile image = new RasterTile(screenBox, getId() + "." + bestResolution.getLevel() + "." + i + ","
-						+ j);
-
-				image.setCode(new TileCode(bestResolution.getLevel(), i, j));
-				String url = formatUrl(bestResolution.getTileWidthPx(), bestResolution.getTileHeightPx(), layerBox);
-				image.setUrl(url);
-				result.add(image);
-			}
-		}
-
-		return result;
+		return painter.paint(createWmsParams(), resolutions, this, targetCrs, bounds, scale);
 	}
 
 	@Override
@@ -504,27 +436,11 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 		return legendImageUrl;
 	}
 
-	private String getWmsTargetUrl() {
-		if (useProxy || null != authentication || useCache) {
-			if (null != dispatcherUrlService) {
-				String url = dispatcherUrlService.getDispatcherUrl();
-				if (!url.endsWith("/")) {
-					url += "/";
-				}
-				return url + "wms/" + getId() + "/";
-			} else {
-				return "./d/wms/" + getId() + "/";
-			}
-		} else {
-			return baseWmsUrl;
-		}
-	}
-
 	private String formatGetFeatureInfoUrl(int width, int height, Bbox box, int x, int y, boolean isHtmlRequest)
 			throws GeomajasException {
 		// Always use direct url
 		try {
-			StringBuilder url = formatBaseUrl(baseWmsUrl, width, height, box);
+			StringBuilder url = painter.formatBaseUrl(createWmsParams(), this, width, height, box);
 			String layers = getId();
 			if (layerInfo.getDataSourceName() != null) {
 				layers = layerInfo.getDataSourceName();
@@ -545,101 +461,15 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 		}
 	}
 
+	WmsParams createWmsParams() {
+		return new WmsParams(format, useProxy, authentication, useCache, baseWmsUrl, styles, parameters, version);
+	}
+
 	private String retrieveFormatString(boolean isHtmlRequest) {
 		if (isHtmlRequest) {
 			return ("text/html");
 		} else {
 			return ("application/vnd.ogc.gml");
-		}
-	}
-
-	private String formatUrl(int width, int height, Bbox box) throws GeomajasException {
-		StringBuilder url = formatBaseUrl(getWmsTargetUrl(), width, height, box);
-		url.append("&request=GetMap");
-		String token = securityContext.getToken();
-		if (null != token) {
-			url.append("&userToken=");
-			url.append(token);
-		}
-		return url.toString();
-	}
-
-	/**
-	 * Build the base part of the url (doesn't change for getMap or getFeatureInfo requests).
-	 * 
-	 * @param targetUrl
-	 *            base url
-	 * @param width
-	 *            image width
-	 * @param height
-	 *            image height
-	 * @param box
-	 *            bounding box
-	 * @return base WMS url
-	 * @throws GeomajasException
-	 *             missing parameter
-	 */
-	private StringBuilder formatBaseUrl(String targetUrl, int width, int height, Bbox box) throws GeomajasException {
-		try {
-			StringBuilder url = new StringBuilder(targetUrl);
-			int pos = url.lastIndexOf("?");
-			if (pos > 0) {
-				url.append("&SERVICE=WMS");
-			} else {
-				url.append("?SERVICE=WMS");
-			}
-			String layers = getId();
-			if (layerInfo.getDataSourceName() != null) {
-				layers = layerInfo.getDataSourceName();
-			}
-			url.append("&layers=");
-			url.append(URLEncoder.encode(layers, "UTF8"));
-			url.append("&WIDTH=");
-			url.append(Integer.toString(width));
-			url.append("&HEIGHT=");
-			url.append(Integer.toString(height));
-			DecimalFormat decimalFormat = new DecimalFormat(); // create new as
-																// this is not
-																// thread safe
-			decimalFormat.setDecimalSeparatorAlwaysShown(false);
-			decimalFormat.setGroupingUsed(false);
-			decimalFormat.setMinimumFractionDigits(0);
-			decimalFormat.setMaximumFractionDigits(100);
-			DecimalFormatSymbols symbols = new DecimalFormatSymbols();
-			symbols.setDecimalSeparator('.');
-			decimalFormat.setDecimalFormatSymbols(symbols);
-
-			url.append("&bbox=");
-			url.append(decimalFormat.format(box.getX()));
-			url.append(",");
-			url.append(decimalFormat.format(box.getY()));
-			url.append(",");
-			url.append(decimalFormat.format(box.getMaxX()));
-			url.append(",");
-			url.append(decimalFormat.format(box.getMaxY()));
-			url.append("&format=");
-			url.append(format);
-			url.append("&version=");
-			url.append(version);
-			if ("1.3.0".equals(version)) {
-				url.append("&crs=");
-			} else {
-				url.append("&srs=");
-			}
-			url.append(URLEncoder.encode(layerInfo.getCrs(), "UTF8"));
-			url.append("&styles=");
-			url.append(styles);
-			if (null != parameters) {
-				for (Parameter p : parameters) {
-					url.append("&");
-					url.append(URLEncoder.encode(p.getName(), "UTF8"));
-					url.append("=");
-					url.append(URLEncoder.encode(p.getValue(), "UTF8"));
-				}
-			}
-			return url;
-		} catch (UnsupportedEncodingException uee) {
-			throw new IllegalStateException("Cannot find UTF8 encoding?", uee);
 		}
 	}
 
@@ -774,81 +604,6 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 		}
 	}
 
-	private Resolution getResolutionForScale(double scale) {
-		if (null == resolutions || resolutions.size() == 0) {
-			return calculateBestQuadTreeResolution(scale);
-		} else {
-			double screenResolution = 1.0 / scale;
-			if (screenResolution >= resolutions.get(0).getResolution()) {
-				return resolutions.get(0);
-			} else if (screenResolution <= resolutions.get(resolutions.size() - 1).getResolution()) {
-				return resolutions.get(resolutions.size() - 1);
-			} else {
-				for (int i = 0; i < resolutions.size() - 1; i++) {
-					Resolution upper = resolutions.get(i);
-					Resolution lower = resolutions.get(i + 1);
-					if (screenResolution <= upper.getResolution() && screenResolution >= lower.getResolution()) {
-						if ((upper.getResolution() - screenResolution) > 2 * (screenResolution - lower.getResolution())) {
-							return lower;
-						} else {
-							return upper;
-						}
-					}
-				}
-			}
-		}
-		// should not occur !!!!
-		return resolutions.get(resolutions.size() - 1);
-	}
-
-	private Resolution calculateBestQuadTreeResolution(double scale) {
-		double screenResolution = 1.0 / scale;
-		// based on quad tree created by subdividing the maximum extent
-		Bbox bbox = layerInfo.getMaxExtent();
-		double maxWidth = bbox.getWidth();
-		double maxHeight = bbox.getHeight();
-
-		int tileWidth = layerInfo.getTileWidth();
-		int tileHeight = layerInfo.getTileHeight();
-
-		Resolution upper = new Resolution(Math.max(maxWidth / tileWidth, maxHeight / tileHeight), 0, tileWidth,
-				tileHeight);
-		if (screenResolution >= upper.getResolution()) {
-			return upper;
-		} else {
-			int level = 0;
-			Resolution lower = upper; // set value to avoid possible NPE
-			while (screenResolution < upper.getResolution()) {
-				lower = upper;
-				level++;
-				double width = maxWidth / Math.pow(2, level);
-				double height = maxHeight / Math.pow(2, level);
-				upper = new Resolution(Math.max(width / tileWidth, height / tileHeight), level, tileWidth, tileHeight);
-			}
-			if ((screenResolution - upper.getResolution()) > 2 * (lower.getResolution() - screenResolution)) {
-				return lower;
-			} else {
-				return upper;
-			}
-		}
-	}
-
-	private RasterGrid getRasterGrid(Envelope bounds, double width, double height) {
-		Bbox bbox = getLayerInfo().getMaxExtent();
-		int ymin = (int) Math.floor((bounds.getMinY() - bbox.getY()) / height);
-		int ymax = (int) Math.ceil((bounds.getMaxY() - bbox.getY()) / height);
-		int xmin = (int) Math.floor((bounds.getMinX() - bbox.getX()) / width);
-		int xmax = (int) Math.ceil((bounds.getMaxX() - bbox.getX()) / width);
-
-		Coordinate lowerLeft = new Coordinate(bbox.getX() + xmin * width, bbox.getY() + ymin * height);
-		return new RasterGrid(lowerLeft, xmin, ymin, xmax, ymax, width, height);
-	}
-
-	private Envelope clipBounds(Envelope bounds) {
-		Envelope maxExtent = converterService.toInternal(layerInfo.getMaxExtent());
-		return bounds.intersection(maxExtent);
-	}
-
 	public String getBaseWmsUrl() {
 		return baseWmsUrl;
 	}
@@ -915,6 +670,15 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 	@Api
 	public void setParameters(List<Parameter> parameters) {
 		this.parameters = parameters;
+	}
+
+	/**
+	 * Get additional parameters to include in all WMS <code>getMap</code> requests.
+	 * 
+	 * @return parameters. For possible keys and values, check your WMS server.
+	 */
+	public List<Parameter> getParameters() {
+		return parameters;
 	}
 
 	/**
@@ -1096,129 +860,6 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 	}
 
 	/**
-	 * Grid definition for a WMS layer. It is used internally in the WMS layer.
-	 * 
-	 * @author Jan De Moerloose
-	 * @author Pieter De Graef
-	 */
-	private static class RasterGrid {
-
-		private final Coordinate lowerLeft;
-
-		private final int xmin;
-
-		private final int ymin;
-
-		private final int xmax;
-
-		private final int ymax;
-
-		private final double tileWidth;
-
-		private final double tileHeight;
-
-		RasterGrid(Coordinate lowerLeft, int xmin, int ymin, int xmax, int ymax, double tileWidth, double tileHeight) {
-			super();
-			this.lowerLeft = lowerLeft;
-			this.xmin = xmin;
-			this.ymin = ymin;
-			this.xmax = xmax;
-			this.ymax = ymax;
-			this.tileWidth = tileWidth;
-			this.tileHeight = tileHeight;
-		}
-
-		public Coordinate getLowerLeft() {
-			return lowerLeft;
-		}
-
-		public double getTileHeight() {
-			return tileHeight;
-		}
-
-		public double getTileWidth() {
-			return tileWidth;
-		}
-
-		public int getXmax() {
-			return xmax;
-		}
-
-		public int getXmin() {
-			return xmin;
-		}
-
-		public int getYmax() {
-			return ymax;
-		}
-
-		public int getYmin() {
-			return ymin;
-		}
-	}
-
-	/**
-	 * Single resolution definition for a WMS layer. This class is used internally in the WMS layer, and therefore has
-	 * no public constructors.
-	 * 
-	 * @author Jan De Moerloose
-	 * @author Pieter De Graef
-	 */
-	private static class Resolution {
-
-		private final double resolution;
-
-		private final int level;
-
-		private final int tileWidth;
-
-		private final int tileHeight;
-
-		/**
-		 * Constructor that immediately requires all fields.
-		 * 
-		 * @param resolution
-		 *            The actual resolution value. This is the reverse of the scale.
-		 * @param level
-		 *            The level in the quad tree.
-		 * @param tileWidth
-		 *            The width of a tile at the given tile level.
-		 * @param tileHeight
-		 *            The height of a tile at the given tile level.
-		 */
-		Resolution(double resolution, int level, int tileWidth, int tileHeight) {
-			this.resolution = resolution;
-			this.level = level;
-			this.tileWidth = tileWidth;
-			this.tileHeight = tileHeight;
-		}
-
-		public int getLevel() {
-			return level;
-		}
-
-		public int getTileHeightPx() {
-			return tileHeight;
-		}
-
-		public int getTileWidthPx() {
-			return tileWidth;
-		}
-
-		public double getTileHeight() {
-			return tileHeight * resolution;
-		}
-
-		public double getTileWidth() {
-			return tileWidth * resolution;
-		}
-
-		public double getResolution() {
-			return resolution;
-		}
-	}
-
-	/**
 	 * Clear cache manager service. Provided only for testing.
 	 */
 	void clearCacheManagerService() {
@@ -1247,6 +888,10 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 
 	public void setLegendImageWidth(int legendImageWidth) {
 		this.legendImageWidth = legendImageWidth;
+	}
+
+	public List<Resolution> getResolutions() {
+		return resolutions;
 	}
 
 }
