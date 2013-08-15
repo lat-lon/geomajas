@@ -61,6 +61,8 @@ public abstract class ClientLayerInfo implements IsInfo {
 
 	private ClientUserDataInfo userData;
 	
+	private String aggregationId;
+	
 	/**
 	 * Get the unique id of this layer.
 	 * 
@@ -361,6 +363,14 @@ public abstract class ClientLayerInfo implements IsInfo {
 		if (null == zoomToPointScale) {
 			zoomToPointScale = new ScaleInfo(maximumScale);
 		}		
+	}
+
+	public String getAggregationId() {
+		return aggregationId;
+	}
+
+	public void setAggregationId(String aggregationId) {
+		this.aggregationId = aggregationId;
 	}
 
 }
