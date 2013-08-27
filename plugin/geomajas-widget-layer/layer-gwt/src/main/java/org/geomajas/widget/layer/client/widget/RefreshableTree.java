@@ -1,6 +1,6 @@
 package org.geomajas.widget.layer.client.widget;
 
-import org.geomajas.widget.layer.client.widget.CombinedLayertree.LayerTreeLegendNode;
+import org.geomajas.widget.layer.client.widget.node.LayerTreeLegendNode;
 
 import com.google.gwt.core.client.GWT;
 import com.smartgwt.client.widgets.tree.Tree;
@@ -11,7 +11,7 @@ import com.smartgwt.client.widgets.tree.TreeNode;
  * 
  * @author Frank Wynants
  */
-class RefreshableTree extends Tree {
+public class RefreshableTree extends Tree {
 
 	private final LayerTreeBase treeBase;
 

@@ -20,6 +20,7 @@ import org.geomajas.gwt.client.map.event.MapModelChangedEvent;
 import org.geomajas.gwt.client.map.event.MapModelChangedHandler;
 import org.geomajas.gwt.client.util.Log;
 import org.geomajas.gwt.client.widget.MapWidget;
+import org.geomajas.widget.layer.client.widget.node.LayerTreeTreeNode;
 import org.geomajas.widget.layer.configuration.client.ClientAbstractNodeInfo;
 import org.geomajas.widget.layer.configuration.client.ClientLayerTreeInfo;
 
@@ -199,7 +200,7 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 	protected void onIconClick(TreeNode node) {
 		if (node instanceof LayerTreeTreeNode) {
 			LayerTreeTreeNode n = (LayerTreeTreeNode) node;
-			n.layer.setVisible(!n.layer.isVisible());
+			n.getLayer().setVisible(!n.getLayer().isVisible());
 			n.updateIcon();
 		}
 	}

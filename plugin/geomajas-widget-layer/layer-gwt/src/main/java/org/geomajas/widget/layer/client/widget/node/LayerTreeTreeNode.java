@@ -1,8 +1,9 @@
-package org.geomajas.widget.layer.client.widget;
+package org.geomajas.widget.layer.client.widget.node;
 
 import org.geomajas.gwt.client.map.layer.AbstractLayer;
 import org.geomajas.gwt.client.map.layer.Layer;
 import org.geomajas.gwt.client.map.layer.VectorLayer;
+import org.geomajas.widget.layer.client.widget.RefreshableTree;
 
 import com.smartgwt.client.widgets.tree.TreeNode;
 
@@ -28,9 +29,9 @@ public class LayerTreeTreeNode extends TreeNode {
 
 	protected static final String ICON_SHOW_END = ".png";
 
-	protected RefreshableTree tree;
+	protected final RefreshableTree tree;
 
-	protected AbstractLayer<?> layer;
+	protected final AbstractLayer<?> layer;
 
 	/**
 	 * Constructor creates a TreeNode with layer.getLabel as label.
@@ -58,16 +59,16 @@ public class LayerTreeTreeNode extends TreeNode {
 	 *            should tree be refreshed
 	 */
 	public void updateIcon(boolean refresh) {
-		if (layer.isVisible()) {
+		if (getLayer().isVisible()) {
 			StringBuffer icon = new StringBuffer(ICON_SHOW);
-			if (!layer.isShowing()) {
+			if (!getLayer().isShowing()) {
 				icon.append(ICON_SHOW_OUT_OF_RANGE);
 			}
-			if (layer.isLabelsVisible()) {
+			if (getLayer().isLabelsVisible()) {
 				icon.append(ICON_SHOW_LABELED);
 			}
-			if (layer instanceof VectorLayer) {
-				VectorLayer vl = (VectorLayer) layer;
+			if (getLayer() instanceof VectorLayer) {
+				VectorLayer vl = (VectorLayer) getLayer();
 				if (vl.getFilter() != null && vl.getFilter().length() > 0) {
 					icon.append(ICON_SHOW_FILTERED);
 				}
@@ -78,11 +79,15 @@ public class LayerTreeTreeNode extends TreeNode {
 			setIcon(ICON_HIDE);
 		}
 		if (refresh) {
-			tree.refreshIcons();
+			getTree().refreshIcons();
 		}
 	}
 
 	public AbstractLayer<?> getLayer() {
 		return layer;
+	}
+
+	public RefreshableTree getTree() {
+		return tree;
 	}
 }
