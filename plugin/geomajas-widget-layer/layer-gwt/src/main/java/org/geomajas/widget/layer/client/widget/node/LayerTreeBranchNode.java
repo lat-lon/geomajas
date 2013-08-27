@@ -8,7 +8,7 @@ import org.geomajas.widget.layer.client.widget.RefreshableTree;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
 /**
- * {@link TreeNode} implementation for category nodes
+ * {@link LayerTreeNode} implementation for category nodes
  * 
  * @author <a href="mailto:erben@lat-lon.de">Alexander Erben</a>
  * @author <a href="mailto:goltz@lat-lon.de">Lyn Goltz</a>
@@ -48,6 +48,8 @@ public class LayerTreeBranchNode extends LayerTreeNode {
 	public void setChildLayers(List<LayerTreeNode> childLayers) {
 		if (childLayers != null)
 			this.childLayers = childLayers;
+		else 
+			this.childLayers = new ArrayList<LayerTreeNode>();
 		updateIcon();
 	}
 

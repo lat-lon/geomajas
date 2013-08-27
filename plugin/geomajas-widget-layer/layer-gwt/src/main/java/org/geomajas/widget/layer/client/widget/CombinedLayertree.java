@@ -112,8 +112,8 @@ public class CombinedLayertree extends LayerTreeBase {
 			node.setAttribute(EXPANDED_ATTR, ((ClientBranchNodeInfo) treeNode).isExpanded());
 			tree.add(node, nodeRoot);
 
-			List<LayerTreeNode> addedChildLayers = new ArrayList<LayerTreeNode>();
 			// treeNodes
+			List<LayerTreeNode> addedChildLayers = new ArrayList<LayerTreeNode>();
 			List<ClientAbstractNodeInfo> children = treeNode.getTreeNodes();
 			for (ClientAbstractNodeInfo newNode : children) {
 				addedChildLayers.addAll(processNode(newNode, node, refresh));

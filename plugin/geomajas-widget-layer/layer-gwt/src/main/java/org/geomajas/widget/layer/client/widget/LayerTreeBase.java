@@ -207,14 +207,26 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 
 	private void onIconClick(TreeNode node) {
 		if (node instanceof LayerTreeLeafNode) {
-			LayerTreeLeafNode n = (LayerTreeLeafNode) node;
-			n.getLayer().setVisible(!n.getLayer().isVisible());
-			n.updateIcon();
+			LayerTreeLeafNode leafNode = (LayerTreeLeafNode) node;
+			leafNode.getLayer().setVisible(!leafNode.getLayer().isVisible());
+			leafNode.updateIcon();
+			updateParents(leafNode);
 		} else if (node instanceof LayerTreeBranchNode) {
-			LayerTreeBranchNode branchTreeNode = (LayerTreeBranchNode) node;
-			boolean newStatus = !branchTreeNode.isVisible();
-			updateChildLayers(branchTreeNode, newStatus);
-			branchTreeNode.updateIcon();
+			LayerTreeBranchNode branchNode = (LayerTreeBranchNode) node;
+			boolean newStatus = !branchNode.isVisible();
+			updateChildLayers(branchNode, newStatus);
+			branchNode.updateIcon();
+			updateParents(branchNode);
+		}
+	}
+
+	private void updateParents(LayerTreeNode leafNode) {
+		TreeNode[] parents = tree.getParents(leafNode);
+		for (TreeNode treeNode : parents) {
+			if (treeNode instanceof LayerTreeBranchNode) {
+				LayerTreeBranchNode branchNode = (LayerTreeBranchNode) treeNode;
+				branchNode.updateIcon();
+			}
 		}
 	}
 
