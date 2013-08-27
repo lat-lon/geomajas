@@ -16,7 +16,7 @@ import org.geomajas.widget.layer.client.widget.RefreshableTree;
 /**
  * Node with legend for LayerNode.
  */
-public class LayerTreeLegendNode extends LayerTreeTreeNode {
+public class LayerTreeLegendNode extends LayerTreeLeafNode {
 
 	private CombinedLayertree layerTree;
 

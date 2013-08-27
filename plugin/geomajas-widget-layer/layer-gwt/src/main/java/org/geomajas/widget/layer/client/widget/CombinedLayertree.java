@@ -11,7 +11,10 @@
 
 package org.geomajas.widget.layer.client.widget;
 
+import static java.util.Collections.emptyList;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -32,9 +35,11 @@ import org.geomajas.gwt.client.map.layer.Layer;
 import org.geomajas.gwt.client.map.layer.VectorLayer;
 import org.geomajas.gwt.client.widget.MapWidget;
 import org.geomajas.widget.layer.client.LayerMessages;
+import org.geomajas.widget.layer.client.widget.node.LayerTreeBranchNode;
+import org.geomajas.widget.layer.client.widget.node.LayerTreeLeafNode;
 import org.geomajas.widget.layer.client.widget.node.LayerTreeLegendItemNode;
 import org.geomajas.widget.layer.client.widget.node.LayerTreeLegendNode;
-import org.geomajas.widget.layer.client.widget.node.LayerTreeTreeNode;
+import org.geomajas.widget.layer.client.widget.node.LayerTreeNode;
 import org.geomajas.widget.layer.configuration.client.ClientAbstractNodeInfo;
 import org.geomajas.widget.layer.configuration.client.ClientBranchNodeInfo;
 import org.geomajas.widget.layer.configuration.client.ClientLayerNodeInfo;
@@ -75,7 +80,7 @@ public class CombinedLayertree extends LayerTreeBase {
 
 	private final List<HandlerRegistration> registrations = new ArrayList<HandlerRegistration>();
 
-	protected LayerTreeTreeNode rollOverLayerTreeNode;
+	protected LayerTreeLeafNode rollOverLayerTreeNode;
 
 	private HashMap<VectorLayer, List<LayerTreeLegendItemNode>> legendIcons = new HashMap<VectorLayer, List<LayerTreeLegendItemNode>>();
 
@@ -97,29 +102,24 @@ public class CombinedLayertree extends LayerTreeBase {
 		legendIcons.put(key, value);
 	}
 
-	/**
-	 * Processes a treeNode (add it to the TreeGrid).
-	 * 
-	 * @param treeNode
-	 *            The treeNode to process
-	 * @param nodeRoot
-	 *            The root node to which the treeNode has to be added
-	 * @param refresh
-	 *            True if the tree is refreshed (causing it to keep its expanded state)
-	 */
-	protected void processNode(final ClientAbstractNodeInfo treeNode, final TreeNode nodeRoot, final boolean refresh) {
+	@Override
+	protected List<LayerTreeNode> processNode(final ClientAbstractNodeInfo treeNode, final TreeNode nodeRoot,
+			final boolean refresh) {
 		// Branches
 		if (null != treeNode && treeNode instanceof ClientBranchNodeInfo) {
 			String treeNodeLabel = ((ClientBranchNodeInfo) treeNode).getLabel();
-			final TreeNode node = new TreeNode(treeNodeLabel);
+			final LayerTreeBranchNode node = new LayerTreeBranchNode(tree, treeNodeLabel);
 			node.setAttribute(EXPANDED_ATTR, ((ClientBranchNodeInfo) treeNode).isExpanded());
 			tree.add(node, nodeRoot);
 
+			List<LayerTreeNode> addedChildLayers = new ArrayList<LayerTreeNode>();
 			// treeNodes
 			List<ClientAbstractNodeInfo> children = treeNode.getTreeNodes();
 			for (ClientAbstractNodeInfo newNode : children) {
-				processNode(newNode, node, refresh);
+				addedChildLayers.addAll(processNode(newNode, node, refresh));
 			}
+			node.setChildLayers(addedChildLayers);
+			return addedChildLayers;
 			// Leafs
 		} else if (null != treeNode && treeNode instanceof ClientLayerNodeInfo) {
 			if (treeNode instanceof ClientLayerNodeInfo) {
@@ -129,9 +129,11 @@ public class CombinedLayertree extends LayerTreeBase {
 					LayerTreeLegendNode ltln = new LayerTreeLegendNode(this, this.tree, layer);
 					tree.add(ltln, nodeRoot);
 					ltln.init();
+					return Collections.<LayerTreeNode> singletonList(ltln);
 				}
 			}
 		}
+		return emptyList();
 	}
 
 	/**
@@ -140,14 +142,15 @@ public class CombinedLayertree extends LayerTreeBase {
 	 * @param event
 	 *            event
 	 */
+	@Override
 	public void onLeafClick(LeafClickEvent event) {
-		LayerTreeTreeNode layerTreeNode;
+		LayerTreeLeafNode layerTreeNode;
 		if (event.getLeaf() instanceof LayerTreeLegendItemNode) {
 			layerTreeNode = ((LayerTreeLegendItemNode) event.getLeaf()).getParent();
 			treeGrid.deselectRecord(event.getLeaf());
 			treeGrid.selectRecord(layerTreeNode);
 		} else {
-			layerTreeNode = (LayerTreeTreeNode) event.getLeaf();
+			layerTreeNode = (LayerTreeLeafNode) event.getLeaf();
 		}
 
 		// -- update model
@@ -180,15 +183,15 @@ public class CombinedLayertree extends LayerTreeBase {
 		return createTreeGridInfoWindowRollover();
 	}
 
-	@Override
-	protected void onIconClick(TreeNode node) {
-		if (node instanceof LayerTreeLegendNode) {
-			super.onIconClick(node);
-		} // else if (node instanceof TreeNode) {
-			// TODO -- show/hide all layers in folder
-		GWT.log("TODO");
-		// }
-	}
+	// @Override
+	// protected void onIconClick(TreeNode node) {
+	// if (node instanceof LayerTreeLegendNode) {
+	// super.onIconClick(node);
+	// } // else if (node instanceof TreeNode) {
+	// // TODO -- show/hide all layers in folder
+	// GWT.log("TODO");
+	// // }
+	// }
 
 	protected TreeGrid createTreeGridInfoWindowRollover() {
 		return new TreeGrid() {
@@ -230,7 +233,7 @@ public class CombinedLayertree extends LayerTreeBase {
 				if (lgr instanceof LayerTreeLegendItemNode) {
 					rollOverLayerTreeNode = ((LayerTreeLegendItemNode) lgr).getParent();
 				} else if (lgr instanceof LayerTreeLegendNode) {
-					rollOverLayerTreeNode = (LayerTreeTreeNode) lgr;
+					rollOverLayerTreeNode = (LayerTreeLeafNode) lgr;
 				} else {
 					rollOverLayerTreeNode = null;
 					rollOverTools.setVisible(false);
@@ -290,7 +293,7 @@ public class CombinedLayertree extends LayerTreeBase {
 				if (lgr instanceof LayerTreeLegendItemNode) {
 					rollOverLayerTreeNode = ((LayerTreeLegendItemNode) lgr).getParent();
 				} else if (lgr instanceof LayerTreeLegendNode) {
-					rollOverLayerTreeNode = (LayerTreeTreeNode) lgr;
+					rollOverLayerTreeNode = (LayerTreeLeafNode) lgr;
 				} else {
 					rollOverLayerTreeNode = null;
 					rollOverTools.setVisible(false);
@@ -357,7 +360,7 @@ public class CombinedLayertree extends LayerTreeBase {
 		}
 
 		public void update() {
-			LayerTreeTreeNode selected = tree.rollOverLayerTreeNode;
+			LayerTreeLeafNode selected = tree.rollOverLayerTreeNode;
 			if (selected != null && action.isEnabled(selected.getLayer())) {
 				setDisabled(false);
 				setIcon(action.getIcon());
@@ -406,7 +409,7 @@ public class CombinedLayertree extends LayerTreeBase {
 			this.addClickHandler(new ClickHandler() {
 
 				public void onClick(ClickEvent event) {
-					LayerTreeTreeNode selectedLayerNode = tree.rollOverLayerTreeNode;
+					LayerTreeLeafNode selectedLayerNode = tree.rollOverLayerTreeNode;
 					if (LayerTreeModalButton.this.isSelected()) {
 						modalAction.onSelect(selectedLayerNode.getLayer());
 					} else {
@@ -419,7 +422,7 @@ public class CombinedLayertree extends LayerTreeBase {
 		}
 
 		public void update() {
-			LayerTreeTreeNode selected = tree.rollOverLayerTreeNode;
+			LayerTreeLeafNode selected = tree.rollOverLayerTreeNode;
 			if (selected != null && modalAction.isEnabled(selected.getLayer())) {
 				setDisabled(false);
 			} else {
@@ -457,8 +460,8 @@ public class CombinedLayertree extends LayerTreeBase {
 					GWT.log("Legend: onLabelChange() - " + event.getLayer().getLabel());
 					// find the node & update the icon
 					for (TreeNode node : tree.getAllNodes()) {
-						if (node.getName().equals(event.getLayer().getLabel()) && node instanceof LayerTreeTreeNode) {
-							((LayerTreeTreeNode) node).updateIcon();
+						if (node.getName().equals(event.getLayer().getLabel()) && node instanceof LayerTreeLeafNode) {
+							((LayerTreeLeafNode) node).updateIcon();
 						}
 					}
 				}
@@ -467,8 +470,8 @@ public class CombinedLayertree extends LayerTreeBase {
 					GWT.log("Legend: onVisibleChange() - " + event.getLayer().getLabel());
 					// find the node & update the icon
 					for (TreeNode node : tree.getAllNodes()) {
-						if (node.getName().equals(event.getLayer().getLabel()) && node instanceof LayerTreeTreeNode) {
-							((LayerTreeTreeNode) node).updateIcon();
+						if (node.getName().equals(event.getLayer().getLabel()) && node instanceof LayerTreeLeafNode) {
+							((LayerTreeLeafNode) node).updateIcon();
 						}
 					}
 				}
@@ -494,8 +497,8 @@ public class CombinedLayertree extends LayerTreeBase {
 						GWT.log("Legend: onLayerFilterChange() - " + event.getLayer().getLabel());
 						// find the node & update the icon
 						for (TreeNode node : tree.getAllNodes()) {
-							if (node.getName().equals(event.getLayer().getLabel()) && node instanceof LayerTreeTreeNode) {
-								((LayerTreeTreeNode) node).updateIcon();
+							if (node.getName().equals(event.getLayer().getLabel()) && node instanceof LayerTreeLeafNode) {
+								((LayerTreeLeafNode) node).updateIcon();
 							}
 						}
 					}

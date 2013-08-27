@@ -8,7 +8,7 @@ import org.geomajas.gwt.client.util.UrlBuilder;
 /**
  * Node which displays a legend icon + description.
  */
-public class LayerTreeLegendItemNode extends LayerTreeTreeNode {
+public class LayerTreeLegendItemNode extends LayerTreeLeafNode {
 
 	private static final String LEGEND_ICONS_PATH = "legendgraphic";
 

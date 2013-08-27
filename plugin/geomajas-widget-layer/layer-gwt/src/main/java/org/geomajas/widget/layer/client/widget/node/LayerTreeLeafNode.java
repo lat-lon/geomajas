@@ -5,17 +5,13 @@ import org.geomajas.gwt.client.map.layer.Layer;
 import org.geomajas.gwt.client.map.layer.VectorLayer;
 import org.geomajas.widget.layer.client.widget.RefreshableTree;
 
-import com.smartgwt.client.widgets.tree.TreeNode;
-
 /**
  * A node inside the LayerTree.
  * 
  * @author Frank Wynants
  * @author Pieter De Graef
  */
-public class LayerTreeTreeNode extends TreeNode {
-
-	protected static final String ICON_BASE = "[ISOMORPHIC]/geomajas/widget/layertree/";
+public abstract class LayerTreeLeafNode extends LayerTreeNode {
 
 	protected static final String ICON_HIDE = ICON_BASE + "layer-hide.png";
 
@@ -29,8 +25,6 @@ public class LayerTreeTreeNode extends TreeNode {
 
 	protected static final String ICON_SHOW_END = ".png";
 
-	protected final RefreshableTree tree;
-
 	protected final AbstractLayer<?> layer;
 
 	/**
@@ -41,13 +35,18 @@ public class LayerTreeTreeNode extends TreeNode {
 	 * @param layer
 	 *            The layer object
 	 */
-	public LayerTreeTreeNode(RefreshableTree tree, Layer<?> layer) {
-		super(layer.getLabel());
+	public LayerTreeLeafNode(RefreshableTree tree, Layer<?> layer) {
+		super(tree, layer.getLabel());
 		this.layer = (AbstractLayer<?>) layer;
-		this.tree = tree;
 		updateIcon(false);
 	}
+	
+	@Override
+	public boolean isVisible() {
+		return layer.isShowing();
+	}
 
+	@Override
 	public void updateIcon() {
 		updateIcon(true);
 	}
