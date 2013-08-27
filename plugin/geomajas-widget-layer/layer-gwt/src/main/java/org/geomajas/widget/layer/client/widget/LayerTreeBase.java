@@ -18,16 +18,11 @@ import org.geomajas.gwt.client.map.event.LayerSelectedEvent;
 import org.geomajas.gwt.client.map.event.LayerSelectionHandler;
 import org.geomajas.gwt.client.map.event.MapModelChangedEvent;
 import org.geomajas.gwt.client.map.event.MapModelChangedHandler;
-import org.geomajas.gwt.client.map.layer.AbstractLayer;
-import org.geomajas.gwt.client.map.layer.Layer;
-import org.geomajas.gwt.client.map.layer.VectorLayer;
 import org.geomajas.gwt.client.util.Log;
 import org.geomajas.gwt.client.widget.MapWidget;
-import org.geomajas.widget.layer.client.widget.CombinedLayertree.LayerTreeLegendNode;
 import org.geomajas.widget.layer.configuration.client.ClientAbstractNodeInfo;
 import org.geomajas.widget.layer.configuration.client.ClientLayerTreeInfo;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Element;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
@@ -37,7 +32,6 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
-import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 import com.smartgwt.client.widgets.tree.events.FolderClickEvent;
@@ -57,20 +51,6 @@ import com.smartgwt.client.widgets.tree.events.LeafClickHandler;
  */
 public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, FolderClickHandler,
 		LayerSelectionHandler {
-
-	protected static final String ICON_BASE = "[ISOMORPHIC]/geomajas/widget/layertree/";
-
-	protected static final String ICON_HIDE = ICON_BASE + "layer-hide.png";
-
-	protected static final String ICON_SHOW = ICON_BASE + "layer-show";
-
-	protected static final String ICON_SHOW_OUT_OF_RANGE = "-outofrange";
-
-	protected static final String ICON_SHOW_LABELED = "-labeled";
-
-	protected static final String ICON_SHOW_FILTERED = "-filtered";
-
-	protected static final String ICON_SHOW_END = ".png";
 
 	protected static final String IMG_TAGNAME = "IMG";
 
@@ -262,7 +242,7 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 		treeGrid.setHeight100();
 		treeGrid.setShowHeader(false);
 		treeGrid.setOverflow(Overflow.AUTO);
-		tree = new RefreshableTree();
+		tree = new RefreshableTree(this);
 		final TreeNode nodeRoot = new TreeNode("ROOT");
 		tree.setRoot(nodeRoot); // invisible ROOT node (ROOT node is required)
 
@@ -307,100 +287,4 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 		return new TreeGrid();
 	}
 
-	/**
-	 * A SmartGWT Tree with one extra method 'refresh'. This is needed to update icons on the fly in a tree
-	 * 
-	 * @author Frank Wynants
-	 */
-	protected class RefreshableTree extends Tree {
-
-		/**
-		 * Refreshes the icons in the tree, this is done by closing and reopening all nodes. A dirty solution but no
-		 * other option was found at the time.
-		 */
-		public void refreshIcons() {
-			GWT.log("Refresh node(icon)s");
-
-			// TODO this doesn't work, always returns all folders ???
-			TreeNode[] openNodes = this.getOpenList(this.getRoot());
-
-			this.closeAll();
-			syncNodeState(true);
-
-			// exclude layers, which are handled by syncNodeState()
-			for (TreeNode openNode : openNodes) {
-				if (!(openNode instanceof LayerTreeLegendNode)) {
-					this.openFolder(openNode);
-				}
-			}
-		}
-	}
-
-	/**
-	 * A node inside the LayerTree.
-	 * 
-	 * @author Frank Wynants
-	 * @author Pieter De Graef
-	 */
-	public class LayerTreeTreeNode extends TreeNode {
-
-		protected RefreshableTree tree;
-
-		protected AbstractLayer<?> layer;
-
-		/**
-		 * Constructor creates a TreeNode with layer.getLabel as label.
-		 * 
-		 * @param tree
-		 *            tree for node
-		 * @param layer
-		 *            The layer object
-		 */
-		public LayerTreeTreeNode(RefreshableTree tree, Layer<?> layer) {
-			super(layer.getLabel());
-			this.layer = (AbstractLayer<?>) layer;
-			this.tree = tree;
-			updateIcon(false);
-		}
-
-		public void updateIcon() {
-			updateIcon(true);
-		}
-
-		/**
-		 * Causes the node to check its status (visible, showing labels, ...) and to update its icon to match its
-		 * status.
-		 * 
-		 * @param refresh
-		 *            should tree be refreshed
-		 */
-		public void updateIcon(boolean refresh) {
-			if (layer.isVisible()) {
-				StringBuffer icon = new StringBuffer(ICON_SHOW);
-				if (!layer.isShowing()) {
-					icon.append(ICON_SHOW_OUT_OF_RANGE);
-				}
-				if (layer.isLabelsVisible()) {
-					icon.append(ICON_SHOW_LABELED);
-				}
-				if (layer instanceof VectorLayer) {
-					VectorLayer vl = (VectorLayer) layer;
-					if (vl.getFilter() != null && vl.getFilter().length() > 0) {
-						icon.append(ICON_SHOW_FILTERED);
-					}
-				}
-				icon.append(ICON_SHOW_END);
-				setIcon(icon.toString());
-			} else {
-				setIcon(ICON_HIDE);
-			}
-			if (refresh) {
-				tree.refreshIcons();
-			}
-		}
-
-		public AbstractLayer<?> getLayer() {
-			return layer;
-		}
-	}
 }
