@@ -22,6 +22,8 @@ import org.geomajas.gwt.client.map.event.MapModelChangedEvent;
 import org.geomajas.gwt.client.map.event.MapModelChangedHandler;
 import org.geomajas.gwt.client.util.Log;
 import org.geomajas.gwt.client.widget.MapWidget;
+import org.geomajas.gwt.client.widget.MapWidget.RenderGroup;
+import org.geomajas.gwt.client.widget.MapWidget.RenderStatus;
 import org.geomajas.widget.layer.client.widget.node.LayerTreeBranchNode;
 import org.geomajas.widget.layer.client.widget.node.LayerTreeLeafNode;
 import org.geomajas.widget.layer.client.widget.node.LayerTreeNode;
@@ -76,6 +78,8 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 
 	protected boolean initialized;
 
+	private MapWidget mapWidget;
+
 	// -------------------------------------------------------------------------
 	// Constructor:
 	// -------------------------------------------------------------------------
@@ -91,6 +95,7 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 	public LayerTreeBase(final MapWidget mapWidget) {
 		super();
 		setHeight100();
+		this.mapWidget = mapWidget;
 		mapModel = mapWidget.getMapModel();
 		htmlSelectedLayer.setWidth100();
 		treeGrid = createTreeGrid();
@@ -211,6 +216,7 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 		} else if (node instanceof LayerTreeBranchNode) {
 			onBranchNodeClick(node);
 		}
+		
 	}
 
 	private void onLeafNodeClick(TreeNode node) {
@@ -226,6 +232,7 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 		updateChildLayers(branchNode, newStatus);
 		branchNode.updateIcon();
 		updateParents(branchNode);
+		mapWidget.render(mapModel, RenderGroup.WORLD, RenderStatus.ALL);
 	}
 
 	private void updateParents(LayerTreeNode leafNode) {
@@ -243,7 +250,7 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 		for (LayerTreeNode childNode : childNodes) {
 			if (childNode instanceof LayerTreeLeafNode) {
 				LayerTreeLeafNode n = (LayerTreeLeafNode) childNode;
-				n.getLayer().setVisible(newStatus);
+				n.getLayer().setVisibleNoEvent(newStatus);
 				n.updateIcon();
 			} else if (childNode instanceof LayerTreeBranchNode) {
 				LayerTreeBranchNode childBranchTreeNode = (LayerTreeBranchNode) childNode;
