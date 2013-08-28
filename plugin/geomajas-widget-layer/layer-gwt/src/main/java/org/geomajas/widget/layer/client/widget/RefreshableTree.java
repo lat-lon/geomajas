@@ -1,5 +1,9 @@
 package org.geomajas.widget.layer.client.widget;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.geomajas.widget.layer.client.widget.node.LayerTreeBranchNode;
 import org.geomajas.widget.layer.client.widget.node.LayerTreeLegendNode;
 
 import com.google.gwt.core.client.GWT;
@@ -15,6 +19,8 @@ public class RefreshableTree extends Tree {
 
 	private final LayerTreeBase treeBase;
 
+	private static final String EXPANDED_ATTR = "isExpanded";
+
 	public RefreshableTree(LayerTreeBase treeBase) {
 		this.treeBase = treeBase;
 	}
@@ -26,14 +32,17 @@ public class RefreshableTree extends Tree {
 	public void refreshIcons() {
 		GWT.log("Refresh node(icon)s");
 
-		// TODO this doesn't work, always returns all folders ???
-		TreeNode[] openNodes = this.getOpenList(this.getRoot());
+		List<TreeNode> actuallyOpenNodes = new ArrayList<TreeNode>();
+		for (TreeNode node : this.getAllNodes()) {
+			if (this.isOpen(node))
+				actuallyOpenNodes.add(node);
+		}
 
 		this.closeAll();
 		treeBase.syncNodeState(true);
 
 		// exclude layers, which are handled by syncNodeState()
-		for (TreeNode openNode : openNodes) {
+		for (TreeNode openNode : actuallyOpenNodes) {
 			if (!(openNode instanceof LayerTreeLegendNode)) {
 				this.openFolder(openNode);
 			}
