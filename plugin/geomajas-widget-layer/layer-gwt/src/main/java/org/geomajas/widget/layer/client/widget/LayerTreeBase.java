@@ -11,6 +11,8 @@
 
 package org.geomajas.widget.layer.client.widget;
 
+import java.util.List;
+
 import org.geomajas.gwt.client.i18n.I18nProvider;
 import org.geomajas.gwt.client.map.MapModel;
 import org.geomajas.gwt.client.map.event.LayerDeselectedEvent;
@@ -18,16 +20,16 @@ import org.geomajas.gwt.client.map.event.LayerSelectedEvent;
 import org.geomajas.gwt.client.map.event.LayerSelectionHandler;
 import org.geomajas.gwt.client.map.event.MapModelChangedEvent;
 import org.geomajas.gwt.client.map.event.MapModelChangedHandler;
-import org.geomajas.gwt.client.map.layer.AbstractLayer;
-import org.geomajas.gwt.client.map.layer.Layer;
-import org.geomajas.gwt.client.map.layer.VectorLayer;
 import org.geomajas.gwt.client.util.Log;
 import org.geomajas.gwt.client.widget.MapWidget;
-import org.geomajas.widget.layer.client.widget.CombinedLayertree.LayerTreeLegendNode;
+import org.geomajas.gwt.client.widget.MapWidget.RenderGroup;
+import org.geomajas.gwt.client.widget.MapWidget.RenderStatus;
+import org.geomajas.widget.layer.client.widget.node.LayerTreeBranchNode;
+import org.geomajas.widget.layer.client.widget.node.LayerTreeLeafNode;
+import org.geomajas.widget.layer.client.widget.node.LayerTreeNode;
 import org.geomajas.widget.layer.configuration.client.ClientAbstractNodeInfo;
 import org.geomajas.widget.layer.configuration.client.ClientLayerTreeInfo;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Element;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Overflow;
@@ -37,7 +39,6 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.VLayout;
-import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
 import com.smartgwt.client.widgets.tree.events.FolderClickEvent;
@@ -58,20 +59,6 @@ import com.smartgwt.client.widgets.tree.events.LeafClickHandler;
 public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, FolderClickHandler,
 		LayerSelectionHandler {
 
-	protected static final String ICON_BASE = "[ISOMORPHIC]/geomajas/widget/layertree/";
-
-	protected static final String ICON_HIDE = ICON_BASE + "layer-hide.png";
-
-	protected static final String ICON_SHOW = ICON_BASE + "layer-show";
-
-	protected static final String ICON_SHOW_OUT_OF_RANGE = "-outofrange";
-
-	protected static final String ICON_SHOW_LABELED = "-labeled";
-
-	protected static final String ICON_SHOW_FILTERED = "-filtered";
-
-	protected static final String ICON_SHOW_END = ".png";
-
 	protected static final String IMG_TAGNAME = "IMG";
 
 	protected static final int LAYERTREEBUTTON_SIZE = 22;
@@ -81,7 +68,7 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 	protected final HTMLFlow htmlSelectedLayer = new HTMLFlow(I18nProvider.getLayerTree().activeLayer(
 			I18nProvider.getLayerTree().none()));
 
-	protected LayerTreeTreeNode selectedLayerTreeNode;
+	protected LayerTreeLeafNode selectedLayerTreeNode;
 
 	protected TreeGrid treeGrid;
 
@@ -90,6 +77,8 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 	protected MapModel mapModel;
 
 	protected boolean initialized;
+
+	private MapWidget mapWidget;
 
 	// -------------------------------------------------------------------------
 	// Constructor:
@@ -106,6 +95,7 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 	public LayerTreeBase(final MapWidget mapWidget) {
 		super();
 		setHeight100();
+		this.mapWidget = mapWidget;
 		mapModel = mapWidget.getMapModel();
 		htmlSelectedLayer.setWidth100();
 		treeGrid = createTreeGrid();
@@ -136,6 +126,7 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 	 * @param event
 	 *            event
 	 */
+	@Override
 	public void onDeselectLayer(LayerDeselectedEvent event) {
 		ListGridRecord selected = treeGrid.getSelectedRecord();
 		if (selected != null) {
@@ -152,10 +143,11 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 	 * @param event
 	 *            event
 	 */
+	@Override
 	public void onSelectLayer(LayerSelectedEvent event) {
 		for (TreeNode node : tree.getAllNodes()) {
 			if (node.getName().equals(event.getLayer().getLabel())) {
-				selectedLayerTreeNode = (LayerTreeTreeNode) node;
+				selectedLayerTreeNode = (LayerTreeLeafNode) node;
 				treeGrid.selectRecord(selectedLayerTreeNode);
 				htmlSelectedLayer.setContents(I18nProvider.getLayerTree().activeLayer(
 						selectedLayerTreeNode.getLayer().getLabel()));
@@ -176,14 +168,15 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 	 * @param event
 	 *            event
 	 */
+	@Override
 	public void onFolderClick(FolderClickEvent event) {
 		try {
 			Element e = EventHandler.getNativeMouseTarget();
 			if (IMG_TAGNAME.equals(e.getTagName())) {
 				onIconClick(event.getFolder());
 			} else {
-				if (event.getFolder() instanceof LayerTreeTreeNode) {
-					mapModel.selectLayer(((LayerTreeTreeNode) event.getFolder()).getLayer());
+				if (event.getFolder() instanceof LayerTreeLeafNode) {
+					mapModel.selectLayer(((LayerTreeLeafNode) event.getFolder()).getLayer());
 				} else {
 					mapModel.selectLayer(null);
 				}
@@ -201,13 +194,14 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 	 * @param event
 	 *            event
 	 */
+	@Override
 	public void onLeafClick(LeafClickEvent event) {
 		try {
 			Element e = EventHandler.getNativeMouseTarget();
 			if (IMG_TAGNAME.equals(e.getTagName())) {
 				onIconClick(event.getLeaf());
 			} else {
-				LayerTreeTreeNode layerTreeNode = (LayerTreeTreeNode) event.getLeaf();
+				LayerTreeLeafNode layerTreeNode = (LayerTreeLeafNode) event.getLeaf();
 				mapModel.selectLayer(layerTreeNode.getLayer());
 			}
 		} catch (Exception e) { // NOSONAR
@@ -216,11 +210,52 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 		}
 	}
 
-	protected void onIconClick(TreeNode node) {
-		if (node instanceof LayerTreeTreeNode) {
-			LayerTreeTreeNode n = (LayerTreeTreeNode) node;
-			n.layer.setVisible(!n.layer.isVisible());
-			n.updateIcon();
+	private void onIconClick(TreeNode node) {
+		if (node instanceof LayerTreeLeafNode) {
+			onLeafNodeClick(node);
+		} else if (node instanceof LayerTreeBranchNode) {
+			onBranchNodeClick(node);
+		}
+		
+	}
+
+	private void onLeafNodeClick(TreeNode node) {
+		LayerTreeLeafNode leafNode = (LayerTreeLeafNode) node;
+		leafNode.getLayer().setVisible(!leafNode.getLayer().isVisible());
+		leafNode.updateIcon();
+		updateParents(leafNode);
+	}
+
+	private void onBranchNodeClick(TreeNode node) {
+		LayerTreeBranchNode branchNode = (LayerTreeBranchNode) node;
+		boolean newStatus = !branchNode.isVisible();
+		updateChildLayers(branchNode, newStatus);
+		branchNode.updateIcon();
+		updateParents(branchNode);
+		mapWidget.render(mapModel, RenderGroup.WORLD, RenderStatus.ALL);
+	}
+
+	private void updateParents(LayerTreeNode leafNode) {
+		TreeNode[] parents = tree.getParents(leafNode);
+		for (TreeNode treeNode : parents) {
+			if (treeNode instanceof LayerTreeBranchNode) {
+				LayerTreeBranchNode branchNode = (LayerTreeBranchNode) treeNode;
+				branchNode.updateIcon();
+			}
+		}
+	}
+
+	private void updateChildLayers(LayerTreeBranchNode branchTreeNode, boolean newStatus) {
+		List<LayerTreeNode> childNodes = branchTreeNode.getChildLayers();
+		for (LayerTreeNode childNode : childNodes) {
+			if (childNode instanceof LayerTreeLeafNode) {
+				LayerTreeLeafNode n = (LayerTreeLeafNode) childNode;
+				n.getLayer().setVisibleNoEvent(newStatus);
+				n.updateIcon();
+			} else if (childNode instanceof LayerTreeBranchNode) {
+				LayerTreeBranchNode childBranchTreeNode = (LayerTreeBranchNode) childNode;
+				updateChildLayers(childBranchTreeNode, newStatus);
+			}
 		}
 	}
 
@@ -233,7 +268,7 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 	 * 
 	 * @return selected node
 	 */
-	public LayerTreeTreeNode getSelectedLayerTreeNode() {
+	public LayerTreeLeafNode getSelectedLayerTreeNode() {
 		return selectedLayerTreeNode;
 	}
 
@@ -262,7 +297,7 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 		treeGrid.setHeight100();
 		treeGrid.setShowHeader(false);
 		treeGrid.setOverflow(Overflow.AUTO);
-		tree = new RefreshableTree();
+		tree = new RefreshableTree(this);
 		final TreeNode nodeRoot = new TreeNode("ROOT");
 		tree.setRoot(nodeRoot); // invisible ROOT node (ROOT node is required)
 
@@ -288,11 +323,12 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 	 * @param treeNode
 	 *            The treeNode to process
 	 * @param nodeRoot
-	 *            The root node to which the treeNode has te be added
+	 *            The root node to which the treeNode has to be added
 	 * @param refresh
 	 *            True if the tree is refreshed (causing it to keep its expanded state)
+	 * @return the list of processed (and added) nodes
 	 */
-	protected abstract void processNode(final ClientAbstractNodeInfo treeNode, final TreeNode nodeRoot,
+	protected abstract List<LayerTreeNode> processNode(final ClientAbstractNodeInfo treeNode, final TreeNode nodeRoot,
 			final boolean refresh);
 
 	protected abstract void syncNodeState(boolean layersOnly);
@@ -307,100 +343,4 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 		return new TreeGrid();
 	}
 
-	/**
-	 * A SmartGWT Tree with one extra method 'refresh'. This is needed to update icons on the fly in a tree
-	 * 
-	 * @author Frank Wynants
-	 */
-	protected class RefreshableTree extends Tree {
-
-		/**
-		 * Refreshes the icons in the tree, this is done by closing and reopening all nodes. A dirty solution but no
-		 * other option was found at the time.
-		 */
-		public void refreshIcons() {
-			GWT.log("Refresh node(icon)s");
-
-			// TODO this doesn't work, always returns all folders ???
-			TreeNode[] openNodes = this.getOpenList(this.getRoot());
-
-			this.closeAll();
-			syncNodeState(true);
-
-			// exclude layers, which are handled by syncNodeState()
-			for (TreeNode openNode : openNodes) {
-				if (!(openNode instanceof LayerTreeLegendNode)) {
-					this.openFolder(openNode);
-				}
-			}
-		}
-	}
-
-	/**
-	 * A node inside the LayerTree.
-	 * 
-	 * @author Frank Wynants
-	 * @author Pieter De Graef
-	 */
-	public class LayerTreeTreeNode extends TreeNode {
-
-		protected RefreshableTree tree;
-
-		protected AbstractLayer<?> layer;
-
-		/**
-		 * Constructor creates a TreeNode with layer.getLabel as label.
-		 * 
-		 * @param tree
-		 *            tree for node
-		 * @param layer
-		 *            The layer object
-		 */
-		public LayerTreeTreeNode(RefreshableTree tree, Layer<?> layer) {
-			super(layer.getLabel());
-			this.layer = (AbstractLayer<?>) layer;
-			this.tree = tree;
-			updateIcon(false);
-		}
-
-		public void updateIcon() {
-			updateIcon(true);
-		}
-
-		/**
-		 * Causes the node to check its status (visible, showing labels, ...) and to update its icon to match its
-		 * status.
-		 * 
-		 * @param refresh
-		 *            should tree be refreshed
-		 */
-		public void updateIcon(boolean refresh) {
-			if (layer.isVisible()) {
-				StringBuffer icon = new StringBuffer(ICON_SHOW);
-				if (!layer.isShowing()) {
-					icon.append(ICON_SHOW_OUT_OF_RANGE);
-				}
-				if (layer.isLabelsVisible()) {
-					icon.append(ICON_SHOW_LABELED);
-				}
-				if (layer instanceof VectorLayer) {
-					VectorLayer vl = (VectorLayer) layer;
-					if (vl.getFilter() != null && vl.getFilter().length() > 0) {
-						icon.append(ICON_SHOW_FILTERED);
-					}
-				}
-				icon.append(ICON_SHOW_END);
-				setIcon(icon.toString());
-			} else {
-				setIcon(ICON_HIDE);
-			}
-			if (refresh) {
-				tree.refreshIcons();
-			}
-		}
-
-		public AbstractLayer<?> getLayer() {
-			return layer;
-		}
-	}
 }
