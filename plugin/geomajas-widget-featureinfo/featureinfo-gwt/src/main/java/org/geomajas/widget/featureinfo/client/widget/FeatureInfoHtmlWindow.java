@@ -32,9 +32,10 @@ public class FeatureInfoHtmlWindow extends KeepInScreenWindow {
 
 	private void buildWidget(String html) {
 		setTitle(MESSAGES.layerHtmlWindowTitleMessage());
-		setWidth(300);
+		setWidth(400);
 		setHeight(400);
 		setOverflow(Overflow.AUTO);
+		setCanDragResize(true);
 		Label label = new Label();
 		label.setContents(html);
 		label.show();
