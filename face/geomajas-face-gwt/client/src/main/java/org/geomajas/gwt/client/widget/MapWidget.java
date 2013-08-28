@@ -11,6 +11,8 @@
 
 package org.geomajas.gwt.client.widget;
 
+import static org.geomajas.gwt.client.widget.MapWidget.RenderGroup.VECTOR;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -423,11 +425,14 @@ public class MapWidget extends VLayout {
 		}
 		if (paintable instanceof Layer<?>) {
 			Layer<?> layer = (Layer<?>) paintable;
+			// Draw the whole mapModel if the paintable is part of an aggregation
 			if (mapModel.isLayerPartOfActiveComboRasterLayers(layer)) {
 				paintable = mapModel;
 			}
 		}
-		if (paintable == mapModel) {
+		// Clean all combo layers if the whole mapmodel is to be painted. if the renderGroup is set to VECTOR, e.g. when
+		// the measure tools are used, no cleanup is triggered to prevent the aggregated layers from disappearing
+		if (paintable == mapModel && !renderGroup.equals(VECTOR)) {
 			cleanComboLayers();
 		}
 		if (RenderStatus.DELETE.equals(status)) {
