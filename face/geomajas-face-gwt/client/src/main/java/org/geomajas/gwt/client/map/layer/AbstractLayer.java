@@ -125,7 +125,8 @@ public abstract class AbstractLayer<T extends ClientLayerInfo> implements Layer<
 	/**
 	 * Update showing state.
 	 * 
-	 * @param fireEvents Should events be fired if state changes?
+	 * @param fireEvents
+	 *            Should events be fired if state changes?
 	 */
 	protected void updateShowing(boolean fireEvents) {
 		double scale = mapModel.getMapView().getCurrentScale();
@@ -183,7 +184,7 @@ public abstract class AbstractLayer<T extends ClientLayerInfo> implements Layer<
 
 	/**
 	 * Get the layer label as defined in the configuration.
-	 *
+	 * 
 	 * @return layer label
 	 * @since 1.10.0
 	 */
@@ -193,8 +194,8 @@ public abstract class AbstractLayer<T extends ClientLayerInfo> implements Layer<
 	}
 
 	/**
-	 * Returns true if labels are visible (This does not necessarily mean that
-	 * the labels are currently showing on the map!).
+	 * Returns true if labels are visible (This does not necessarily mean that the labels are currently showing on the
+	 * map!).
 	 * 
 	 * @return true when labels are enable
 	 * @since 1.10.0
@@ -206,7 +207,7 @@ public abstract class AbstractLayer<T extends ClientLayerInfo> implements Layer<
 
 	/**
 	 * Returns true if labels are currently showing (eg. isShowing == true && isLabelsVisible == true).
-	 *
+	 * 
 	 * @return true when labels are enabled and the layer is showing
 	 * @since 1.10.0
 	 */
@@ -249,7 +250,7 @@ public abstract class AbstractLayer<T extends ClientLayerInfo> implements Layer<
 
 	/**
 	 * Return whether the layer is visible.
-	 *
+	 * 
 	 * @return true when layer is visible
 	 * @since 1.10.0
 	 */
@@ -260,7 +261,7 @@ public abstract class AbstractLayer<T extends ClientLayerInfo> implements Layer<
 
 	/**
 	 * Make the layer visible or invisible.
-	 *
+	 * 
 	 * @param visible
 	 *            the visible to set
 	 * @since 1.10.0
@@ -271,6 +272,19 @@ public abstract class AbstractLayer<T extends ClientLayerInfo> implements Layer<
 			this.visible = visible;
 			updateShowing(false);
 			handlerManager.fireEvent(new LayerShownEvent(this));
+		}
+	}
+
+	/**
+	 * Make layer visible but do not fire an event
+	 * 
+	 * @param visible
+	 *            the visibility to set
+	 */
+	public void setVisibleNoEvent(boolean visible) {
+		if (visible != this.visible) {
+			this.visible = visible;
+			updateShowing(false);
 		}
 	}
 }
