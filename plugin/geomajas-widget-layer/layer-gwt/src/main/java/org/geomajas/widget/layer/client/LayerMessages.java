@@ -19,6 +19,8 @@ import com.google.gwt.i18n.client.Messages;
  */
 public interface LayerMessages extends Messages {
 	String layerTreeWithLegendLayerActionsToolTip();
+	
+	String dragAndDropLayerListWindowTitle();
 
 	String layerActionsWindowTitle();
 	String layerActionsOpacity();
