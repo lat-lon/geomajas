@@ -25,7 +25,6 @@ import org.geomajas.configuration.client.ClientVectorLayerInfo;
 import org.geomajas.configuration.client.ScaleConfigurationInfo;
 import org.geomajas.configuration.client.ScaleInfo;
 import org.geomajas.global.GeomajasConstant;
-import org.geomajas.global.GeomajasException;
 import org.geomajas.gwt.client.command.GwtCommandDispatcher;
 import org.geomajas.gwt.client.command.event.TokenChangedEvent;
 import org.geomajas.gwt.client.command.event.TokenChangedHandler;
@@ -674,6 +673,24 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 	}
 
 	/**
+     * Search a raster layer by it's id.
+     * 
+     * @param layerId
+     *            The layer's client ID.
+     * @return Returns either a Layer, or null.
+     */
+    public RasterLayer getRasterLayer(String layerId) {
+        if (layers != null) {
+            for (RasterLayer layer : getRasterLayers()) {
+                if (layer.getId().equals(layerId)) {
+                    return layer;
+                }
+            }
+        }
+        return null;
+    }
+
+	/**
 	 * Select a new layer. Only one layer can be selected at a time, so this function first tries to deselect the
 	 * currently selected (if there is one).
 	 * 
@@ -707,6 +724,21 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		}
 		return list;
 	}
+
+	/**
+     * Return a list containing all raster layers within this model.
+     * 
+     * @return raster layers
+     */
+    public List<RasterLayer> getRasterLayers() {
+        ArrayList<RasterLayer> list = new ArrayList<RasterLayer>();
+        for (Layer<?> layer : layers) {
+            if (layer instanceof RasterLayer) {
+                list.add((RasterLayer) layer);
+            }
+        }
+        return list;
+    }
 
 	/** Clear the list of selected features in all vector layers. */
 	public void clearSelectedFeatures() {
