@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<example id="PrintingGwtModule">
+<title>Inherit the GWT module for the printing plug-in.</title>
+<programlisting language="xml"><![CDATA[    
+    <inherits name="org.geomajas.plugin.printing.gwt.example.PrintingExample"/>
+]]>
+</programlisting>
+</example>

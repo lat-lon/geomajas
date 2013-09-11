@@ -26,6 +26,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -45,18 +46,22 @@ import javax.media.jai.RenderedOp;
 import javax.media.jai.operator.MosaicDescriptor;
 import javax.media.jai.operator.TranslateDescriptor;
 
+import org.geomajas.configuration.NamedStyleInfo;
 import org.geomajas.configuration.client.ClientMapInfo;
 import org.geomajas.geometry.Bbox;
 import org.geomajas.global.GeomajasException;
+import org.geomajas.layer.MapLayerService;
 import org.geomajas.layer.RasterLayerService;
 import org.geomajas.layer.tile.RasterTile;
 import org.geomajas.plugin.printing.component.LayoutConstraint;
 import org.geomajas.plugin.printing.component.PdfContext;
 import org.geomajas.plugin.printing.component.PrintComponentVisitor;
+import org.geomajas.plugin.printing.component.dto.ComboRasterLayerComponentInfo;
 import org.geomajas.plugin.printing.component.dto.RasterLayerComponentInfo;
 import org.geomajas.plugin.printing.component.service.PrintConfigurationService;
 import org.geomajas.service.DispatcherUrlService;
 import org.geomajas.service.GeoService;
+import org.opengis.filter.Filter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,12 +77,10 @@ import com.vividsolutions.jts.geom.Envelope;
 
 /**
  * Sub component of a map responsible for rendering raster layer.
- * 
- * @author Jan De Moerloose
  */
 @Component()
 @Scope(value = "prototype")
-public class RasterLayerComponentImpl extends BaseLayerComponentImpl<RasterLayerComponentInfo> {
+public class ComboRasterLayerComponentImpl extends BaseLayerComponentImpl<ComboRasterLayerComponentInfo> {
 
 	protected static final int DOWNLOAD_MAX_ATTEMPTS = 2;
 
@@ -108,11 +111,11 @@ public class RasterLayerComponentImpl extends BaseLayerComponentImpl<RasterLayer
 	protected double rasterScale;
 
 	@XStreamOmitField
-	private final Logger log = LoggerFactory.getLogger(RasterLayerComponentImpl.class);
+	private final Logger log = LoggerFactory.getLogger(ComboRasterLayerComponentImpl.class);
 
 	@Autowired
 	@XStreamOmitField
-	private RasterLayerService rasterLayerService;
+	private MapLayerService mapLayerService;
 
 	@Autowired
 	@XStreamOmitField
@@ -128,8 +131,10 @@ public class RasterLayerComponentImpl extends BaseLayerComponentImpl<RasterLayer
 
 	private float opacity = 1.0f;
 
+	private List<String> layerIds;
+
 	/** Constructor. */
-	public RasterLayerComponentImpl() {
+	public ComboRasterLayerComponentImpl() {
 		getConstraint().setAlignmentX(LayoutConstraint.JUSTIFIED);
 		getConstraint().setAlignmentY(LayoutConstraint.JUSTIFIED);
 	}
@@ -154,7 +159,8 @@ public class RasterLayerComponentImpl extends BaseLayerComponentImpl<RasterLayer
 			}
 			ClientMapInfo map = configurationService.getMapInfo(getMap().getMapId(), getMap().getApplicationId());
 			try {
-				tiles = rasterLayerService.getTiles(getLayerId(), geoService.getCrs2(map.getCrs()), bbox, rasterScale);
+				tiles = mapLayerService.getTiles(layerIds, new HashMap<String, Filter>(),
+						new HashMap<String, NamedStyleInfo>(),geoService.getCrs2(map.getCrs()), bbox, rasterScale);
 				if (tiles.size() > 0) {
 					Collection<Callable<ImageResult>> callables = new ArrayList<Callable<ImageResult>>(tiles.size());
 					// Build the image downloading threads
@@ -188,15 +194,15 @@ public class RasterLayerComponentImpl extends BaseLayerComponentImpl<RasterLayer
 								// a runtime error causing the printing to fail. If this happens handle the error
 								// and and allow the print process to continue.
 								// convert to common direct colormodel (some images have their own indexed color model)
-								RenderedImage colored = null;
-								try {
-									colored = toDirectColorModel(image);
-								} catch (Exception e) {
-									String msg = getLayerId() + " returned a null image.";
-									msg += " The printing plugin will not render this layer";
-									log.error(msg, e);
-									continue;
-								}
+//								RenderedImage colored = null;
+//								try {
+//									colored = toDirectColorModel(image);
+//								} catch (Exception e) {
+//									String msg = getLayerId() + " returned a null image.";
+//									msg += " The printing plugin will not render this layer";
+//									log.error(msg, e);
+//									continue;
+//								}
 
 								// translate to the correct position in the tile grid
 								double xOffset = result.getRasterImage().getCode().getX() * imageWidth
@@ -342,8 +348,9 @@ public class RasterLayerComponentImpl extends BaseLayerComponentImpl<RasterLayer
 	}
 
 	@Override
-	public void fromDto(RasterLayerComponentInfo rasterInfo) {
+	public void fromDto(ComboRasterLayerComponentInfo rasterInfo) {
 		super.fromDto(rasterInfo);
+		this.layerIds = rasterInfo.getLayerIds();
 		String style = rasterInfo.getStyle();
 		if (rasterInfo.getStyle() != null) {
 			String match = style;
