@@ -63,5 +63,13 @@ public class ComboRasterLayer extends RasterLayer {
 	public boolean isShowing() {
 		return true;
 	}
+	
+	public List<String> getServerLayerIds() {
+		List<String> layerIds = new ArrayList<String>();
+		for (Layer layer : getLayers()) {
+			layerIds.add(layer.getServerLayerId());
+		}
+		return layerIds;
+	}
 
 }

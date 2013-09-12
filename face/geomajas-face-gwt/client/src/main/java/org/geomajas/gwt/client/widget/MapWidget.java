@@ -432,7 +432,7 @@ public class MapWidget extends VLayout {
 		}
 		// Clean all combo layers if the whole mapmodel is to be painted. if the renderGroup is set to VECTOR, e.g. when
 		// the measure tools are used, no cleanup is triggered to prevent the aggregated layers from disappearing
-		if (paintable == mapModel && !renderGroup.equals(VECTOR)) {
+		if (paintable == mapModel && renderGroup != null && !renderGroup.equals(VECTOR)) {
 			cleanComboLayers();
 		}
 		if (RenderStatus.DELETE.equals(status)) {
