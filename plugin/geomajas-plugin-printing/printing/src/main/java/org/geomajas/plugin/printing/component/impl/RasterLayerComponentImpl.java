@@ -181,7 +181,7 @@ public class RasterLayerComponentImpl extends BaseLayerComponentImpl<RasterLayer
 								ImageResult result;
 								result = future.get();
 								// create a rendered image
-								RenderedImage colored = JAI.create("stream",
+								RenderedImage image = JAI.create("stream",
 										new ByteArraySeekableStream(result.getImage()));
 								// convert to common direct colormodel (some images have their own indexed color model)
 								// Sprint-51 If the image source is not available the java.awt.image will throw
