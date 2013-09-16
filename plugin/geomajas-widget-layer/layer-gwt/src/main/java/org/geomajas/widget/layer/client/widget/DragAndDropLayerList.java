@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.geomajas.gwt.client.map.MapModel;
+import org.geomajas.gwt.client.map.event.MapModelChangedEvent;
+import org.geomajas.gwt.client.map.event.MapModelChangedHandler;
 import org.geomajas.gwt.client.map.layer.RasterLayer;
 import org.geomajas.gwt.client.widget.MapWidget;
 
@@ -22,92 +25,105 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
  * 
  * @author Dirk Stenger
  */
-public class DragAndDropLayerList extends Canvas {
+public class DragAndDropLayerList extends Canvas implements MapModelChangedHandler {
 
-    private final MapWidget mapWidget;
+	private final MapModel mapModel;
 
-    /**
-     * Creates a drag and drop list grid of all raster layers with direct connection to the map (reordering of drawing
-     * order).
-     * 
-     * @param mapWidget
-     */
-    public DragAndDropLayerList( final MapWidget mapWidget ) {
-        super();
-        this.mapWidget = mapWidget;
+	private boolean isOnMapModelChangedForcedFromThis = false;
 
-        ListGrid list = createList();
-        this.addChild( list );
-    }
+	private ListGrid orderedLayerList;
 
-    private ListGrid createList() {
-        ListGrid listGrid = createListGrid();
-        fillList( listGrid );
-        return listGrid;
-    }
+	/**
+	 * Creates a drag and drop list grid of all raster layers with direct connection to the map (reordering of drawing
+	 * order).
+	 * 
+	 * @param mapWidget
+	 */
+	public DragAndDropLayerList(final MapWidget mapWidget) {
+		super();
+		this.mapModel = mapWidget.getMapModel();
+		this.mapModel.addMapModelChangedHandler(this);
+		this.orderedLayerList = createList();
+		this.addChild(orderedLayerList);
+	}
 
-    private ListGrid createListGrid() {
-        ListGrid listGrid = new ListGrid();
-        listGrid.setWidth( 300 );
-        listGrid.setHeight( 500 );
-        listGrid.setShowHeader( false );
-        listGrid.setShowAllRecords( true );
-        listGrid.setFields( new ListGridField( "label" ) );
-        listGrid.setSelectionType( SelectionStyle.SINGLE );
-        listGrid.setCanReorderRecords( true );
-        createReorderingOfMapFunctionality( listGrid );
-        return listGrid;
-    }
+	@Override
+	public void onMapModelChanged(MapModelChangedEvent event) {
+		if (!isOnMapModelChangedForcedFromThis) {
+			fillList(orderedLayerList);
+			orderedLayerList.redraw();
+		}
+		isOnMapModelChangedForcedFromThis = false;
+	}
 
-    private void createReorderingOfMapFunctionality( final ListGrid listGrid ) {
-        listGrid.addDropCompleteHandler( new DropCompleteHandler() {
-            @Override
-            public void onDropComplete( DropCompleteEvent event ) {
-                Record record = event.getTransferredRecords()[0];
-                RasterLayer layer = getTransferredLayer( record );
-                int position = getTransferredPosition( listGrid, record );
-                mapWidget.getMapModel().moveRasterLayer( layer, position );
-            }
+	private ListGrid createList() {
+		ListGrid listGrid = createListGrid();
+		fillList(listGrid);
+		return listGrid;
+	}
 
-            private RasterLayer getTransferredLayer( Record record ) {
-                String layerId = record.getAttribute( "id" );
-                RasterLayer layer = mapWidget.getMapModel().getRasterLayer( layerId );
-                return layer;
-            }
+	private ListGrid createListGrid() {
+		ListGrid listGrid = new ListGrid();
+		listGrid.setWidth(300);
+		listGrid.setHeight(500);
+		listGrid.setShowHeader(false);
+		listGrid.setShowAllRecords(true);
+		listGrid.setFields(new ListGridField("label"));
+		listGrid.setSelectionType(SelectionStyle.SINGLE);
+		listGrid.setCanReorderRecords(true);
+		createReorderingOfMapFunctionality(listGrid);
+		return listGrid;
+	}
 
-            private int getTransferredPosition( final ListGrid listGrid, Record record ) {
-                int recordIndex = listGrid.getRecordIndex( record );
-                int position = listGrid.getTotalRows() - recordIndex - 1;
-                return position;
-            }
-        } );
-    }
+	private void createReorderingOfMapFunctionality(final ListGrid listGrid) {
+		listGrid.addDropCompleteHandler(new DropCompleteHandler() {
 
-    private void fillList( ListGrid listGrid ) {
-        ListGridRecord[] layerList = createLayerList();
-        listGrid.setData( layerList );
-    }
+			@Override
+			public void onDropComplete(DropCompleteEvent event) {
+				Record record = event.getTransferredRecords()[0];
+				RasterLayer layer = getTransferredLayer(record);
+				int position = getTransferredPosition(listGrid, record);
+				isOnMapModelChangedForcedFromThis = true;
+				mapModel.moveRasterLayer(layer, position);
+			}
 
-    private ListGridRecord[] createLayerList() {
-        List<ListGridRecord> layerList = new ArrayList<ListGridRecord>();
-        addLayersToList( layerList );
-        Collections.reverse( layerList );
-        return (ListGridRecord[]) layerList.toArray();
-    }
+			private RasterLayer getTransferredLayer(Record record) {
+				String layerId = record.getAttribute("id");
+				return mapModel.getRasterLayer(layerId);
+			}
 
-    private void addLayersToList( List<ListGridRecord> layerList ) {
-        List<RasterLayer> layers = mapWidget.getMapModel().getRasterLayers();
-        for ( RasterLayer layer : layers ) {
-            ListGridRecord record = createListGridRecord( layer );
-            layerList.add( record );
-        }
-    }
+			private int getTransferredPosition(final ListGrid listGrid, Record record) {
+				int recordIndex = listGrid.getRecordIndex(record);
+				return listGrid.getTotalRows() - recordIndex - 1;
+			}
+		});
+	}
 
-    private ListGridRecord createListGridRecord( RasterLayer layer ) {
-        ListGridRecord record = new ListGridRecord();
-        record.setAttribute( "label", layer.getLabel() );
-        record.setAttribute( "id", layer.getId() );
-        return record;
-    }
+	private void fillList(ListGrid listGrid) {
+		ListGridRecord[] layerList = createLayerList();
+		listGrid.setData(layerList);
+	}
+
+	private ListGridRecord[] createLayerList() {
+		List<ListGridRecord> layerList = new ArrayList<ListGridRecord>();
+		addLayersToList(layerList);
+		Collections.reverse(layerList);
+		return (ListGridRecord[]) layerList.toArray();
+	}
+
+	private void addLayersToList(List<ListGridRecord> layerList) {
+		List<RasterLayer> layers = mapModel.getRasterLayers();
+		for (RasterLayer layer : layers) {
+			ListGridRecord record = createListGridRecord(layer);
+			layerList.add(record);
+		}
+	}
+
+	private ListGridRecord createListGridRecord(RasterLayer layer) {
+		ListGridRecord record = new ListGridRecord();
+		record.setAttribute("label", layer.getLabel());
+		record.setAttribute("id", layer.getId());
+		return record;
+	}
 
 }

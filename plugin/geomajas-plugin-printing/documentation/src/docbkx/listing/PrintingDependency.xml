@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<example id="PrintingDependency">
+<title>printing plugin dependencies - including source</title>
+<programlisting language="xml"><![CDATA[
+        <dependency>
+            <groupId>org.geomajas.plugin</groupId>
+            <artifactId>geomajas-plugin-printing-gwt</artifactId>
+        </dependency>
+        ]]>
+</programlisting>
+</example>
