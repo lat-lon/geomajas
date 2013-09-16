@@ -33,7 +33,7 @@ public class DragAndDropLayerList extends Canvas implements MapModelChangedHandl
 	private boolean isOnMapModelChangedForcedFromThis = false;
 
 	private ListGrid orderedLayerList;
-	
+
 	private List<Integer> positionsOfNonRasterLayer = new ArrayList<Integer>();
 
 	/**
@@ -56,7 +56,7 @@ public class DragAndDropLayerList extends Canvas implements MapModelChangedHandl
 			fillList(orderedLayerList);
 			orderedLayerList.redraw();
 		} else {
-			updatePositionsOfNonRasterLayers ();
+			updatePositionsOfNonRasterLayers();
 		}
 		isOnMapModelChangedForcedFromThis = false;
 	}
@@ -119,17 +119,17 @@ public class DragAndDropLayerList extends Canvas implements MapModelChangedHandl
 	}
 
 	private void addLayersToList(List<ListGridRecord> layerList) {
-	    positionsOfNonRasterLayer.clear();
+		positionsOfNonRasterLayer.clear();
 		List<Layer<?>> layers = mapModel.getLayers();
 		int currentLayerPosition = 0;
 		for (Layer<?> layer : layers) {
-		    if (layer instanceof RasterLayer) {
-		        ListGridRecord record = createListGridRecord(layer);
-		        layerList.add(record);
-		    } else {
-		        positionsOfNonRasterLayer.add(currentLayerPosition);
-		    }
-		    currentLayerPosition++;
+			if (layer instanceof RasterLayer) {
+				ListGridRecord record = createListGridRecord(layer);
+				layerList.add(record);
+			} else {
+				positionsOfNonRasterLayer.add(currentLayerPosition);
+			}
+			currentLayerPosition++;
 		}
 	}
 
@@ -139,16 +139,16 @@ public class DragAndDropLayerList extends Canvas implements MapModelChangedHandl
 		record.setAttribute("id", layer.getId());
 		return record;
 	}
-	
-	private void updatePositionsOfNonRasterLayers () {
+
+	private void updatePositionsOfNonRasterLayers() {
 		positionsOfNonRasterLayer.clear();
 		List<Layer<?>> layers = mapModel.getLayers();
 		int currentLayerPosition = 0;
 		for (Layer<?> layer : layers) {
-		    if (!(layer instanceof RasterLayer)) {
-		        positionsOfNonRasterLayer.add(currentLayerPosition);
-		    }
-		    currentLayerPosition++;
+			if (!(layer instanceof RasterLayer)) {
+				positionsOfNonRasterLayer.add(currentLayerPosition);
+			}
+			currentLayerPosition++;
 		}
 	}
 
