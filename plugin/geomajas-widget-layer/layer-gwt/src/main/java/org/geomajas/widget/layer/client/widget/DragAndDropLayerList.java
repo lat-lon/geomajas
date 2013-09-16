@@ -7,6 +7,7 @@ import java.util.List;
 import org.geomajas.gwt.client.map.MapModel;
 import org.geomajas.gwt.client.map.event.MapModelChangedEvent;
 import org.geomajas.gwt.client.map.event.MapModelChangedHandler;
+import org.geomajas.gwt.client.map.layer.Layer;
 import org.geomajas.gwt.client.map.layer.RasterLayer;
 import org.geomajas.gwt.client.widget.MapWidget;
 
@@ -32,6 +33,8 @@ public class DragAndDropLayerList extends Canvas implements MapModelChangedHandl
 	private boolean isOnMapModelChangedForcedFromThis = false;
 
 	private ListGrid orderedLayerList;
+	
+	private List<Integer> positionsOfNonRasterLayer = new ArrayList<Integer>();
 
 	/**
 	 * Creates a drag and drop list grid of all raster layers with direct connection to the map (reordering of drawing
@@ -52,6 +55,8 @@ public class DragAndDropLayerList extends Canvas implements MapModelChangedHandl
 		if (!isOnMapModelChangedForcedFromThis) {
 			fillList(orderedLayerList);
 			orderedLayerList.redraw();
+		} else {
+			updatePositionsOfNonRasterLayers ();
 		}
 		isOnMapModelChangedForcedFromThis = false;
 	}
@@ -81,20 +86,22 @@ public class DragAndDropLayerList extends Canvas implements MapModelChangedHandl
 			@Override
 			public void onDropComplete(DropCompleteEvent event) {
 				Record record = event.getTransferredRecords()[0];
-				RasterLayer layer = getTransferredLayer(record);
-				int position = getTransferredPosition(listGrid, record);
+				RasterLayer layer = retrieveTransferredLayer(record);
+				int position = calculatePosition(listGrid, record);
 				isOnMapModelChangedForcedFromThis = true;
 				mapModel.moveRasterLayer(layer, position);
 			}
 
-			private RasterLayer getTransferredLayer(Record record) {
+			private RasterLayer retrieveTransferredLayer(Record record) {
 				String layerId = record.getAttribute("id");
 				return mapModel.getRasterLayer(layerId);
 			}
 
-			private int getTransferredPosition(final ListGrid listGrid, Record record) {
+			private int calculatePosition(final ListGrid listGrid, Record record) {
 				int recordIndex = listGrid.getRecordIndex(record);
-				return listGrid.getTotalRows() - recordIndex - 1;
+				int reversedRecordIndex = listGrid.getTotalRows() - recordIndex - 1;
+				RasterLayerPositionCalculator rasterLayerPositionCalculator = new RasterLayerPositionCalculator();
+				return rasterLayerPositionCalculator.calculatePosition(reversedRecordIndex, positionsOfNonRasterLayer);
 			}
 		});
 	}
@@ -112,18 +119,37 @@ public class DragAndDropLayerList extends Canvas implements MapModelChangedHandl
 	}
 
 	private void addLayersToList(List<ListGridRecord> layerList) {
-		List<RasterLayer> layers = mapModel.getRasterLayers();
-		for (RasterLayer layer : layers) {
-			ListGridRecord record = createListGridRecord(layer);
-			layerList.add(record);
+	    positionsOfNonRasterLayer.clear();
+		List<Layer<?>> layers = mapModel.getLayers();
+		int currentLayerPosition = 0;
+		for (Layer<?> layer : layers) {
+		    if (layer instanceof RasterLayer) {
+		        ListGridRecord record = createListGridRecord(layer);
+		        layerList.add(record);
+		    } else {
+		        positionsOfNonRasterLayer.add(currentLayerPosition);
+		    }
+		    currentLayerPosition++;
 		}
 	}
 
-	private ListGridRecord createListGridRecord(RasterLayer layer) {
+	private ListGridRecord createListGridRecord(Layer<?> layer) {
 		ListGridRecord record = new ListGridRecord();
 		record.setAttribute("label", layer.getLabel());
 		record.setAttribute("id", layer.getId());
 		return record;
+	}
+	
+	private void updatePositionsOfNonRasterLayers () {
+		positionsOfNonRasterLayer.clear();
+		List<Layer<?>> layers = mapModel.getLayers();
+		int currentLayerPosition = 0;
+		for (Layer<?> layer : layers) {
+		    if (!(layer instanceof RasterLayer)) {
+		        positionsOfNonRasterLayer.add(currentLayerPosition);
+		    }
+		    currentLayerPosition++;
+		}
 	}
 
 }
