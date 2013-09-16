@@ -87,7 +87,7 @@ public class PrintServiceImpl implements PrintService {
 	@Qualifier("printing.printMarshaller")
 	private Unmarshaller unMarshaller;
 
-	private int jaiTileCacheInMb = 64;
+	private int jaiTileCacheInMb = 256;
 
 	private Map<String, Document> documentMap = Collections.synchronizedMap(new HashMap<String, Document>());
 
