@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<example id="PrintingToolInfo">
+<title>example toolbar</title>
+<programlisting language="xml"><![CDATA[<property name="toolbar">
+    <bean name="printingMapToolbar" class="org.geomajas.configuration.client.ClientToolbarInfo">
+        <property name="tools">
+            <list>
+                <ref bean="ShowDefaultPrint"/>
+            </list>
+        </property>
+    </bean>
+</property>]]>
+</programlisting>
+</example>
