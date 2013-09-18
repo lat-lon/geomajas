@@ -108,7 +108,7 @@ public class DragAndDropLayerList extends Canvas implements MapModelChangedHandl
 		List<ListGridRecord> layerList = new ArrayList<ListGridRecord>();
 		addLayersToList(layerList);
 		Collections.reverse(layerList);
-		return (ListGridRecord[]) layerList.toArray();
+		return layerList.<ListGridRecord> toArray(new ListGridRecord[] {});
 	}
 
 	private void addLayersToList(List<ListGridRecord> layerList) {

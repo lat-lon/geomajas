@@ -10,6 +10,9 @@
  */
 package org.geomajas.plugin.printing.command.print;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.geomajas.command.Command;
 import org.geomajas.plugin.printing.command.dto.PrintGetTemplateRequest;
 import org.geomajas.plugin.printing.command.dto.PrintGetTemplateResponse;
@@ -20,6 +23,7 @@ import org.geomajas.plugin.printing.component.impl.LabelComponentImpl;
 import org.geomajas.plugin.printing.component.impl.LegendComponentImpl;
 import org.geomajas.plugin.printing.component.impl.LegendItemComponentImpl;
 import org.geomajas.plugin.printing.component.impl.MapComponentImpl;
+import org.geomajas.plugin.printing.component.impl.RasterLayerComponentImpl;
 import org.geomajas.plugin.printing.component.service.PrintDtoConverterService;
 import org.geomajas.plugin.printing.configuration.PrintTemplate;
 import org.geomajas.plugin.printing.document.Document.Format;

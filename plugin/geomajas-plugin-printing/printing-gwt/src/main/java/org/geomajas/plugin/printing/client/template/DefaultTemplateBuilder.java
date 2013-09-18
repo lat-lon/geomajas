@@ -113,8 +113,7 @@ public class DefaultTemplateBuilder extends AbstractTemplateBuilder {
 				info.setStyle(rasterLayer.getLayerInfo().getStyle());
 				info.setLayerIds(rasterLayer.getServerLayerIds());
 				layers.add(info);
-			}
-			if (layer instanceof RasterLayer && layer.isShowing()) {
+			} else if (layer instanceof RasterLayer && layer.isShowing()) {
 				RasterLayerComponentInfo info = new RasterLayerComponentInfo();
 				RasterLayer rasterLayer = (RasterLayer) layer;
 				info.setLayerId(rasterLayer.getServerLayerId());

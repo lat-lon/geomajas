@@ -11,6 +11,7 @@
 
 package org.geomajas.plugin.printing.component.impl;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -33,30 +34,35 @@ import org.springframework.stereotype.Component;
 @Component()
 @Scope(value = "prototype")
 public class ComboRasterLayerComponentImpl extends RasterLayerComponentImpl {
-	
+
 	private List<String> layerIds;
 
 	@Autowired
 	private MapLayerService mapLayerService;
-	
+
 	@Override
 	protected List<RasterTile> retrieveTiles(ClientMapInfo map) throws GeomajasException, LayerException {
-		return mapLayerService.getTiles(layerIds, new HashMap<String, Filter>(),
-				new HashMap<String, NamedStyleInfo>(), geoService.getCrs2(map.getCrs()), bbox, rasterScale);
+		return mapLayerService.getTiles(layerIds, new HashMap<String, Filter>(), new HashMap<String, NamedStyleInfo>(),
+				geoService.getCrs2(map.getCrs()), bbox, rasterScale);
 	}
 
-	public void fromDto(ComboRasterLayerComponentInfo comboRasterInfo) {
-		this.layerIds = comboRasterInfo.getLayerIds();
+	@Override
+	public void fromDto(RasterLayerComponentInfo rasterInfo) {
+		if (rasterInfo instanceof RasterLayerComponentInfo) {
+			this.layerIds = ((ComboRasterLayerComponentInfo) rasterInfo).getLayerIds();
+		} else {
+			this.layerIds = Collections.emptyList(); // TODO this case should rather be handled with an exception
+		}
 		RasterLayerComponentInfo info = new RasterLayerComponentInfo();
-		info.setBounds(comboRasterInfo.getBounds());
-		info.setChildren(comboRasterInfo.getChildren());
-		info.setId(comboRasterInfo.getId());
-		info.setLayerId(comboRasterInfo.getLayerId());
-		info.setLayoutConstraint(comboRasterInfo.getLayoutConstraint());
-		info.setSelected(comboRasterInfo.isSelected());
-		info.setStyle(comboRasterInfo.getStyle());
-		info.setTag(comboRasterInfo.getTag());
-		info.setVisible(comboRasterInfo.isVisible());
+		info.setBounds(rasterInfo.getBounds());
+		info.setChildren(rasterInfo.getChildren());
+		info.setId(rasterInfo.getId());
+		info.setLayerId(rasterInfo.getLayerId());
+		info.setLayoutConstraint(rasterInfo.getLayoutConstraint());
+		info.setSelected(rasterInfo.isSelected());
+		info.setStyle(rasterInfo.getStyle());
+		info.setTag(rasterInfo.getTag());
+		info.setVisible(rasterInfo.isVisible());
 		super.fromDto(info);
 	}
 
