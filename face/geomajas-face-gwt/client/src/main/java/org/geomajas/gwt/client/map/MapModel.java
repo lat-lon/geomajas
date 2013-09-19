@@ -355,8 +355,8 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		clearActiveComboRasterLayers(visitor, group);
 		List<Layer<?>> unvisitedLayers = new ArrayList<Layer<?>>();
 		String currentAggregationId = null;
+		
 		for (Layer<?> layer : layers) {
-			GWT.log("Aggregating layer with id " + layer.getId());
 			if (layer.isShowing()) {
 				if (layer.getLayerInfo() instanceof ClientLayerInfo) {
 					ClientLayerInfo layerInfo = (ClientLayerInfo) layer.getLayerInfo();
@@ -1292,17 +1292,13 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 	}
 
 	public List<Layer<?>> buildAggregatedLayerList() {
+		
 		List<Layer<?>> unvisitedLayers = new ArrayList<Layer<?>>();
 		List<Layer<?>> aggregation = new ArrayList<Layer<?>>();
-		List<Layer<?>> currentLayers = new ArrayList<Layer<?>>();
-
-		for (int i = 0; i < layers.size(); i++) {
-			currentLayers.add(layers.get(i));
-		}
-
+		
 		String currentAggregationId = null;
 
-		for (Layer<?> layer : currentLayers) {
+		for (Layer<?> layer : layers) {
 			try {
 				if (layer.isShowing()) {
 					if (layer.getLayerInfo() instanceof ClientRasterLayerInfo) {
@@ -1341,14 +1337,15 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		return currentAggregationId;
 	}
 
-	private void endAggregationStreak(List<Layer<?>> aggregation, List<Layer<?>> layers) {
-		if (layers == null || layers.isEmpty()) {
+	private void endAggregationStreak(List<Layer<?>> aggregation, List<Layer<?>> unvisited) {
+		if (unvisited == null || unvisited.isEmpty()) {
 			return;
-		} else if (layers.size() == 1) {
-			aggregation.add(layers.get(0));
+		} else if (unvisited.size() == 1) {
+			aggregation.add(unvisited.get(0));
 		} else {
-			aggregation.add(new ComboRasterLayer(layers));
+			aggregation.add(new ComboRasterLayer(unvisited));
 		}
+		unvisited.clear();
 	}
 
 	private String handleNonAggregatableLayer(List<Layer<?>> unvisitedLayers, List<Layer<?>> aggregation, Layer<?> layer) {

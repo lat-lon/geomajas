@@ -96,6 +96,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Cursor;
 import com.smartgwt.client.types.VerticalAlignment;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.menu.Menu;
 
@@ -164,13 +165,13 @@ public class MapWidget extends VLayout {
 	private Map<String, MapAddon> addons = new LinkedHashMap<String, MapAddon>();
 
 	private FeaturePainter featurePainter;
-	
+
 	private MapModelRenderer mapModelRenderer;
-	
+
 	private MapViewRenderer mapViewRenderer;
 
 	private String cursor = Cursor.DEFAULT.getValue();
-	
+
 	private String defaultCursor = Cursor.DEFAULT.getValue();
 
 	/**
@@ -383,7 +384,8 @@ public class MapWidget extends VLayout {
 	/**
 	 * Render the map completely.
 	 * 
-	 * @param force force rendering now
+	 * @param force
+	 *            force rendering now
 	 * @since 1.10.0
 	 * @deprecated instead of calling this method directly, rendering should be triggered by events.
 	 */
@@ -413,58 +415,62 @@ public class MapWidget extends VLayout {
 	 */
 	@Api
 	public void render(Paintable paintable, RenderGroup renderGroup, RenderStatus status) {
-		if (!graphics.isReady() || !mapViewRenderer.isViewPortKnown() || !mapModelRenderer.isReadyToDraw()) {
-			return;
-		}
-		PaintableGroup group = null;
-		if (renderGroup != null) {
-			group = getGroup(renderGroup);
-		}
-		if (paintable == null) {
-			paintable = this.mapModel;
-		}
-		if (paintable instanceof Layer<?>) {
-			Layer<?> layer = (Layer<?>) paintable;
-			// Draw the whole mapModel if the paintable is part of an aggregation
-			if (mapModel.isLayerPartOfActiveComboRasterLayers(layer)) {
-				paintable = mapModel;
+		try {
+			if (!graphics.isReady() || !mapViewRenderer.isViewPortKnown() || !mapModelRenderer.isReadyToDraw()) {
+				return;
 			}
-		}
-		// Clean all combo layers if the whole mapmodel is to be painted. if the renderGroup is set to VECTOR, e.g. when
-		// the measure tools are used, no cleanup is triggered to prevent the aggregated layers from disappearing
-		if (paintable == mapModel && renderGroup != null && !renderGroup.equals(VECTOR)) {
-			cleanComboLayers();
-		}
-		if (RenderStatus.DELETE.equals(status)) {
-			List<Painter> painters = painterVisitor.getPaintersForObject(paintable);
-			if (painters != null) {
-				for (Painter painter : painters) {
-					painter.deleteShape(paintable, group, graphics);
+			PaintableGroup group = null;
+			if (renderGroup != null) {
+				group = getGroup(renderGroup);
+			}
+			if (paintable == null) {
+				paintable = this.mapModel;
+			}
+			if (paintable instanceof Layer<?>) {
+				Layer<?> layer = (Layer<?>) paintable;
+				// Draw the whole mapModel if the paintable is part of an aggregation
+				if (mapModel.isLayerPartOfActiveComboRasterLayers(layer)) {
+					paintable = mapModel;
 				}
 			}
-		} else {
-			if (RenderStatus.ALL.equals(status)) {
-				paintable.accept(painterVisitor, group, mapModel.getMapView().getBounds(), true);
-				if (paintable == this.mapModel) {
-					// Paint the world space paintable objects:
-					for (WorldPaintable worldPaintable : worldPaintables.values()) {
-						worldPaintable.transform(mapModel.getMapView().getWorldViewTransformer());
-						worldPaintable.accept(painterVisitor, getGroup(RenderGroup.WORLD), mapModel.getMapView()
-								.getBounds(), true);
+			// Clean all combo layers if the whole mapmodel is to be painted. if the renderGroup is set to VECTOR, e.g.
+			// when
+			// the measure tools are used, no cleanup is triggered to prevent the aggregated layers from disappearing
+			if (paintable == mapModel && renderGroup != null && !renderGroup.equals(VECTOR)) {
+				cleanComboLayers();
+			}
+			if (RenderStatus.DELETE.equals(status)) {
+				List<Painter> painters = painterVisitor.getPaintersForObject(paintable);
+				if (painters != null) {
+					for (Painter painter : painters) {
+						painter.deleteShape(paintable, group, graphics);
 					}
 				}
-			} else if (RenderStatus.UPDATE.equals(status)) {
-				if (paintable == this.mapModel) {
-					// Paint the world space paintable objects:
-					for (WorldPaintable worldPaintable : worldPaintables.values()) {
-						worldPaintable.transform(mapModel.getMapView().getWorldViewTransformer());
-						worldPaintable.accept(painterVisitor, getGroup(RenderGroup.WORLD), mapModel.getMapView()
-								.getBounds(), false);
+			} else {
+				if (RenderStatus.ALL.equals(status)) {
+					paintable.accept(painterVisitor, group, mapModel.getMapView().getBounds(), true);
+					if (paintable == this.mapModel) {
+						// Paint the world space paintable objects:
+						for (WorldPaintable worldPaintable : worldPaintables.values()) {
+							worldPaintable.transform(mapModel.getMapView().getWorldViewTransformer());
+							worldPaintable.accept(painterVisitor, getGroup(RenderGroup.WORLD), mapModel.getMapView()
+									.getBounds(), true);
+						}
 					}
+				} else if (RenderStatus.UPDATE.equals(status)) {
+					if (paintable == this.mapModel) {
+						// Paint the world space paintable objects:
+						for (WorldPaintable worldPaintable : worldPaintables.values()) {
+							worldPaintable.transform(mapModel.getMapView().getWorldViewTransformer());
+							worldPaintable.accept(painterVisitor, getGroup(RenderGroup.WORLD), mapModel.getMapView()
+									.getBounds(), false);
+						}
+					}
+					paintable.accept(painterVisitor, group, mapModel.getMapView().getBounds(), false);
 				}
-				paintable.accept(painterVisitor, group, mapModel.getMapView().getBounds(), false);
 			}
-		}
+		} catch (Exception e) {
+		} 
 	}
 
 	private void cleanComboLayers() {
@@ -483,7 +489,7 @@ public class MapWidget extends VLayout {
 	public void setCursor(Cursor cursor) {
 		graphics.getRasterContext().setCursor(null, cursor.getValue());
 		graphics.getVectorContext().setCursor(null, cursor.getValue());
-		this.cursor = cursor.getValue(); 
+		this.cursor = cursor.getValue();
 	}
 
 	/**
@@ -523,7 +529,8 @@ public class MapWidget extends VLayout {
 	/**
 	 * Apply a new default cursor on the map. This cursor will be set on deactivation of a controller.
 	 * 
-	 * @param cursor The new default cursor to be used when the mouse hovers over the map.
+	 * @param cursor
+	 *            The new default cursor to be used when the mouse hovers over the map.
 	 * @since 1.12.0
 	 */
 	@Api
@@ -1162,15 +1169,16 @@ public class MapWidget extends VLayout {
 			}
 		}
 	}
-	
+
 	/**
 	 * Get the graphics widget of this map.
+	 * 
 	 * @return the graphics widget
 	 */
 	protected GraphicsWidget getGraphics() {
 		return graphics;
 	}
-	
+
 	private void setAddons() {
 		if (getMapModel().isInitialized()) {
 			ClientMapInfo info = getMapModel().getMapInfo();
@@ -1332,11 +1340,11 @@ public class MapWidget extends VLayout {
 			for (Layer<?> layer : previousLayers) {
 				render(layer, null, RenderStatus.DELETE);
 			}
-			
+
 			previousLayers.clear(); // just to be safe
 			previousLayers.addAll(mapModel.getLayers());
 			refreshCallback(mapModel.getMapInfo());
-			
+
 			// render all
 			render(mapModel, null, RenderStatus.ALL);
 		}
@@ -1354,15 +1362,11 @@ public class MapWidget extends VLayout {
 			readyToDraw = false;
 		}
 
-		
 		public boolean isReadyToDraw() {
 			return readyToDraw;
 		}
-		
-		
 
 	}
-
 
 	/**
 	 * Controller that allows for zooming when scrolling the mouse wheel.
@@ -1423,8 +1427,9 @@ public class MapWidget extends VLayout {
 
 	/**
 	 * Refresh a layer. This will re-render the layer with freshly fetched data.
-	 *
-	 * @param layer layer
+	 * 
+	 * @param layer
+	 *            layer
 	 * @since 1.11.0
 	 */
 	@Api
