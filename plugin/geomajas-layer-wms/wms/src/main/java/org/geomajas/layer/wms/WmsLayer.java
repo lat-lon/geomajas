@@ -597,8 +597,10 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 		try {
 			InputStream stream = httpService.getStream(legendUrl, null, null);
 			BufferedImage img = ImageIO.read(stream);
-			setLegendImageHeight(img.getHeight());
-			setLegendImageWidth(img.getWidth());
+			if (img != null) {
+				setLegendImageHeight(img.getHeight());
+				setLegendImageWidth(img.getWidth());
+			}
 		} catch (IOException e) {
 			log.debug("Could not retrieve legend image height and size. Reason: ", e);
 		}
