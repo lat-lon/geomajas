@@ -117,6 +117,8 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 
 	private List<ComboRasterLayer> activeComboRasterLayers = new ArrayList<ComboRasterLayer>();
 
+	private List<Layer<?>> activeNonComboLayers = new ArrayList<Layer<?>>();
+
 	/**
 	 * Internal configuration state of the map.
 	 * 
@@ -356,7 +358,7 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		List<Layer<?>> unvisitedLayers = new ArrayList<Layer<?>>();
 		String currentAggregationId = null;
 		for (Layer<?> layer : layers) {
-			GWT.log("Aggregating layer with id "+layer.getId());
+			GWT.log("Aggregating layer with id " + layer.getId());
 			if (layer.isShowing()) {
 				if (layer.getLayerInfo() instanceof ClientLayerInfo) {
 					ClientLayerInfo layerInfo = (ClientLayerInfo) layer.getLayerInfo();
@@ -364,16 +366,18 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 					if (aggregationId == null) {
 						endStreak(visitor, group, bounds, recursive, unvisitedLayers);
 						layer.accept(visitor, group, bounds, recursive);
+						activeNonComboLayers.add(layer);
 						currentAggregationId = null;
 					} else {
 						if (!aggregationId.equals(currentAggregationId) && currentAggregationId != null) {
 							endStreak(visitor, group, bounds, recursive, unvisitedLayers);
-							currentAggregationId = aggregationId;
 						}
+						currentAggregationId = aggregationId;
 						unvisitedLayers.add(layer);
 					}
 				} else {
 					layer.accept(visitor, group, bounds, recursive);
+					activeNonComboLayers.add(layer);
 				}
 			}
 		}
@@ -381,7 +385,10 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 	}
 
 	private void clearActiveComboRasterLayers(PainterVisitor visitor, Object group) {
-		for (Layer layer : activeComboRasterLayers) {
+		for (Layer<?> layer : activeComboRasterLayers) {
+			visitor.remove(layer, group);
+		}
+		for (Layer<?> layer : activeNonComboLayers) {
 			visitor.remove(layer, group);
 		}
 	}
@@ -389,7 +396,9 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 	private void endStreak(PainterVisitor visitor, Object group, Bbox bounds, boolean recursive,
 			List<Layer<?>> unvisitedLayers) {
 		if (unvisitedLayers.size() == 1) {
-			unvisitedLayers.get(0).accept(visitor, group, bounds, recursive);
+			Layer<?> layer = unvisitedLayers.get(0);
+			layer.accept(visitor, group, bounds, recursive);
+			activeNonComboLayers.add(layer);
 		} else if (unvisitedLayers.size() > 1) {
 			ComboRasterLayer comboLayer = new ComboRasterLayer(unvisitedLayers);
 			comboLayer.accept(visitor, group, bounds, recursive);
@@ -673,22 +682,22 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 	}
 
 	/**
-     * Search a raster layer by it's id.
-     * 
-     * @param layerId
-     *            The layer's client ID.
-     * @return Returns either a Layer, or null.
-     */
-    public RasterLayer getRasterLayer(String layerId) {
-        if (layers != null) {
-            for (RasterLayer layer : getRasterLayers()) {
-                if (layer.getId().equals(layerId)) {
-                    return layer;
-                }
-            }
-        }
-        return null;
-    }
+	 * Search a raster layer by it's id.
+	 * 
+	 * @param layerId
+	 *            The layer's client ID.
+	 * @return Returns either a Layer, or null.
+	 */
+	public RasterLayer getRasterLayer(String layerId) {
+		if (layers != null) {
+			for (RasterLayer layer : getRasterLayers()) {
+				if (layer.getId().equals(layerId)) {
+					return layer;
+				}
+			}
+		}
+		return null;
+	}
 
 	/**
 	 * Select a new layer. Only one layer can be selected at a time, so this function first tries to deselect the
@@ -726,19 +735,19 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 	}
 
 	/**
-     * Return a list containing all raster layers within this model.
-     * 
-     * @return raster layers
-     */
-    public List<RasterLayer> getRasterLayers() {
-        ArrayList<RasterLayer> list = new ArrayList<RasterLayer>();
-        for (Layer<?> layer : layers) {
-            if (layer instanceof RasterLayer) {
-                list.add((RasterLayer) layer);
-            }
-        }
-        return list;
-    }
+	 * Return a list containing all raster layers within this model.
+	 * 
+	 * @return raster layers
+	 */
+	public List<RasterLayer> getRasterLayers() {
+		ArrayList<RasterLayer> list = new ArrayList<RasterLayer>();
+		for (Layer<?> layer : layers) {
+			if (layer instanceof RasterLayer) {
+				list.add((RasterLayer) layer);
+			}
+		}
+		return list;
+	}
 
 	/** Clear the list of selected features in all vector layers. */
 	public void clearSelectedFeatures() {
@@ -1275,7 +1284,6 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		}
 	}
 
-	
 	public List<ComboRasterLayer> getActiveComboRasterLayers() {
 		return Collections.unmodifiableList(activeComboRasterLayers);
 	}
@@ -1284,9 +1292,10 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		activeComboRasterLayers.clear();
 	}
 
-	public boolean isLayerPartOfActiveComboRasterLayers (Layer<?> layerToCheck){
+	public boolean isLayerPartOfActiveComboRasterLayers(Layer<?> layerToCheck) {
 		for (ComboRasterLayer currentComboLayer : activeComboRasterLayers) {
-			if (currentComboLayer.getLayers().contains(layerToCheck)) return true;
+			if (currentComboLayer.getLayers().contains(layerToCheck))
+				return true;
 		}
 		return false;
 	}
