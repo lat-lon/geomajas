@@ -48,6 +48,7 @@ import javax.media.jai.operator.TranslateDescriptor;
 import org.geomajas.configuration.client.ClientMapInfo;
 import org.geomajas.geometry.Bbox;
 import org.geomajas.global.GeomajasException;
+import org.geomajas.layer.LayerException;
 import org.geomajas.layer.RasterLayerService;
 import org.geomajas.layer.tile.RasterTile;
 import org.geomajas.plugin.printing.component.LayoutConstraint;
@@ -120,7 +121,7 @@ public class RasterLayerComponentImpl extends BaseLayerComponentImpl<RasterLayer
 
 	@Autowired
 	@XStreamOmitField
-	private GeoService geoService;
+	protected GeoService geoService;
 
 	@Autowired
 	@XStreamOmitField
@@ -154,7 +155,7 @@ public class RasterLayerComponentImpl extends BaseLayerComponentImpl<RasterLayer
 			}
 			ClientMapInfo map = configurationService.getMapInfo(getMap().getMapId(), getMap().getApplicationId());
 			try {
-				tiles = rasterLayerService.getTiles(getLayerId(), geoService.getCrs2(map.getCrs()), bbox, rasterScale);
+				tiles = retrieveTiles(map);
 				if (tiles.size() > 0) {
 					Collection<Callable<ImageResult>> callables = new ArrayList<Callable<ImageResult>>(tiles.size());
 					// Build the image downloading threads
@@ -268,6 +269,10 @@ public class RasterLayerComponentImpl extends BaseLayerComponentImpl<RasterLayer
 						+ bbox.getWidth() + " " + bbox.getHeight() + "] failed : " + e.getMessage());
 			}
 		}
+	}
+
+	protected List<RasterTile> retrieveTiles(ClientMapInfo map) throws GeomajasException, LayerException {
+		return rasterLayerService.getTiles(getLayerId(), geoService.getCrs2(map.getCrs()), bbox, rasterScale);
 	}
 
 	private boolean isYIndexUp(List<RasterTile> tiles) {

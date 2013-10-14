@@ -15,16 +15,19 @@ import java.util.List;
 
 import org.geomajas.configuration.FontStyleInfo;
 import org.geomajas.configuration.client.ClientLayerInfo;
+import org.geomajas.configuration.client.ClientMapInfo;
 import org.geomajas.configuration.client.ClientRasterLayerInfo;
 import org.geomajas.configuration.client.ClientVectorLayerInfo;
 import org.geomajas.geometry.Coordinate;
 import org.geomajas.gwt.client.map.MapModel;
 import org.geomajas.gwt.client.map.MapView;
+import org.geomajas.gwt.client.map.layer.ComboRasterLayer;
 import org.geomajas.gwt.client.map.layer.Layer;
 import org.geomajas.gwt.client.map.layer.RasterLayer;
 import org.geomajas.gwt.client.map.layer.VectorLayer;
 import org.geomajas.plugin.printing.client.util.PrintingLayout;
 import org.geomajas.plugin.printing.command.dto.PrintTemplateInfo;
+import org.geomajas.plugin.printing.component.dto.ComboRasterLayerComponentInfo;
 import org.geomajas.plugin.printing.component.dto.ImageComponentInfo;
 import org.geomajas.plugin.printing.component.dto.LabelComponentInfo;
 import org.geomajas.plugin.printing.component.dto.LayoutConstraintInfo;
@@ -102,8 +105,15 @@ public class DefaultTemplateBuilder extends AbstractTemplateBuilder {
 		map.setRasterResolution(rasterDpi);
 		List<PrintComponentInfo> layers = new ArrayList<PrintComponentInfo>();
 		// use the normal way for raster layers (TODO: add support for dpi to rasterized part)
-		for (Layer layer : mapModel.getLayers()) {
-			if (layer instanceof RasterLayer && layer.isShowing()) {
+		for (Layer layer : mapModel.buildAggregatedLayerList()) {
+			if (layer instanceof ComboRasterLayer && layer.isShowing()) {
+				ComboRasterLayerComponentInfo info = new ComboRasterLayerComponentInfo();
+				ComboRasterLayer rasterLayer = (ComboRasterLayer) layer;
+				info.setLayerId(rasterLayer.getServerLayerId());
+				info.setStyle(rasterLayer.getLayerInfo().getStyle());
+				info.setLayerIds(rasterLayer.getServerLayerIds());
+				layers.add(info);
+			} else if (layer instanceof RasterLayer && layer.isShowing()) {
 				RasterLayerComponentInfo info = new RasterLayerComponentInfo();
 				RasterLayer rasterLayer = (RasterLayer) layer;
 				info.setLayerId(rasterLayer.getServerLayerId());
@@ -111,6 +121,12 @@ public class DefaultTemplateBuilder extends AbstractTemplateBuilder {
 				layers.add(info);
 			}
 		}
+		// rasterizeVectorLayers(layers); TODO renable
+		map.getChildren().addAll(0, layers);
+		return map;
+	}
+
+	private void rasterizeVectorLayers(List<PrintComponentInfo> layers) {
 		// use the rasterized layers way for vector layers
 		for (ClientLayerInfo layerInfo : mapModel.getMapInfo().getLayers()) {
 			// we must skip the raster layers or we have them twice !
@@ -123,8 +139,6 @@ public class DefaultTemplateBuilder extends AbstractTemplateBuilder {
 		RasterizedLayersComponentInfo rasterizedLayersComponentInfo = new RasterizedLayersComponentInfo();
 		rasterizedLayersComponentInfo.setMapInfo(mapModel.getMapInfo());
 		layers.add(rasterizedLayersComponentInfo);
-		map.getChildren().addAll(0, layers);
-		return map;
 	}
 
 	@Override
@@ -159,8 +173,8 @@ public class DefaultTemplateBuilder extends AbstractTemplateBuilder {
 				VectorLayer vectorLayer = (VectorLayer) layer;
 				ClientVectorLayerInfo layerInfo = vectorLayer.getLayerInfo();
 				String label = layerInfo.getLabel();
-				FeatureTypeStyleInfo fts = layerInfo.getNamedStyleInfo().getUserStyle().
-					getFeatureTypeStyleList().get(0);
+				FeatureTypeStyleInfo fts = layerInfo.getNamedStyleInfo().getUserStyle().getFeatureTypeStyleList()
+						.get(0);
 				for (RuleInfo rule : fts.getRuleList()) {
 					// use title if present, name if not
 					String title = (rule.getTitle() != null ? rule.getTitle() : rule.getName());

@@ -344,7 +344,7 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		visitor.visit(this, group);
 
 		if (recursive) {
-			aggregateAndVisitAllLayeres(visitor, group, bounds, recursive);
+			aggregateAndVisitAllLayers(visitor, group, bounds, recursive);
 		}
 
 		// Paint the editing of a feature (if a feature is being edited):
@@ -353,12 +353,12 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		}
 	}
 
-	private void aggregateAndVisitAllLayeres(PainterVisitor visitor, Object group, Bbox bounds, boolean recursive) {
+	private void aggregateAndVisitAllLayers(PainterVisitor visitor, Object group, Bbox bounds, boolean recursive) {
 		clearActiveComboRasterLayers(visitor, group);
 		List<Layer<?>> unvisitedLayers = new ArrayList<Layer<?>>();
 		String currentAggregationId = null;
+		
 		for (Layer<?> layer : layers) {
-			GWT.log("Aggregating layer with id " + layer.getId());
 			if (layer.isShowing()) {
 				if (layer.getLayerInfo() instanceof ClientLayerInfo) {
 					ClientLayerInfo layerInfo = (ClientLayerInfo) layer.getLayerInfo();
@@ -1299,4 +1299,70 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		}
 		return false;
 	}
+
+	public List<Layer<?>> buildAggregatedLayerList() {
+		
+		List<Layer<?>> unvisitedLayers = new ArrayList<Layer<?>>();
+		List<Layer<?>> aggregation = new ArrayList<Layer<?>>();
+		
+		String currentAggregationId = null;
+
+		for (Layer<?> layer : layers) {
+			try {
+				if (layer.isShowing()) {
+					if (layer.getLayerInfo() instanceof ClientRasterLayerInfo) {
+						currentAggregationId = processRasterLayerAggregation(unvisitedLayers, aggregation,
+								currentAggregationId, layer);
+					} else {
+						currentAggregationId = handleNonAggregatableLayer(unvisitedLayers, aggregation, layer);
+					}
+				}
+			} catch (Exception e) {
+				GWT.log(e.getMessage());
+			}
+		}
+		try {
+
+			endAggregationStreak(aggregation, unvisitedLayers);
+		} catch (Exception e) {
+			GWT.log(e.getMessage());
+		}
+		return aggregation;
+	}
+
+	private String processRasterLayerAggregation(List<Layer<?>> unvisitedLayers, List<Layer<?>> aggregation,
+			String currentAggregationId, Layer<?> layer) {
+		ClientLayerInfo layerInfo = (ClientLayerInfo) layer.getLayerInfo();
+		String aggregationId = layerInfo.getAggregationId();
+		if (aggregationId == null) {
+			currentAggregationId = handleNonAggregatableLayer(unvisitedLayers, aggregation, layer);
+		} else {
+			if (!aggregationId.equals(currentAggregationId) && currentAggregationId != null) {
+				endAggregationStreak(aggregation, unvisitedLayers);
+				currentAggregationId = aggregationId;
+			}
+			unvisitedLayers.add(layer);
+		}
+		return currentAggregationId;
+	}
+
+	private void endAggregationStreak(List<Layer<?>> aggregation, List<Layer<?>> unvisited) {
+		if (unvisited == null || unvisited.isEmpty()) {
+			return;
+		} else if (unvisited.size() == 1) {
+			aggregation.add(unvisited.get(0));
+		} else {
+			aggregation.add(new ComboRasterLayer(unvisited));
+		}
+		unvisited.clear();
+	}
+
+	private String handleNonAggregatableLayer(List<Layer<?>> unvisitedLayers, List<Layer<?>> aggregation, Layer<?> layer) {
+		String currentAggregationId;
+		endAggregationStreak(aggregation, unvisitedLayers);
+		aggregation.add(layer);
+		currentAggregationId = null;
+		return currentAggregationId;
+	}
+
 }
