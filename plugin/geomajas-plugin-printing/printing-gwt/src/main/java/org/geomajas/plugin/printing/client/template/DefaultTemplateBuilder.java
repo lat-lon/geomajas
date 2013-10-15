@@ -15,7 +15,6 @@ import java.util.List;
 
 import org.geomajas.configuration.FontStyleInfo;
 import org.geomajas.configuration.client.ClientLayerInfo;
-import org.geomajas.configuration.client.ClientMapInfo;
 import org.geomajas.configuration.client.ClientRasterLayerInfo;
 import org.geomajas.configuration.client.ClientVectorLayerInfo;
 import org.geomajas.geometry.Coordinate;
@@ -25,6 +24,7 @@ import org.geomajas.gwt.client.map.layer.ComboRasterLayer;
 import org.geomajas.gwt.client.map.layer.Layer;
 import org.geomajas.gwt.client.map.layer.RasterLayer;
 import org.geomajas.gwt.client.map.layer.VectorLayer;
+import org.geomajas.layer.LayerLegendImageSupport;
 import org.geomajas.plugin.printing.client.util.PrintingLayout;
 import org.geomajas.plugin.printing.command.dto.PrintTemplateInfo;
 import org.geomajas.plugin.printing.component.dto.ComboRasterLayerComponentInfo;
@@ -33,8 +33,8 @@ import org.geomajas.plugin.printing.component.dto.LabelComponentInfo;
 import org.geomajas.plugin.printing.component.dto.LayoutConstraintInfo;
 import org.geomajas.plugin.printing.component.dto.LegendComponentInfo;
 import org.geomajas.plugin.printing.component.dto.LegendGraphicComponentInfo;
-import org.geomajas.plugin.printing.component.dto.LegendIconComponentInfo;
 import org.geomajas.plugin.printing.component.dto.LegendItemComponentInfo;
+import org.geomajas.plugin.printing.component.dto.LegendViaUrlComponentInfo;
 import org.geomajas.plugin.printing.component.dto.MapComponentInfo;
 import org.geomajas.plugin.printing.component.dto.PageComponentInfo;
 import org.geomajas.plugin.printing.component.dto.PrintComponentInfo;
@@ -195,15 +195,21 @@ public class DefaultTemplateBuilder extends AbstractTemplateBuilder {
 				RasterLayer rasterLayer = (RasterLayer) layer;
 				ClientRasterLayerInfo layerInfo = rasterLayer.getLayerInfo();
 				LegendItemComponentInfo item = new LegendItemComponentInfo();
-				LegendIconComponentInfo icon = new LegendIconComponentInfo();
-				icon.setLabel(layerInfo.getLabel());
-				icon.setLayerType(layerInfo.getLayerType());
-				item.addChild(icon);
+
+				createAndAddLegendViaUrlComponentInfo(rasterLayer, item);
+
 				item.addChild(getLegendLabel(legend, layerInfo.getLabel()));
 				legend.addChild(item);
 			}
 		}
 		return legend;
+	}
+
+	private void createAndAddLegendViaUrlComponentInfo(RasterLayer rasterLayer, LegendItemComponentInfo item) {
+		LegendViaUrlComponentInfo icon = new LegendViaUrlComponentInfo();
+		String layerId = rasterLayer.getServerLayerId();
+		icon.setLegendImageServiceUrl("d/legendgraphic/" + layerId + ".png");
+		item.addChild(icon);
 	}
 
 	private LabelComponentInfo getLegendLabel(LegendComponentInfo legend, String text) {
