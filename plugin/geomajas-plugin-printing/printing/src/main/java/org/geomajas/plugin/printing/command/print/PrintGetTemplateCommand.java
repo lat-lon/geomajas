@@ -10,9 +10,6 @@
  */
 package org.geomajas.plugin.printing.command.print;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.geomajas.command.Command;
 import org.geomajas.plugin.printing.command.dto.PrintGetTemplateRequest;
 import org.geomajas.plugin.printing.command.dto.PrintGetTemplateResponse;
@@ -23,10 +20,11 @@ import org.geomajas.plugin.printing.component.impl.LabelComponentImpl;
 import org.geomajas.plugin.printing.component.impl.LegendComponentImpl;
 import org.geomajas.plugin.printing.component.impl.LegendItemComponentImpl;
 import org.geomajas.plugin.printing.component.impl.MapComponentImpl;
-import org.geomajas.plugin.printing.component.impl.RasterLayerComponentImpl;
 import org.geomajas.plugin.printing.component.service.PrintDtoConverterService;
 import org.geomajas.plugin.printing.configuration.PrintTemplate;
+import org.geomajas.plugin.printing.document.AbstractItextDocument;
 import org.geomajas.plugin.printing.document.Document.Format;
+import org.geomajas.plugin.printing.document.LegendOnNextPageDocument;
 import org.geomajas.plugin.printing.document.SinglePageDocument;
 import org.geomajas.plugin.printing.service.PrintService;
 import org.slf4j.Logger;
@@ -63,9 +61,10 @@ public class PrintGetTemplateCommand implements Command<PrintGetTemplateRequest,
 		// you dirty hack you...
 		PrintTemplateInfo template = request.getTemplate();
 		PageComponent page = (PageComponent) converterService.toInternal(template.getPage());
-		MapComponentImpl mapComponent = (MapComponentImpl) page.getChild(PrintTemplate.MAP);
+		MapComponentImpl<?> mapComponent = (MapComponentImpl<?>) page.getChild(PrintTemplate.MAP);
+		LegendComponentImpl legendComponent = null;
 		if (mapComponent != null) {
-			LegendComponentImpl legendComponent = (LegendComponentImpl) mapComponent.getChild(PrintTemplate.LEGEND);
+			legendComponent = (LegendComponentImpl) mapComponent.getChild(PrintTemplate.LEGEND);
 			if (legendComponent != null) {
 				LabelComponentImpl lab = (LabelComponentImpl) legendComponent.getChild(PrintTemplate.TITLE);
 				if (lab != null) {
@@ -79,7 +78,13 @@ public class PrintGetTemplateCommand implements Command<PrintGetTemplateRequest,
 		if (request.getPageSize() != null) {
 			page.setSize(request.getPageSize(), true);
 		}
-		SinglePageDocument pdfDoc = new SinglePageDocument(page, null);
+		AbstractItextDocument pdfDoc;
+		if (request.isLegendOnNewPage() && legendComponent != null) {
+			mapComponent.removeComponent(legendComponent);
+			pdfDoc = new LegendOnNextPageDocument(page, legendComponent);
+		} else {
+			pdfDoc = new SinglePageDocument(page, null);
+		}
 		// layout the document
 		pdfDoc.layout(Format.PDF);
 		// Add document to container

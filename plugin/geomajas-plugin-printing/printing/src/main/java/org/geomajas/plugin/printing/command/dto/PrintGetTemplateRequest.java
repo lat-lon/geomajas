@@ -37,6 +37,8 @@ public class PrintGetTemplateRequest implements CommandRequest {
 
 	private String pageSize;
 
+	private boolean isLegendOnNewPage;
+
 	/** No-arguments constructor for GWT. */
 	public PrintGetTemplateRequest() {
 	}
@@ -76,4 +78,20 @@ public class PrintGetTemplateRequest implements CommandRequest {
 	public void setPageSize(String pageSize) {
 		this.pageSize = pageSize;
 	}
+
+	/**
+	 * @param isLegendOnNewPage
+	 *            <code>true</code> if the legend should be on a new page, <code>false</code> otherwise
+	 */
+	public void setLegendOnNewPage(boolean isLegendOnNewPage) {
+		this.isLegendOnNewPage = isLegendOnNewPage;
+	}
+
+	/**
+	 * @return <code>true</code> if the legend should be on a new page, <code>false</code> otherwise
+	 */
+	public boolean isLegendOnNewPage() {
+		return isLegendOnNewPage;
+	}
+	
 }

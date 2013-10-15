@@ -24,7 +24,6 @@ import org.geomajas.gwt.client.map.layer.ComboRasterLayer;
 import org.geomajas.gwt.client.map.layer.Layer;
 import org.geomajas.gwt.client.map.layer.RasterLayer;
 import org.geomajas.gwt.client.map.layer.VectorLayer;
-import org.geomajas.layer.LayerLegendImageSupport;
 import org.geomajas.plugin.printing.client.util.PrintingLayout;
 import org.geomajas.plugin.printing.command.dto.PrintTemplateInfo;
 import org.geomajas.plugin.printing.component.dto.ComboRasterLayerComponentInfo;
@@ -33,6 +32,7 @@ import org.geomajas.plugin.printing.component.dto.LabelComponentInfo;
 import org.geomajas.plugin.printing.component.dto.LayoutConstraintInfo;
 import org.geomajas.plugin.printing.component.dto.LegendComponentInfo;
 import org.geomajas.plugin.printing.component.dto.LegendGraphicComponentInfo;
+import org.geomajas.plugin.printing.component.dto.LegendIconComponentInfo;
 import org.geomajas.plugin.printing.component.dto.LegendItemComponentInfo;
 import org.geomajas.plugin.printing.component.dto.LegendViaUrlComponentInfo;
 import org.geomajas.plugin.printing.component.dto.MapComponentInfo;
@@ -71,6 +71,8 @@ public class DefaultTemplateBuilder extends AbstractTemplateBuilder {
 	protected MapModel mapModel;
 
 	protected String applicationId;
+
+	private Boolean isLegendOnNewPage;
 
 	@Override
 	public PrintTemplateInfo buildTemplate() {
@@ -196,7 +198,10 @@ public class DefaultTemplateBuilder extends AbstractTemplateBuilder {
 				ClientRasterLayerInfo layerInfo = rasterLayer.getLayerInfo();
 				LegendItemComponentInfo item = new LegendItemComponentInfo();
 
-				createAndAddLegendViaUrlComponentInfo(rasterLayer, item);
+				if (isLegendOnNewPage)
+					createAndAddLegendViaUrlComponentInfo(rasterLayer, item);
+				else
+					createAndAddLegendIconComponentInfo(rasterLayer, item);
 
 				item.addChild(getLegendLabel(legend, layerInfo.getLabel()));
 				legend.addChild(item);
@@ -212,6 +217,13 @@ public class DefaultTemplateBuilder extends AbstractTemplateBuilder {
 		item.addChild(icon);
 	}
 
+	private void createAndAddLegendIconComponentInfo(RasterLayer rasterLayer, LegendItemComponentInfo item) {
+		LegendIconComponentInfo icon = new LegendIconComponentInfo();
+		icon.setLayerType(rasterLayer.getLayerInfo().getLayerType());
+		icon.setLabel(rasterLayer.getLabel());
+		item.addChild(icon);
+	}
+	
 	private LabelComponentInfo getLegendLabel(LegendComponentInfo legend, String text) {
 		LabelComponentInfo legendLabel = new LabelComponentInfo();
 		legendLabel.setBackgroundColor(PrintingLayout.templateDefaultBackgroundColor);
@@ -325,6 +337,10 @@ public class DefaultTemplateBuilder extends AbstractTemplateBuilder {
 
 	public void setApplicationId(String applicationId) {
 		this.applicationId = applicationId;
+	}
+
+	public void setLegendOnNewPage(Boolean isLegendOnNewPage) {
+		this.isLegendOnNewPage = isLegendOnNewPage;		
 	}
 
 }

@@ -10,7 +10,9 @@
  */
 package org.geomajas.plugin.printing.document;
 
+import java.io.File;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.geomajas.configuration.FeatureStyleInfo;
@@ -23,6 +25,7 @@ import org.geomajas.plugin.printing.component.dto.LabelComponentInfo;
 import org.geomajas.plugin.printing.component.dto.LegendComponentInfo;
 import org.geomajas.plugin.printing.component.dto.LegendIconComponentInfo;
 import org.geomajas.plugin.printing.component.dto.LegendItemComponentInfo;
+import org.geomajas.plugin.printing.component.dto.PrintComponentInfo;
 import org.geomajas.plugin.printing.component.impl.PageComponentImpl;
 import org.geomajas.plugin.printing.component.service.PrintConfigurationService;
 import org.geomajas.plugin.printing.component.service.PrintDtoConverterService;
@@ -148,6 +151,76 @@ public class DefaultDocumentTest {
 		fo.close();
 	}
 
+	@Test
+	public void testRenderLegendOnNewPage() throws Exception {
+		LegendComponentInfo legend = new LegendComponentInfo();
+		FontStyleInfo style = new FontStyleInfo();
+		style.setFamily("Dialog");
+		style.setStyle("Italic");
+		style.setSize(12);
+		legend.setFont(style);
+		legend.setMapId("mainMap");
+		legend.setTag("legend");
+		legend.setTitle("legend");
+		for (ClientLayerInfo layer : configurationService.getMapInfo("mainMap", "application").getLayers()) {
+			if (layer instanceof ClientVectorLayerInfo) {
+				ClientVectorLayerInfo layerInfo = (ClientVectorLayerInfo) layer;
+				String label = layerInfo.getLabel();
+				List<FeatureStyleInfo> defs = layerInfo.getNamedStyleInfo().getFeatureStyles();
+				for (FeatureStyleInfo styleDefinition : defs) {
+					String text = "";
+					if (defs.size() > 1) {
+						text = label + "(" + styleDefinition.getName() + ")";
+					} else {
+						text = label;
+					}
+					LegendItemComponentInfo item = new LegendItemComponentInfo();
+					LegendIconComponentInfo icon = new LegendIconComponentInfo();
+					icon.setLabel(text);
+					icon.setStyleInfo(styleDefinition);
+					icon.setLayerType(layerInfo.getLayerType());
+					LabelComponentInfo legendLabel = new LabelComponentInfo();
+					legendLabel.setBackgroundColor("0xFFFFFF");
+					legendLabel.setBorderColor("0x000000");
+					legendLabel.setFontColor("0x000000");
+					legendLabel.setFont(legend.getFont());
+					legendLabel.setText(text);
+					legendLabel.setTextOnly(true);
+					item.addChild(icon);
+					item.addChild(legendLabel);
+					legend.addChild(item);
+				}
+			} else if (layer instanceof ClientRasterLayerInfo) {
+				ClientRasterLayerInfo layerInfo = (ClientRasterLayerInfo) layer;
+				LegendItemComponentInfo item = new LegendItemComponentInfo();
+				LegendIconComponentInfo icon = new LegendIconComponentInfo();
+				icon.setLabel(layerInfo.getLabel());
+				icon.setLayerType(layerInfo.getLayerType());
+				LabelComponentInfo legendLabel = new LabelComponentInfo();
+				legendLabel.setFont(legend.getFont());
+				legendLabel.setBackgroundColor("0xFFFFFF");
+				legendLabel.setBorderColor("black");
+				legendLabel.setFontColor("0x000000");
+				legendLabel.setText(layerInfo.getLabel());
+				legendLabel.setTextOnly(true);
+				item.addChild(icon);
+				item.addChild(legendLabel);
+				legend.addChild(item);
+			}
+		}
+		LegendComponent comp = (LegendComponent) printDtoService.toInternal(legend);
+		PageComponentImpl page = new PageComponentImpl();
+		page.setSize("A4", false);
+		page.addComponent(comp);
+		PrintTemplate template = new PrintTemplate();
+		template.setPage(page);
+		LegendOnNextPageDocument pdfDoc  = new LegendOnNextPageDocument(page, comp);
+		FileOutputStream fo = new FileOutputStream(File.createTempFile("legend", ".pdf" ));
+		pdfDoc.render(fo, Format.PDF);
+		fo.flush();
+		fo.close();
+	}
+	
 	private DefaultConfigurationVisitor getDefaultVisitor(double x, double y, float widthInUnits) {
 		// 842, 595
 		DefaultConfigurationVisitor config = new DefaultConfigurationVisitor();
