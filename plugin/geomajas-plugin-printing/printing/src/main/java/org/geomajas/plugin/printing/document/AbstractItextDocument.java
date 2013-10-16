@@ -20,8 +20,7 @@ import com.lowagie.text.Rectangle;
 import com.lowagie.text.pdf.PdfWriter;
 
 /**
- * 
- * TODO add class documentation here
+ * {@link org.geomajas.plugin.printing.document.Document} implementation using itext for rendering
  * 
  * @author <a href="mailto:goltz@lat-lon.de">Lyn Goltz</a>
  * @author last edited by: $Author: lyn $
