@@ -1,13 +1,3 @@
-/*
- * This is part of Geomajas, a GIS framework, http://www.geomajas.org/.
- *
- * Copyright 2008-2013 Geosparc nv, http://www.geosparc.com/, Belgium.
- *
- * The program is available in open source according to the GNU Affero
- * General Public License. All contributions in this program are covered
- * by the Geomajas Contributors License Agreement. For full licensing
- * details, see LICENSE.txt in the project root.
- */
 package org.geomajas.plugin.printing.component.impl;
 
 import java.awt.Font;
@@ -18,29 +8,23 @@ import org.geomajas.configuration.FeatureStyleInfo;
 import org.geomajas.configuration.client.ClientRasterLayerInfo;
 import org.geomajas.configuration.client.ClientVectorLayerInfo;
 import org.geomajas.plugin.printing.component.LayoutConstraint;
+import org.geomajas.plugin.printing.component.LegendComponent;
 import org.geomajas.plugin.printing.component.MapComponent;
 import org.geomajas.plugin.printing.component.PdfContext;
 import org.geomajas.plugin.printing.component.PrintComponent;
 import org.geomajas.plugin.printing.component.PrintComponentVisitor;
+import org.geomajas.plugin.printing.component.dto.AbstractLegendComponentInfo;
 import org.geomajas.plugin.printing.component.dto.LegendComponentInfo;
 import org.geomajas.plugin.printing.component.service.PrintDtoConverterService;
 import org.geomajas.plugin.printing.configuration.PrintTemplate;
 import org.geomajas.plugin.printing.parser.FontConverter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
 
 import com.thoughtworks.xstream.annotations.XStreamConverter;
 import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
-/**
- * Inclusion of legend in printed document.
- * 
- * @author Jan De Moerloose
- */
-@Component()
-@Scope(value = "prototype")
-public class LegendComponentImpl extends AbstractLegendComponentImpl<LegendComponentInfo> {
+public abstract class AbstractLegendComponentImpl<T extends AbstractLegendComponentInfo>
+	extends AbstractPrintComponent<T> implements LegendComponent<T> {
 
 	/** Application id. */
 	private String applicationId;
@@ -60,15 +44,17 @@ public class LegendComponentImpl extends AbstractLegendComponentImpl<LegendCompo
 	@XStreamOmitField
 	private PrintDtoConverterService converterService;
 
-	public LegendComponentImpl() {
+	protected LabelComponentImpl titleLabel;
+
+	public AbstractLegendComponentImpl() {
 		this("Legend");
 	}
 
-	public LegendComponentImpl(String title) {
+	public AbstractLegendComponentImpl(String title) {
 		this.title = title;
 		setConstraint(new LayoutConstraint(LayoutConstraint.RIGHT, LayoutConstraint.BOTTOM, LayoutConstraint.FLOW_Y, 0,
 				0, 20, 20)); /* marginX: 20 ; marginY: 20 */
-		LabelComponentImpl titleLabel = new LabelComponentImpl();
+		titleLabel = new LabelComponentImpl();
 		titleLabel.getConstraint().setAlignmentX(LayoutConstraint.CENTER);
 		titleLabel.getConstraint().setMarginY(5);
 		titleLabel.setTextOnly(true);
@@ -111,11 +97,6 @@ public class LegendComponentImpl extends AbstractLegendComponentImpl<LegendCompo
 
 	public void setTitle(String title) {
 		this.title = title;
-	}
-
-	@Override
-	public void calculateSize(PdfContext context) {
-		super.calculateSize(context);
 	}
 
 	@Override
@@ -198,11 +179,12 @@ public class LegendComponentImpl extends AbstractLegendComponentImpl<LegendCompo
 		addComponent(item);
 	}
 
-	public void fromDto(LegendComponentInfo legendInfo) {
+	public void fromDto(T legendInfo) {
 		super.fromDto(legendInfo);
 		setApplicationId(legendInfo.getApplicationId());
 		setMapId(legendInfo.getMapId());
 		setFont(converterService.toInternal(legendInfo.getFont()));
 		setTitle(legendInfo.getTitle());
 	}
+
 }

@@ -16,8 +16,8 @@ import org.geomajas.plugin.printing.command.dto.PrintGetTemplateResponse;
 import org.geomajas.plugin.printing.command.dto.PrintTemplateInfo;
 import org.geomajas.plugin.printing.component.PageComponent;
 import org.geomajas.plugin.printing.component.PrintComponent;
+import org.geomajas.plugin.printing.component.impl.AbstractLegendComponentImpl;
 import org.geomajas.plugin.printing.component.impl.LabelComponentImpl;
-import org.geomajas.plugin.printing.component.impl.LegendComponentImpl;
 import org.geomajas.plugin.printing.component.impl.LegendItemComponentImpl;
 import org.geomajas.plugin.printing.component.impl.MapComponentImpl;
 import org.geomajas.plugin.printing.component.service.PrintDtoConverterService;
@@ -62,9 +62,9 @@ public class PrintGetTemplateCommand implements Command<PrintGetTemplateRequest,
 		PrintTemplateInfo template = request.getTemplate();
 		PageComponent page = (PageComponent) converterService.toInternal(template.getPage());
 		MapComponentImpl<?> mapComponent = (MapComponentImpl<?>) page.getChild(PrintTemplate.MAP);
-		LegendComponentImpl legendComponent = null;
+		AbstractLegendComponentImpl legendComponent = null;
 		if (mapComponent != null) {
-			legendComponent = (LegendComponentImpl) mapComponent.getChild(PrintTemplate.LEGEND);
+			legendComponent = (AbstractLegendComponentImpl) mapComponent.getChild(PrintTemplate.LEGEND);
 			if (legendComponent != null) {
 				LabelComponentImpl lab = (LabelComponentImpl) legendComponent.getChild(PrintTemplate.TITLE);
 				if (lab != null) {
@@ -92,7 +92,7 @@ public class PrintGetTemplateCommand implements Command<PrintGetTemplateRequest,
 		response.setDocumentId(documentId);
 	}
 
-	private void adjustLegendFontSizeForSmallPageSizes(PrintGetTemplateRequest request, LegendComponentImpl lc) {
+	private void adjustLegendFontSizeForSmallPageSizes(PrintGetTemplateRequest request, AbstractLegendComponentImpl<?> lc) {
 		// adjust fontsize legend for small pagesizes
 		float relPSize = getPageSizeRelativeToA3(request); // A3 == 100% fontsize
 		if (relPSize < 1) {
