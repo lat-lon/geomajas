@@ -18,7 +18,7 @@ public abstract class AbstractLegendComponentInfo extends PrintComponentInfo {
 	 * 
 	 * @since 2.4.0
 	 */
-	public static final String DEFAULT_LEGEND_TITLE = "Legend"; // Default is english
+	public static final String DEFAULT_LEGEND_TITLE = "Legende"; // Default is english
 
 	/**
 	 * Default font family for text in the legend component. Can be overridden by specifying the font via setFont()
