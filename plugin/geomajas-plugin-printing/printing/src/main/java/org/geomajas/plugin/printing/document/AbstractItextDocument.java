@@ -50,6 +50,7 @@ public abstract class AbstractItextDocument extends AbstractDocument {
 		try {
 			doRender(outputStream, format);
 		} catch (Exception e) { // NOSONAR
+			e.printStackTrace();
 			throw new PrintingException(e, PrintingException.DOCUMENT_RENDER_PROBLEM);
 		}
 	}

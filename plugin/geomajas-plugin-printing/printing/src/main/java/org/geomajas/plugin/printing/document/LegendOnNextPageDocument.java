@@ -3,6 +3,7 @@ package org.geomajas.plugin.printing.document;
 import org.geomajas.plugin.printing.component.LegendComponent;
 import org.geomajas.plugin.printing.component.PageComponent;
 import org.geomajas.plugin.printing.component.PdfContext;
+import org.geomajas.plugin.printing.component.impl.DynamicLegendComponentImpl;
 
 import com.lowagie.text.BadElementException;
 import com.lowagie.text.Document;
@@ -32,13 +33,16 @@ public class LegendOnNextPageDocument extends AbstractItextDocument {
 		// finally render
 		page.render(context);
 		document.add(context.getImage());
-
 		document.newPage();
 		// writer = createWriter(document);
 		context = createContext(writer);
-		legendComponent.layout(context);
+		if (legendComponent instanceof DynamicLegendComponentImpl) {
+			DynamicLegendComponentImpl dynamicLegendComponent = (DynamicLegendComponentImpl) legendComponent;
+			dynamicLegendComponent.layout(document, context);
+		} else {
+			legendComponent.layout(context);
+		}
 		legendComponent.render(context);
 		document.add(context.getImage());
 	}
-
 }
