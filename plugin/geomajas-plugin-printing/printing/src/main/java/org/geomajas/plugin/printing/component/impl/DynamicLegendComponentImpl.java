@@ -45,21 +45,12 @@ public class DynamicLegendComponentImpl extends AbstractLegendComponentImpl<Dyna
 		super(title);
 	}
 
-	private PdfContext newPage(Document doc, PdfContext context, PrintComponent<?> child) {
+	private PdfContext newContext(Document doc, PdfContext context, PrintComponent<?> child) {
 		try {
-			render(context);
-			Image image = context.getImage();
-			doc.add(image);
-			doc.newPage();
-			PdfWriter createWriter = createWriter(doc);
-			createWriter.open();
-			PdfContext ctx = new PdfContext(createWriter);
-			ctx.initSize(getBounds());
-			return ctx;
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
+			return createContext(getBounds(), doc);
+		} catch (Exception e) {e.printStackTrace();
+		};
+		return context;
 	}
 	
 	protected PdfWriter createWriter(Document document) throws DocumentException {
@@ -102,6 +93,7 @@ public class DynamicLegendComponentImpl extends AbstractLegendComponentImpl<Dyna
 		PdfWriter writer = PdfWriter.getInstance(document, new ByteArrayOutputStream());
 		// Render in correct colors for transparent rasters
 		writer.setRgbTransparencyBlending(true);
+		writer.open();
 		PdfContext context = new PdfContext(writer);
 		context.initSize(bounds);
 		return context;
@@ -112,7 +104,8 @@ public class DynamicLegendComponentImpl extends AbstractLegendComponentImpl<Dyna
 		layout(null, context);
 	}
 
-	public void layout(Document doc, PdfContext context) {
+	public List<PdfContext> layout(Document doc, PdfContext context) {
+		List<PdfContext> ctxs = new ArrayList<PdfContext>();
 		titleLabel.calculateSize(context);
 
 		Rectangle bounds = getBounds();
@@ -148,8 +141,9 @@ public class DynamicLegendComponentImpl extends AbstractLegendComponentImpl<Dyna
 				if (currentHeight < MARGIN) {
 					if ((currentHeight + childHeight) != startHeight)
 						currentWidth += maxWidth;
-					if (currentWidth+maxWidth> globalMaxWidth && doc != null) {
-						 context = newPage(doc, context, child);
+					if (currentWidth + maxWidth> globalMaxWidth && doc != null) {
+						ctxs.add(context);
+						context = newContext(doc, context, child);
 						currentWidth = MARGIN;
 						currentHeight = startHeight;
 					}
@@ -173,7 +167,8 @@ public class DynamicLegendComponentImpl extends AbstractLegendComponentImpl<Dyna
 				}
 			}
 		}
-
+		ctxs.add(context);
+		return ctxs;
 	}
 
 }

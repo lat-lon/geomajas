@@ -1,5 +1,7 @@
 package org.geomajas.plugin.printing.document;
 
+import java.util.List;
+
 import org.geomajas.plugin.printing.component.LegendComponent;
 import org.geomajas.plugin.printing.component.PageComponent;
 import org.geomajas.plugin.printing.component.PdfContext;
@@ -38,11 +40,16 @@ public class LegendOnNextPageDocument extends AbstractItextDocument {
 		context = createContext(writer);
 		if (legendComponent instanceof DynamicLegendComponentImpl) {
 			DynamicLegendComponentImpl dynamicLegendComponent = (DynamicLegendComponentImpl) legendComponent;
-			dynamicLegendComponent.layout(document, context);
+			List<PdfContext> layouts = dynamicLegendComponent.layout(document, context);
+			for (PdfContext ctx : layouts) {
+				legendComponent.render(ctx);
+				document.newPage();
+				document.add(ctx.getImage());
+			}
 		} else {
 			legendComponent.layout(context);
+			legendComponent.render(context);
+			document.add(context.getImage());
 		}
-		legendComponent.render(context);
-		document.add(context.getImage());
 	}
 }
