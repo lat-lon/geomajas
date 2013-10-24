@@ -38,11 +38,11 @@ public abstract class AbstractLegendComponentImpl<T extends AbstractLegendCompon
 			LegendComponentInfo.DEFAULT_LEGEND_FONTSIZE); // Default font
 
 	/** Heading text. */
-	private String title = LegendComponentInfo.DEFAULT_LEGEND_TITLE;
+	protected String title = LegendComponentInfo.DEFAULT_LEGEND_TITLE;
 
 	@Autowired
 	@XStreamOmitField
-	private PrintDtoConverterService converterService;
+	protected PrintDtoConverterService converterService;
 
 	protected LabelComponentImpl titleLabel;
 

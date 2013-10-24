@@ -1,7 +1,7 @@
 package org.geomajas.plugin.printing.component.impl;
 
-import java.awt.Font;
-import java.io.ByteArrayOutputStream;
+import static java.lang.Math.max;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -14,28 +14,16 @@ import java.util.Set;
 import org.geomajas.plugin.printing.component.PdfContext;
 import org.geomajas.plugin.printing.component.PrintComponent;
 import org.geomajas.plugin.printing.component.dto.DynamicLegendComponentInfo;
-import org.geomajas.plugin.printing.component.dto.LegendComponentInfo;
-import org.geomajas.plugin.printing.parser.FontConverter;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.Image;
 import com.lowagie.text.Rectangle;
-import com.lowagie.text.pdf.PdfWriter;
-import com.thoughtworks.xstream.annotations.XStreamConverter;
 
 @Component()
 @Scope(value = "prototype")
 public class DynamicLegendComponentImpl extends AbstractLegendComponentImpl<DynamicLegendComponentInfo> {
 
-	private static final float MARGIN = 10;
-
-	/** The font for the text. */
-	@XStreamConverter(FontConverter.class)
-	private Font font = new Font(LegendComponentInfo.DEFAULT_LEGEND_FONT_FAMILY, Font.PLAIN,
-			LegendComponentInfo.DEFAULT_LEGEND_FONTSIZE); // Default font
+	static final float MARGIN = 10;
 
 	public DynamicLegendComponentImpl() {
 		this("Legende");
@@ -45,40 +33,134 @@ public class DynamicLegendComponentImpl extends AbstractLegendComponentImpl<Dyna
 		super(title);
 	}
 
-	private PdfContext newContext(Document doc, PdfContext context, PrintComponent<?> child) {
-		try {
-			return createContext(getBounds(), doc);
-		} catch (Exception e) {e.printStackTrace();
-		};
-		return context;
-	}
-	
-	protected PdfWriter createWriter(Document document) throws DocumentException {
-		PdfWriter writer = PdfWriter.getInstance(document, new ByteArrayOutputStream());
-		// Render in correct colors for transparent rasters
-		writer.setRgbTransparencyBlending(true);
-		return writer;
+	@Override
+	public void layout(PdfContext context) {
+		layoutOnMultiplePages(context);
 	}
 
-	private List<Entry<PrintComponent<?>, Float>> retrieveSortedListOfChildren() {
-		Map<PrintComponent<?>, Float> map = retrieveMapWithChildren();
-		return retrieveSortedList(map);
+	@SuppressWarnings("deprecation")
+	public List<List<PrintComponent<?>>> layoutOnMultiplePages(PdfContext context) {
+		List<List<PrintComponent<?>>> allPageChilds = new ArrayList<List<PrintComponent<?>>>();
+		titleLabel.calculateSize(context);
+
+		Rectangle bounds = getBounds();
+		float width = bounds.getWidth();
+		float height = bounds.getHeight();
+
+		Rectangle titleLabelBounds = titleLabel.getBounds();
+		float titleLabelHeight = titleLabelBounds.getHeight();
+		float titleLabelWidth = titleLabelBounds.getWidth();
+		float labelUrx = width / 2 - titleLabelWidth / 2;
+		float labelUry = height - MARGIN;
+		float labelLly = labelUry - titleLabelHeight;
+		titleLabel.setBounds(new Rectangle(0f, labelLly, labelUrx, labelUry));
+
+		float startHeight = height - titleLabelHeight - MARGIN;
+		float availableHeight = startHeight - MARGIN;
+
+		float currentWidth = MARGIN;
+		float currentHeight = startHeight;
+		float currentColumnWidth = 0;
+
+		List<PrintComponent<?>> currentPageChilds = new ArrayList<PrintComponent<?>>();
+		for (Entry<PrintComponent<?>, Float> childEntry : retrieveChildsSortedByHeight()) {
+			PrintComponent<?> child = childEntry.getKey();
+			if (child != titleLabel) {
+				child.layout(context);
+				Rectangle childBounds = child.getBounds();
+				float childWidth = childBounds.getWidth();
+				float childHeight = childBounds.getHeight();
+
+				currentHeight -= childHeight;
+				if (isFirstInColumnAndDoesNotFitInColumn(startHeight, currentHeight, childHeight)) {
+					float scaleFactor = calculateScaleFactor(availableHeight, childHeight);
+					if (maxPageWidthIsAchieved(width, currentWidth, childWidth * scaleFactor)) {
+						currentWidth = MARGIN;
+						allPageChilds.add(currentPageChilds);
+						currentPageChilds = new ArrayList<PrintComponent<?>>();
+					}
+					currentHeight = startHeight;
+					setNewBounds(child, currentWidth, currentHeight, childWidth, childHeight, scaleFactor);
+					currentWidth += (childWidth * scaleFactor);
+					currentColumnWidth = 0;
+				} else if (doesNotFitInColumn(currentHeight)) {
+					currentWidth += currentColumnWidth;
+					if (maxPageWidthIsAchieved(width, currentWidth, childWidth)) {
+						currentWidth = MARGIN;
+						allPageChilds.add(currentPageChilds);
+						currentPageChilds = new ArrayList<PrintComponent<?>>();
+					}
+					currentHeight = startHeight - childHeight;
+					currentColumnWidth = childWidth;
+					setNewBounds(child, currentWidth, currentHeight, childWidth, childHeight);
+				} else {
+					currentColumnWidth = max(currentColumnWidth, childWidth);
+					setNewBounds(child, currentWidth, currentHeight, childWidth, childHeight);
+				}
+				currentPageChilds.add(child);
+			}
+		}
+		allPageChilds.add(currentPageChilds);
+		return allPageChilds;
 	}
 
-	private Map<PrintComponent<?>, Float> retrieveMapWithChildren() {
-		Map<PrintComponent<?>, Float> map = new HashMap<PrintComponent<?>, Float>();
+	private void setNewBounds(PrintComponent<?> child, float currentWidth, float currentHeight, float childWidth,
+			float childHeight, float scale) {
+		float llx = currentWidth;
+		float urx = currentWidth + (childWidth * scale);
+		float lly = currentHeight - (childHeight * scale);
+		float ury = currentHeight;
+		child.setBounds(new Rectangle(llx, lly, urx, ury));
+	}
+
+	private void setNewBounds(PrintComponent<?> child, float currentWidth, float currentHeight, float childWidth,
+			float childHeight) {
+		float llx = currentWidth;
+		float urx = currentWidth + childWidth;
+		float lly = currentHeight;
+		float ury = currentHeight + childHeight;
+		child.setBounds(new Rectangle(llx, lly, urx, ury));
+	}
+
+	private boolean isFirstInColumnAndDoesNotFitInColumn(float startHeight, float currentHeight, float childHeight) {
+		return (currentHeight + childHeight) == startHeight && doesNotFitInColumn(currentHeight);
+	}
+
+	private boolean doesNotFitInColumn(float currentHeight) {
+		return currentHeight < MARGIN;
+	}
+
+	private boolean maxPageWidthIsAchieved(float width, float currentWidth, float childWidth) {
+		return currentWidth + childWidth > width - MARGIN;
+	}
+
+	private float calculateScaleFactor(float currentHeight, float childHeight) {
+		float scaleInPercent = currentHeight / childHeight;
+		if (scaleInPercent > 1)
+			scaleInPercent = 1;
+		return scaleInPercent;
+	}
+
+	private List<Entry<PrintComponent<?>, Float>> retrieveChildsSortedByHeight() {
+		Map<PrintComponent<?>, Float> child2Height = retrieveChild2HeightMap();
+		return sortByHeight(child2Height);
+	}
+
+	@SuppressWarnings("deprecation")
+	private Map<PrintComponent<?>, Float> retrieveChild2HeightMap() {
+		Map<PrintComponent<?>, Float> child2Height = new HashMap<PrintComponent<?>, Float>();
 		for (PrintComponent<?> child : getChildren()) {
 			if (child != titleLabel) {
 				Rectangle childBounds = child.getBounds();
 				float childHeight = childBounds.getHeight();
-				map.put(child, childHeight);
+				child2Height.put(child, childHeight);
 			}
 		}
-		return map;
+		return child2Height;
 	}
 
-	private List<Entry<PrintComponent<?>, Float>> retrieveSortedList(Map<PrintComponent<?>, Float> map) {
-		Set<Entry<PrintComponent<?>, Float>> entrySet = map.entrySet();
+	private List<Entry<PrintComponent<?>, Float>> sortByHeight(Map<PrintComponent<?>, Float> child2Height) {
+		Set<Entry<PrintComponent<?>, Float>> entrySet = child2Height.entrySet();
 		List<Entry<PrintComponent<?>, Float>> arrayList = new ArrayList<Entry<PrintComponent<?>, Float>>(entrySet);
 		Collections.sort(arrayList, new Comparator<Map.Entry<PrintComponent<?>, Float>>() {
 
@@ -89,86 +171,7 @@ public class DynamicLegendComponentImpl extends AbstractLegendComponentImpl<Dyna
 		return arrayList;
 	}
 
-	protected PdfContext createContext(Rectangle bounds, Document document) throws DocumentException {
-		PdfWriter writer = PdfWriter.getInstance(document, new ByteArrayOutputStream());
-		// Render in correct colors for transparent rasters
-		writer.setRgbTransparencyBlending(true);
-		writer.open();
-		PdfContext context = new PdfContext(writer);
-		context.initSize(bounds);
-		return context;
+	public LabelComponentImpl getTitleLabel(){
+		return titleLabel;
 	}
-
-	@Override
-	public void layout(PdfContext context) {
-		layout(null, context);
-	}
-
-	public List<PdfContext> layout(Document doc, PdfContext context) {
-		List<PdfContext> ctxs = new ArrayList<PdfContext>();
-		titleLabel.calculateSize(context);
-
-		Rectangle bounds = getBounds();
-		float width = bounds.getWidth();
-		float height = bounds.getHeight();
-		Rectangle titleLabelBounds = titleLabel.getBounds();
-		float titleLabelHeight = titleLabelBounds.getHeight();
-		float titleLabelWidth = titleLabelBounds.getWidth();
-		float labelUrx = width / 2 - titleLabelWidth / 2;
-		float labelUry = height - MARGIN;
-		float labelLly = labelUry - titleLabelHeight;
-		titleLabel.setBounds(new Rectangle(0f, labelLly, labelUrx, labelUry));
-
-		float startHeight = height - titleLabelHeight - MARGIN;
-
-		float currentWidth = MARGIN;
-		float currentHeight = startHeight;
-		float maxWidth = 0;
-		float globalMaxWidth = width - 2 * MARGIN;
-
-		List<Entry<PrintComponent<?>, Float>> sortedListOfChildren = retrieveSortedListOfChildren();
-		for (Entry<PrintComponent<?>, Float> childEntry : sortedListOfChildren) {
-			PrintComponent<?> child = childEntry.getKey();
-			if (child != titleLabel) {
-				child.layout(context);
-				Rectangle childBounds = child.getBounds();
-				float childWidth = childBounds.getWidth();
-				float childHeight = childBounds.getHeight();
-
-				maxWidth = Math.max(maxWidth, childWidth);
-
-				currentHeight -= childHeight;
-				if (currentHeight < MARGIN) {
-					if ((currentHeight + childHeight) != startHeight)
-						currentWidth += maxWidth;
-					if (currentWidth + maxWidth> globalMaxWidth && doc != null) {
-						ctxs.add(context);
-						context = newContext(doc, context, child);
-						currentWidth = MARGIN;
-						currentHeight = startHeight;
-					}
-					currentHeight = startHeight;
-					maxWidth = childWidth;
-					float resizeInPercentage = currentHeight / childHeight;
-					float llx = currentWidth;
-					float urx = currentWidth + (childWidth * resizeInPercentage);
-					float lly = MARGIN;
-					float ury = currentHeight;
-					child.setBounds(new Rectangle(llx, lly, urx, ury));
-					if (currentHeight - childHeight < MARGIN) {
-						currentWidth += maxWidth;
-					}
-				} else {
-					float llx = currentWidth;
-					float urx = currentWidth + childWidth;
-					float lly = currentHeight;
-					float ury = currentHeight + childHeight;
-					child.setBounds(new Rectangle(llx, lly, urx, ury));
-				}
-			}
-		}
-		ctxs.add(context);
-		return ctxs;
-	}
-
 }

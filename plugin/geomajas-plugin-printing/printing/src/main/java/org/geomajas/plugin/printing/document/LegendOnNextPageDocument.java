@@ -5,15 +5,17 @@ import java.util.List;
 import org.geomajas.plugin.printing.component.LegendComponent;
 import org.geomajas.plugin.printing.component.PageComponent;
 import org.geomajas.plugin.printing.component.PdfContext;
+import org.geomajas.plugin.printing.component.PrintComponent;
 import org.geomajas.plugin.printing.component.impl.DynamicLegendComponentImpl;
 
 import com.lowagie.text.BadElementException;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
+import com.lowagie.text.Image;
 import com.lowagie.text.pdf.PdfWriter;
 
 /**
- * Encapulates a two page document with the map on the first an legend on the second page.
+ * Encapsulates a two page document with the map on the first an legend on the second page.
  * 
  * @author <a href="mailto:goltz@lat-lon.de">Lyn Goltz</a>
  * @author last edited by: $Author: lyn $
@@ -22,9 +24,9 @@ import com.lowagie.text.pdf.PdfWriter;
  */
 public class LegendOnNextPageDocument extends AbstractItextDocument {
 
-	private LegendComponent legendComponent;
+	private LegendComponent<?> legendComponent;
 
-	public LegendOnNextPageDocument(PageComponent page, LegendComponent legendComponent) {
+	public LegendOnNextPageDocument(PageComponent page, LegendComponent<?> legendComponent) {
 		super(page);
 		this.legendComponent = legendComponent;
 	}
@@ -32,24 +34,42 @@ public class LegendOnNextPageDocument extends AbstractItextDocument {
 	protected void renderContent(Document document, PdfWriter writer, PdfContext context) throws DocumentException,
 			BadElementException {
 		page.layout(context);
-		// finally render
 		page.render(context);
 		document.add(context.getImage());
-		document.newPage();
-		// writer = createWriter(document);
-		context = createContext(writer);
 		if (legendComponent instanceof DynamicLegendComponentImpl) {
-			DynamicLegendComponentImpl dynamicLegendComponent = (DynamicLegendComponentImpl) legendComponent;
-			List<PdfContext> layouts = dynamicLegendComponent.layout(document, context);
-			for (PdfContext ctx : layouts) {
-				legendComponent.render(ctx);
-				document.newPage();
-				document.add(ctx.getImage());
-			}
+			renderLegendOnMultiplePages(document, writer);
 		} else {
+			document.newPage();
+			context = createContext(writer);
 			legendComponent.layout(context);
 			legendComponent.render(context);
 			document.add(context.getImage());
 		}
 	}
+
+	private void renderLegendOnMultiplePages(Document document, PdfWriter writer) throws DocumentException,
+			BadElementException {
+		DynamicLegendComponentImpl dynamicLegendComponent = (DynamicLegendComponentImpl) legendComponent;
+		legendComponent.setBounds(page.getBounds());
+		PdfContext context = createContext(writer);
+		List<List<PrintComponent<?>>> pages = dynamicLegendComponent.layoutOnMultiplePages(createContext(writer));
+		for (List<PrintComponent<?>> page : pages) {
+			document.newPage();
+			context = createContext(writer);
+			page.add(dynamicLegendComponent.getTitleLabel());
+			render(context, page);
+			Image image = context.getImage();
+			document.add(image);
+		}
+	}
+
+	private void render(PdfContext context, List<PrintComponent<?>> page) {
+		for (PrintComponent<?> child : page) {
+			context.saveOrigin();
+			context.setOrigin(child.getBounds().getLeft(), child.getBounds().getBottom());
+			child.render(context);
+			context.restoreOrigin();
+		}
+	}
+
 }
