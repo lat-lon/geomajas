@@ -23,7 +23,7 @@ import org.springframework.web.servlet.view.AbstractView;
 
 /**
  * View to produce PDF documents.
- *
+ * 
  * @author Jan De Moerloose
  */
 @Component(PrintingController.DOCUMENT_VIEW_NAME)
@@ -36,11 +36,10 @@ public class DocumentView extends AbstractView {
 		String download = (String) model.get(PrintingController.DOWNLOAD_KEY);
 		String fileName = (String) model.get(PrintingController.FILENAME_KEY);
 		Format format = (Format) model.get(PrintingController.FORMAT_KEY);
-				
+
 		// Write content type and also length (determined via byte array).
 		response.setContentType(format.getMimetype());
-		response.setContentLength(doc.getContentLength());
-		
+
 		// check download method
 		if (download.equals(PrintingController.DOWNLOAD_METHOD_SAVE)) {
 			response.setHeader("Content-Disposition", " attachment; filename=\"" + fileName + "\"");
@@ -54,6 +53,8 @@ public class DocumentView extends AbstractView {
 		ServletOutputStream out = response.getOutputStream();
 		doc.render(out, format);
 		out.flush();
+
+		response.setContentLength(doc.getContentLength());
 	}
 
 }
