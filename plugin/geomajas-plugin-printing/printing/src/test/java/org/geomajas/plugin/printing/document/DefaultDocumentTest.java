@@ -10,9 +10,10 @@
  */
 package org.geomajas.plugin.printing.document;
 
+import static org.geomajas.plugin.printing.document.Document.Format.PDF;
+
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.geomajas.configuration.FeatureStyleInfo;
@@ -25,7 +26,8 @@ import org.geomajas.plugin.printing.component.dto.LabelComponentInfo;
 import org.geomajas.plugin.printing.component.dto.LegendComponentInfo;
 import org.geomajas.plugin.printing.component.dto.LegendIconComponentInfo;
 import org.geomajas.plugin.printing.component.dto.LegendItemComponentInfo;
-import org.geomajas.plugin.printing.component.dto.PrintComponentInfo;
+import org.geomajas.plugin.printing.component.impl.DynamicLegendComponentImpl;
+import org.geomajas.plugin.printing.component.impl.LegendViaUrlComponentImpl;
 import org.geomajas.plugin.printing.component.impl.PageComponentImpl;
 import org.geomajas.plugin.printing.component.service.PrintConfigurationService;
 import org.geomajas.plugin.printing.component.service.PrintDtoConverterService;
@@ -36,6 +38,7 @@ import org.geomajas.plugin.printing.document.Document.Format;
 import org.geomajas.plugin.printing.service.PrintService;
 import org.geomajas.security.SecurityManager;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -201,7 +204,7 @@ public class DefaultDocumentTest {
 				legendLabel.setBackgroundColor("0xFFFFFF");
 				legendLabel.setBorderColor("black");
 				legendLabel.setFontColor("0x000000");
-				legendLabel.setText(layerInfo.getLabel());
+				legendLabel.setText(layerInfo.getLabel() != null ? layerInfo.getLabel() : "");
 				legendLabel.setTextOnly(true);
 				item.addChild(icon);
 				item.addChild(legendLabel);
@@ -214,13 +217,33 @@ public class DefaultDocumentTest {
 		page.addComponent(comp);
 		PrintTemplate template = new PrintTemplate();
 		template.setPage(page);
-		LegendOnNextPageDocument pdfDoc  = new LegendOnNextPageDocument(page, comp);
-		FileOutputStream fo = new FileOutputStream(File.createTempFile("legend", ".pdf" ));
+		LegendOnNextPageDocument pdfDoc = new LegendOnNextPageDocument(page, comp);
+		FileOutputStream fo = new FileOutputStream(File.createTempFile("legend", ".pdf"));
 		pdfDoc.render(fo, Format.PDF);
 		fo.flush();
 		fo.close();
 	}
-	
+
+	@Ignore("A legend URL is required")
+	@Test
+	public void testRenderDynamicLegendOnNewPage() throws Exception {
+		DynamicLegendComponentImpl legendComponent = new DynamicLegendComponentImpl();
+		for (int i = 0; i < 5; i++) {
+			LegendViaUrlComponentImpl legendViaUrlComponentImpl = new LegendViaUrlComponentImpl();
+			legendViaUrlComponentImpl.setLegendImageServiceUrl("TODO");
+			legendComponent.addComponent(legendViaUrlComponentImpl);
+		}
+		PageComponentImpl page = new PageComponentImpl();
+		page.setSize("A4", false);
+		page.addComponent(legendComponent);
+		LegendOnNextPageDocument legendOnNextPageDoc = new LegendOnNextPageDocument(page, legendComponent);
+		legendOnNextPageDoc.layout(PDF);
+		FileOutputStream fo = new FileOutputStream(File.createTempFile("dynamic_legend", ".pdf"));
+		legendOnNextPageDoc.render(fo, PDF);
+		fo.flush();
+		fo.close();
+	}
+
 	private DefaultConfigurationVisitor getDefaultVisitor(double x, double y, float widthInUnits) {
 		// 842, 595
 		DefaultConfigurationVisitor config = new DefaultConfigurationVisitor();
