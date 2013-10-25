@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<example id="GwtModule">
+<title>GWT module include Featureinfo</title>
+<programlisting language="xml"><![CDATA[<module rename-to="FeatureinfoExample">
+    <inherits name="com.smartgwt.tools.SmartGwtTools"/>
+    <inherits name="org.geomajas.gwt.GeomajasClient"/>
+    <inherits name="com.smartclient.theme.enterprise.Enterprise"/>
+
+
+
+    <entry-point class="org.geomajas.widget.featureinfo.gwt.example.client.FeatureinfoExampleStandalone"/>
+</module>]]>
+</programlisting>
+</example>

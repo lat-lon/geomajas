@@ -15,9 +15,9 @@ import java.util.List;
 
 import org.geomajas.configuration.FontStyleInfo;
 import org.geomajas.configuration.client.ClientLayerInfo;
-import org.geomajas.configuration.client.ClientMapInfo;
 import org.geomajas.configuration.client.ClientRasterLayerInfo;
 import org.geomajas.configuration.client.ClientVectorLayerInfo;
+import org.geomajas.geometry.Bbox;
 import org.geomajas.geometry.Coordinate;
 import org.geomajas.gwt.client.map.MapModel;
 import org.geomajas.gwt.client.map.MapView;
@@ -27,14 +27,16 @@ import org.geomajas.gwt.client.map.layer.RasterLayer;
 import org.geomajas.gwt.client.map.layer.VectorLayer;
 import org.geomajas.plugin.printing.client.util.PrintingLayout;
 import org.geomajas.plugin.printing.command.dto.PrintTemplateInfo;
+import org.geomajas.plugin.printing.component.dto.AbstractLegendComponentInfo;
 import org.geomajas.plugin.printing.component.dto.ComboRasterLayerComponentInfo;
+import org.geomajas.plugin.printing.component.dto.DynamicLegendComponentInfo;
 import org.geomajas.plugin.printing.component.dto.ImageComponentInfo;
 import org.geomajas.plugin.printing.component.dto.LabelComponentInfo;
 import org.geomajas.plugin.printing.component.dto.LayoutConstraintInfo;
-import org.geomajas.plugin.printing.component.dto.LegendComponentInfo;
 import org.geomajas.plugin.printing.component.dto.LegendGraphicComponentInfo;
 import org.geomajas.plugin.printing.component.dto.LegendIconComponentInfo;
 import org.geomajas.plugin.printing.component.dto.LegendItemComponentInfo;
+import org.geomajas.plugin.printing.component.dto.LegendViaUrlComponentInfo;
 import org.geomajas.plugin.printing.component.dto.MapComponentInfo;
 import org.geomajas.plugin.printing.component.dto.PageComponentInfo;
 import org.geomajas.plugin.printing.component.dto.PrintComponentInfo;
@@ -71,6 +73,8 @@ public class DefaultTemplateBuilder extends AbstractTemplateBuilder {
 	protected MapModel mapModel;
 
 	protected String applicationId;
+
+	private Boolean isLegendOnNewPage;
 
 	@Override
 	public PrintTemplateInfo buildTemplate() {
@@ -159,8 +163,15 @@ public class DefaultTemplateBuilder extends AbstractTemplateBuilder {
 	}
 
 	@Override
-	protected LegendComponentInfo buildLegend() {
-		LegendComponentInfo legend = super.buildLegend();
+	protected AbstractLegendComponentInfo buildLegend() {
+		AbstractLegendComponentInfo legend;
+		if (isLegendOnNewPage) {
+			legend = new DynamicLegendComponentInfo();
+			legend.setBounds(new Bbox(0d, 0d, pageWidth, pageHeight));
+			legend.getLayoutConstraint().setWidth((float) pageWidth);
+			legend.getLayoutConstraint().setHeight((float) pageHeight);
+		} else
+			legend = super.buildLegend();
 		FontStyleInfo style = new FontStyleInfo();
 		style.setFamily(PrintingLayout.templateDefaultFontFamily);
 		style.setStyle(PrintingLayout.templateDefaultFontStyle);
@@ -194,19 +205,35 @@ public class DefaultTemplateBuilder extends AbstractTemplateBuilder {
 			} else if (layer instanceof RasterLayer && layer.isShowing()) {
 				RasterLayer rasterLayer = (RasterLayer) layer;
 				ClientRasterLayerInfo layerInfo = rasterLayer.getLayerInfo();
-				LegendItemComponentInfo item = new LegendItemComponentInfo();
-				LegendIconComponentInfo icon = new LegendIconComponentInfo();
-				icon.setLabel(layerInfo.getLabel());
-				icon.setLayerType(layerInfo.getLayerType());
-				item.addChild(icon);
-				item.addChild(getLegendLabel(legend, layerInfo.getLabel()));
-				legend.addChild(item);
+
+				if (isLegendOnNewPage) {
+					createAndAddLegendViaUrlComponentInfo(rasterLayer, legend);
+				} else {
+					LegendItemComponentInfo legendItem = new LegendItemComponentInfo();
+					createAndAddLegendIconComponentInfo(rasterLayer, legendItem);
+					legendItem.addChild(getLegendLabel(legend, layerInfo.getLabel()));
+					legend.addChild(legendItem);
+				}
 			}
 		}
 		return legend;
 	}
 
-	private LabelComponentInfo getLegendLabel(LegendComponentInfo legend, String text) {
+	private void createAndAddLegendViaUrlComponentInfo(RasterLayer rasterLayer, PrintComponentInfo parent) {
+		LegendViaUrlComponentInfo icon = new LegendViaUrlComponentInfo();
+		String layerId = rasterLayer.getServerLayerId();
+		icon.setLegendImageServiceUrl("d/legendgraphic/" + layerId + ".png");
+		parent.addChild(icon);
+	}
+
+	private void createAndAddLegendIconComponentInfo(RasterLayer rasterLayer, LegendItemComponentInfo parent) {
+		LegendIconComponentInfo icon = new LegendIconComponentInfo();
+		icon.setLayerType(rasterLayer.getLayerInfo().getLayerType());
+		icon.setLabel(rasterLayer.getLabel());
+		parent.addChild(icon);
+	}
+
+	private LabelComponentInfo getLegendLabel(AbstractLegendComponentInfo legend, String text) {
 		LabelComponentInfo legendLabel = new LabelComponentInfo();
 		legendLabel.setBackgroundColor(PrintingLayout.templateDefaultBackgroundColor);
 		legendLabel.setBorderColor(PrintingLayout.templateDefaultBorderColor);
@@ -319,6 +346,10 @@ public class DefaultTemplateBuilder extends AbstractTemplateBuilder {
 
 	public void setApplicationId(String applicationId) {
 		this.applicationId = applicationId;
+	}
+
+	public void setLegendOnNewPage(Boolean isLegendOnNewPage) {
+		this.isLegendOnNewPage = isLegendOnNewPage;
 	}
 
 }

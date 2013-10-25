@@ -13,6 +13,7 @@ package org.geomajas.plugin.printing.client.template;
 import org.geomajas.configuration.FontStyleInfo;
 import org.geomajas.plugin.printing.client.util.PrintingLayout;
 import org.geomajas.plugin.printing.command.dto.PrintTemplateInfo;
+import org.geomajas.plugin.printing.component.dto.AbstractLegendComponentInfo;
 import org.geomajas.plugin.printing.component.dto.ImageComponentInfo;
 import org.geomajas.plugin.printing.component.dto.LabelComponentInfo;
 import org.geomajas.plugin.printing.component.dto.LayoutConstraintInfo;
@@ -60,7 +61,7 @@ public abstract class AbstractTemplateBuilder {
 		return new ImageComponentInfo();
 	}
 
-	protected LegendComponentInfo buildLegend() {
+	protected AbstractLegendComponentInfo buildLegend() {
 		return new LegendComponentInfo();
 	}
 

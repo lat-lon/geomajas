@@ -80,6 +80,8 @@ public class PrintPreferencesCanvas extends Canvas {
 
 	private RadioGroupItem orientationGroup;
 
+	private CheckboxItem legendOnNextPageCheckbox;
+	
 	private SliderItem rasterDpiSlider;
 
 	private CheckboxItem arrowCheckbox;
@@ -127,6 +129,10 @@ public class PrintPreferencesCanvas extends Canvas {
 		orientationGroup.setValueMap(orientations);
 		orientationGroup.setVertical(false);
 		orientationGroup.setValue(LANDSCAPE);
+		// one or two pages?
+		legendOnNextPageCheckbox = new CheckboxItem();
+		legendOnNextPageCheckbox.setValue(false);
+		legendOnNextPageCheckbox.setTitle(MESSAGES.printPrefsLegendOnNextPage());
 		// raster dpi slider
 		rasterDpiSlider = new SliderItem();
 		rasterDpiSlider.setTitle(MESSAGES.printPrefsRasterDPI());
@@ -167,7 +173,7 @@ public class PrintPreferencesCanvas extends Canvas {
 		downloadTypeGroup.setVertical(false);
 		downloadTypeGroup.setValue(SAVE);
 
-		form.setFields(titleItem, sizeItem, orientationGroup, arrowCheckbox, scaleBarCheckbox, rasterDpiSlider,
+		form.setFields(titleItem, sizeItem, orientationGroup, legendOnNextPageCheckbox, arrowCheckbox, scaleBarCheckbox, rasterDpiSlider,
 				fileNameItem, downloadTypeGroup, statusText);
 		mainPreferences.setPane(form);
 		tabs.setTabs(mainPreferences);
@@ -219,8 +225,10 @@ public class PrintPreferencesCanvas extends Canvas {
 		builder.setWithArrow((Boolean) arrowCheckbox.getValue());
 		builder.setWithScaleBar((Boolean) scaleBarCheckbox.getValue());
 		builder.setRasterDpi((Integer) rasterDpiSlider.getValue());
+		builder.setLegendOnNewPage((Boolean)legendOnNextPageCheckbox.getValue());
 		PrintTemplateInfo template = builder.buildTemplate();
 		request.setTemplate(template);
+		request.setLegendOnNewPage((Boolean)legendOnNextPageCheckbox.getValue());
 		final GwtCommand command = new GwtCommand(PrintGetTemplateRequest.COMMAND);
 		command.setCommandRequest(request);
 		GwtCommandDispatcher.getInstance().execute(command, new AbstractCommandCallback<PrintGetTemplateResponse>() {

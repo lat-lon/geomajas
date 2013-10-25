@@ -606,4 +606,9 @@ public class PdfContext {
 		return graphics;
 	}
 
+	
+	public PdfWriter getWriter() {
+		return writer;
+	}
+
 }
