@@ -25,6 +25,8 @@ public class LegendViaUrlComponentInfo extends PrintComponentInfo {
 
 	private String clientLayerId;
 
+	private String serverLayerId;
+
 	private String legendImageServiceUrl;
 
 	/**
@@ -44,6 +46,25 @@ public class LegendViaUrlComponentInfo extends PrintComponentInfo {
 	 */
 	public void setClientLayerId(String clientLayerId) {
 		this.clientLayerId = clientLayerId;
+	}
+
+	/**
+	 * Get server layer id.
+	 * 
+	 * @return server layer id
+	 */
+	public String getServerLayerId() {
+		return serverLayerId;
+	}
+
+	/**
+	 * Set the server layer id.
+	 * 
+	 * @param serverLayerId
+	 *            id
+	 */
+	public void setServerLayerId(String serverLayerId) {
+		this.serverLayerId = serverLayerId;
 	}
 
 	/**

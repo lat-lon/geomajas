@@ -222,6 +222,7 @@ public class DefaultTemplateBuilder extends AbstractTemplateBuilder {
 	private void createAndAddLegendViaUrlComponentInfo(RasterLayer rasterLayer, PrintComponentInfo parent) {
 		LegendViaUrlComponentInfo icon = new LegendViaUrlComponentInfo();
 		String layerId = rasterLayer.getServerLayerId();
+		icon.setServerLayerId(layerId);
 		icon.setLegendImageServiceUrl("d/legendgraphic/" + layerId + ".png");
 		parent.addChild(icon);
 	}

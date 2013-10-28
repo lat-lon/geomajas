@@ -88,6 +88,8 @@ LegendViaUrlComponent {
 	private DispatcherUrlService dispatcherUrlService;
 
 	private String layerId;
+	
+	private String serverLayerId;
 
 	private URL legendImageServiceUrl;
 
@@ -243,6 +245,14 @@ LegendViaUrlComponent {
 	public void setClientLayerId(String layerId) {
 		this.layerId = layerId; // purely informative
 	}
+	
+	public String getServerLayerId() {
+		return serverLayerId;  // purely informative
+	}
+
+	public void setServerLayerId(String serverLayerId) {
+		this.serverLayerId = serverLayerId; // purely informative
+	}
 
 	@Override
 	public String getLegendImageServiceUrl() {
@@ -306,6 +316,7 @@ LegendViaUrlComponent {
 		
 		setLegendImageServiceUrl(info.getLegendImageServiceUrl());
 		setClientLayerId(info.getClientLayerId());
+		setServerLayerId(info.getServerLayerId());
 	}
 
 	private boolean hasInVisibleResponse() {
