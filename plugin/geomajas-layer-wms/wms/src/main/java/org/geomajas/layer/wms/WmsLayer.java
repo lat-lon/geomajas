@@ -648,8 +648,10 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 
 	private String buildRequestUrlFromEnvelope(Envelope env) {
 		StringBuilder requestUrlBuilder = new StringBuilder(wfsRequestUrlForBboxFeatureHits);
-		requestUrlBuilder.append("&bbox=").append(env.getMinX()).append(",").append(env.getMinY()).append(",")
-				.append(env.getMaxX()).append(",").append(env.getMaxY()).append(",").append("EPSG:25833");
+		requestUrlBuilder.append("&bbox=");
+		requestUrlBuilder.append(env.getMinX()).append(",").append(env.getMinY()).append(",");
+		requestUrlBuilder.append(env.getMaxX()).append(",").append(env.getMaxY()).append(",");
+		requestUrlBuilder.append("EPSG:25833");
 		return requestUrlBuilder.toString();
 	}
 	
