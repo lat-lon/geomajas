@@ -170,6 +170,9 @@ public class DefaultTemplateBuilder extends AbstractTemplateBuilder {
 			legend.setBounds(new Bbox(0d, 0d, pageWidth, pageHeight));
 			legend.getLayoutConstraint().setWidth((float) pageWidth);
 			legend.getLayoutConstraint().setHeight((float) pageHeight);
+			org.geomajas.gwt.client.spatial.Bbox bbox = mapModel.getMapView().getBounds();
+			Bbox envelope = new Bbox(bbox.getX(), bbox.getY(), bbox.getWidth(), bbox.getHeight());
+			legend.setViewEnvelope(envelope);
 		} else
 			legend = super.buildLegend();
 		FontStyleInfo style = new FontStyleInfo();
