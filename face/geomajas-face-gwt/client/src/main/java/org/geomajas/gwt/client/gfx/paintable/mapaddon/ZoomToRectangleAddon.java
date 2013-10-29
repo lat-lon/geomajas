@@ -35,8 +35,6 @@ public class ZoomToRectangleAddon extends MapAddon {
 
 	private MapWidget map;
 
-	private boolean firstTime = true;
-
 	public ZoomToRectangleAddon(String id, MapWidget map) {
 		super(id, 20, 20);
 		this.map = map;
@@ -56,16 +54,12 @@ public class ZoomToRectangleAddon extends MapAddon {
 		map.getVectorContext().drawImage(this, "zoom-rect-img",
 				Geomajas.getIsomorphicDir() + "geomajas/mapaddon/zoom_rectangle.png",
 				new Bbox(c.getX(), c.getY(), 20, 20), new PictureStyle(1));
-
-		if (firstTime) {
-			map.getVectorContext().setController(this, "zoom-rect-img", new ActivateRectangleController(map),
-					Event.MOUSEEVENTS);
-			map.getVectorContext().setCursor(this, "zoom-rect-img", Cursor.POINTER.getValue());
-		}
-		firstTime = false;
 	}
 
 	public void onDraw() {
+		map.getVectorContext().setController(this, "zoom-rect-img", new ActivateRectangleController(map),
+				Event.MOUSEEVENTS);
+		map.getVectorContext().setCursor(this, "zoom-rect-img", Cursor.POINTER.getValue());
 	}
 
 	public void onRemove() {
