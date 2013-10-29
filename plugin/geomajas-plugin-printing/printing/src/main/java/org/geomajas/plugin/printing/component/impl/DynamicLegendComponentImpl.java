@@ -75,55 +75,63 @@ public class DynamicLegendComponentImpl extends AbstractLegendComponentImpl<Dyna
 		for (Entry<PrintComponent<?>, Float> childEntry : retrieveChildsSortedByHeight()) {
 			PrintComponent<?> child = childEntry.getKey();
 			if (child != titleLabel) {
-				if (child instanceof LegendViaUrlComponentImpl) {
-					String serverLayerId = ((LegendViaUrlComponentImpl) child).getServerLayerId();
-					Layer<?> layer = configurationService.getLayer(serverLayerId);
-					if (layer instanceof WmsLayer && child instanceof AbstractLegendComponentImpl<?>) {
-						WmsLayer wmsLayer = (WmsLayer) layer;
-						Bbox bbox = ((AbstractLegendComponentImpl<?>) child).getViewBbox();
-						Envelope env = new Envelope(bbox.getX(), bbox.getX() + bbox.getWidth(), bbox.getY(),
-								bbox.getY() + bbox.getHeight());
-						boolean isInEnvelope = wmsLayer.isAtLeastOneFeatureInEnvelope(env);
-						if (isInEnvelope) {
-							child.layout(context);
-							Rectangle childBounds = child.getBounds();
-							float childWidth = childBounds.getWidth();
-							float childHeight = childBounds.getHeight();
+				boolean isInEnvelope = checkIfFeatureIsInEnvelope(child);
+				if (isInEnvelope) {
+					child.layout(context);
+					Rectangle childBounds = child.getBounds();
+					float childWidth = childBounds.getWidth();
+					float childHeight = childBounds.getHeight();
 
-							currentHeight -= childHeight;
-							if (isFirstInColumnAndDoesNotFitInColumn(startHeight, currentHeight, childHeight)) {
-								float scaleFactor = calculateScaleFactor(availableHeight, childHeight);
-								if (maxPageWidthIsAchieved(width, currentWidth, childWidth * scaleFactor)) {
-									currentWidth = MARGIN;
-									allPageChilds.add(currentPageChilds);
-									currentPageChilds = new ArrayList<PrintComponent<?>>();
-								}
-								currentHeight = startHeight;
-								setNewBounds(child, currentWidth, currentHeight, childWidth, childHeight, scaleFactor);
-								currentWidth += (childWidth * scaleFactor);
-								currentColumnWidth = 0;
-							} else if (doesNotFitInColumn(currentHeight)) {
-								currentWidth += currentColumnWidth;
-								if (maxPageWidthIsAchieved(width, currentWidth, childWidth)) {
-									currentWidth = MARGIN;
-									allPageChilds.add(currentPageChilds);
-									currentPageChilds = new ArrayList<PrintComponent<?>>();
-								}
-								currentHeight = startHeight - childHeight;
-								currentColumnWidth = childWidth;
-								setNewBounds(child, currentWidth, currentHeight, childWidth, childHeight);
-							} else {
-								currentColumnWidth = max(currentColumnWidth, childWidth);
-								setNewBounds(child, currentWidth, currentHeight, childWidth, childHeight);
-							}
-							currentPageChilds.add(child);
+					currentHeight -= childHeight;
+					if (isFirstInColumnAndDoesNotFitInColumn(startHeight, currentHeight, childHeight)) {
+						float scaleFactor = calculateScaleFactor(availableHeight, childHeight);
+						if (maxPageWidthIsAchieved(width, currentWidth, childWidth * scaleFactor)) {
+							currentWidth = MARGIN;
+							allPageChilds.add(currentPageChilds);
+							currentPageChilds = new ArrayList<PrintComponent<?>>();
 						}
+						currentHeight = startHeight;
+						setNewBounds(child, currentWidth, currentHeight, childWidth, childHeight, scaleFactor);
+						currentWidth += (childWidth * scaleFactor);
+						currentColumnWidth = 0;
+					} else if (doesNotFitInColumn(currentHeight)) {
+						currentWidth += currentColumnWidth;
+						if (maxPageWidthIsAchieved(width, currentWidth, childWidth)) {
+							currentWidth = MARGIN;
+							allPageChilds.add(currentPageChilds);
+							currentPageChilds = new ArrayList<PrintComponent<?>>();
+						}
+						currentHeight = startHeight - childHeight;
+						currentColumnWidth = childWidth;
+						setNewBounds(child, currentWidth, currentHeight, childWidth, childHeight);
+					} else {
+						currentColumnWidth = max(currentColumnWidth, childWidth);
+						setNewBounds(child, currentWidth, currentHeight, childWidth, childHeight);
 					}
+					currentPageChilds.add(child);
 				}
 			}
 		}
 		allPageChilds.add(currentPageChilds);
 		return allPageChilds;
+	}
+
+	private boolean checkIfFeatureIsInEnvelope(PrintComponent<?> child) {
+		boolean isInEnvelope = true;
+		if (child instanceof LegendViaUrlComponentImpl) {
+			String serverLayerId = ((LegendViaUrlComponentImpl) child).getServerLayerId();
+			Layer<?> layer = configurationService.getLayer(serverLayerId);
+			if (child instanceof AbstractLegendComponentImpl<?> && layer instanceof WmsLayer) {
+				Envelope envelope = generateEnvelope(child);
+				isInEnvelope = ((WmsLayer) layer).isAtLeastOneFeatureInEnvelope(envelope);
+			}
+		}
+		return isInEnvelope;
+	}
+
+	private Envelope generateEnvelope(PrintComponent<?> child) {
+		Bbox bbox = ((AbstractLegendComponentImpl<?>) child).getViewBbox();
+		return new Envelope(bbox.getX(), bbox.getX() + bbox.getWidth(), bbox.getY(), bbox.getY() + bbox.getHeight());
 	}
 
 	private void setNewBounds(PrintComponent<?> child, float currentWidth, float currentHeight, float childWidth,
