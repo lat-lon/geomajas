@@ -7,6 +7,7 @@ import java.util.List;
 import org.geomajas.configuration.FeatureStyleInfo;
 import org.geomajas.configuration.client.ClientRasterLayerInfo;
 import org.geomajas.configuration.client.ClientVectorLayerInfo;
+import org.geomajas.geometry.Bbox;
 import org.geomajas.plugin.printing.component.LayoutConstraint;
 import org.geomajas.plugin.printing.component.LegendComponent;
 import org.geomajas.plugin.printing.component.MapComponent;
@@ -45,6 +46,8 @@ public abstract class AbstractLegendComponentImpl<T extends AbstractLegendCompon
 	protected PrintDtoConverterService converterService;
 
 	protected LabelComponentImpl titleLabel;
+
+	protected Bbox viewBbox;
 
 	public AbstractLegendComponentImpl() {
 		this("Legend");
@@ -97,6 +100,14 @@ public abstract class AbstractLegendComponentImpl<T extends AbstractLegendCompon
 
 	public void setTitle(String title) {
 		this.title = title;
+	}
+
+	public Bbox getViewBbox() {
+		return viewBbox;
+	}
+
+	public void setViewBbox(Bbox viewBbox) {
+		this.viewBbox = viewBbox;
 	}
 
 	@Override
@@ -185,6 +196,7 @@ public abstract class AbstractLegendComponentImpl<T extends AbstractLegendCompon
 		setMapId(legendInfo.getMapId());
 		setFont(converterService.toInternal(legendInfo.getFont()));
 		setTitle(legendInfo.getTitle());
+		setViewBbox(legendInfo.getViewEnvelope());
 	}
 
 }

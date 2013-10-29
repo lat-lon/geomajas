@@ -11,7 +11,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.geomajas.geometry.Bbox;
 import org.geomajas.layer.Layer;
+import org.geomajas.layer.wms.WmsLayer;
 import org.geomajas.plugin.printing.component.PdfContext;
 import org.geomajas.plugin.printing.component.PrintComponent;
 import org.geomajas.plugin.printing.component.dto.DynamicLegendComponentInfo;
@@ -21,6 +23,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import com.lowagie.text.Rectangle;
+import com.vividsolutions.jts.geom.Envelope;
 
 @Component()
 @Scope(value = "prototype")
@@ -75,44 +78,48 @@ public class DynamicLegendComponentImpl extends AbstractLegendComponentImpl<Dyna
 				if (child instanceof LegendViaUrlComponentImpl) {
 					String serverLayerId = ((LegendViaUrlComponentImpl) child).getServerLayerId();
 					Layer<?> layer = configurationService.getLayer(serverLayerId);
-					// if (layer instanceof WmsLayer) {
-					// WmsLayer wmsLayer = (WmsLayer) layer;
-					// TODO: Further usage of wmsLayer still has to be implemented.
-					// It can be used to check if at least one feature is in the envelope.
-					// }
-				}
-				child.layout(context);
-				Rectangle childBounds = child.getBounds();
-				float childWidth = childBounds.getWidth();
-				float childHeight = childBounds.getHeight();
+					if (layer instanceof WmsLayer && child instanceof AbstractLegendComponentImpl<?>) {
+						WmsLayer wmsLayer = (WmsLayer) layer;
+						Bbox bbox = ((AbstractLegendComponentImpl<?>) child).getViewBbox();
+						Envelope env = new Envelope(bbox.getX(), bbox.getX() + bbox.getWidth(), bbox.getY(),
+								bbox.getY() + bbox.getHeight());
+						boolean isInEnvelope = wmsLayer.isAtLeastOneFeatureInEnvelope(env);
+						if (isInEnvelope) {
+							child.layout(context);
+							Rectangle childBounds = child.getBounds();
+							float childWidth = childBounds.getWidth();
+							float childHeight = childBounds.getHeight();
 
-				currentHeight -= childHeight;
-				if (isFirstInColumnAndDoesNotFitInColumn(startHeight, currentHeight, childHeight)) {
-					float scaleFactor = calculateScaleFactor(availableHeight, childHeight);
-					if (maxPageWidthIsAchieved(width, currentWidth, childWidth * scaleFactor)) {
-						currentWidth = MARGIN;
-						allPageChilds.add(currentPageChilds);
-						currentPageChilds = new ArrayList<PrintComponent<?>>();
+							currentHeight -= childHeight;
+							if (isFirstInColumnAndDoesNotFitInColumn(startHeight, currentHeight, childHeight)) {
+								float scaleFactor = calculateScaleFactor(availableHeight, childHeight);
+								if (maxPageWidthIsAchieved(width, currentWidth, childWidth * scaleFactor)) {
+									currentWidth = MARGIN;
+									allPageChilds.add(currentPageChilds);
+									currentPageChilds = new ArrayList<PrintComponent<?>>();
+								}
+								currentHeight = startHeight;
+								setNewBounds(child, currentWidth, currentHeight, childWidth, childHeight, scaleFactor);
+								currentWidth += (childWidth * scaleFactor);
+								currentColumnWidth = 0;
+							} else if (doesNotFitInColumn(currentHeight)) {
+								currentWidth += currentColumnWidth;
+								if (maxPageWidthIsAchieved(width, currentWidth, childWidth)) {
+									currentWidth = MARGIN;
+									allPageChilds.add(currentPageChilds);
+									currentPageChilds = new ArrayList<PrintComponent<?>>();
+								}
+								currentHeight = startHeight - childHeight;
+								currentColumnWidth = childWidth;
+								setNewBounds(child, currentWidth, currentHeight, childWidth, childHeight);
+							} else {
+								currentColumnWidth = max(currentColumnWidth, childWidth);
+								setNewBounds(child, currentWidth, currentHeight, childWidth, childHeight);
+							}
+							currentPageChilds.add(child);
+						}
 					}
-					currentHeight = startHeight;
-					setNewBounds(child, currentWidth, currentHeight, childWidth, childHeight, scaleFactor);
-					currentWidth += (childWidth * scaleFactor);
-					currentColumnWidth = 0;
-				} else if (doesNotFitInColumn(currentHeight)) {
-					currentWidth += currentColumnWidth;
-					if (maxPageWidthIsAchieved(width, currentWidth, childWidth)) {
-						currentWidth = MARGIN;
-						allPageChilds.add(currentPageChilds);
-						currentPageChilds = new ArrayList<PrintComponent<?>>();
-					}
-					currentHeight = startHeight - childHeight;
-					currentColumnWidth = childWidth;
-					setNewBounds(child, currentWidth, currentHeight, childWidth, childHeight);
-				} else {
-					currentColumnWidth = max(currentColumnWidth, childWidth);
-					setNewBounds(child, currentWidth, currentHeight, childWidth, childHeight);
 				}
-				currentPageChilds.add(child);
 			}
 		}
 		allPageChilds.add(currentPageChilds);

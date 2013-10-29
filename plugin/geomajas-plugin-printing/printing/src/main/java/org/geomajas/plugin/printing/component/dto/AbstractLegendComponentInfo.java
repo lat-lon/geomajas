@@ -1,11 +1,12 @@
 package org.geomajas.plugin.printing.component.dto;
 
 import org.geomajas.configuration.FontStyleInfo;
+import org.geomajas.geometry.Bbox;
 
 public abstract class AbstractLegendComponentInfo extends PrintComponentInfo {
 
 	private static final long serialVersionUID = 200L;
-	
+
 	/**
 	 * Default font family for text in the legend component. Can be overridden by specifying the font via setFont()
 	 * 
@@ -34,6 +35,8 @@ public abstract class AbstractLegendComponentInfo extends PrintComponentInfo {
 	private String mapId;
 
 	private FontStyleInfo font;
+
+	private Bbox viewEnvelope;
 
 	/**
 	 * Title or Heading text of the legend
@@ -122,5 +125,24 @@ public abstract class AbstractLegendComponentInfo extends PrintComponentInfo {
 	 */
 	public void setTitle(String title) {
 		this.title = title;
+	}
+
+	/**
+	 * Get view envelope.
+	 * 
+	 * @return view envelope
+	 */
+	public Bbox getViewEnvelope() {
+		return viewEnvelope;
+	}
+
+	/**
+	 * Set view envelope.
+	 * 
+	 * @param viewEnvelope
+	 *            view envelope
+	 */
+	public void setViewEnvelope(Bbox viewEnvelope) {
+		this.viewEnvelope = viewEnvelope;
 	}
 }
