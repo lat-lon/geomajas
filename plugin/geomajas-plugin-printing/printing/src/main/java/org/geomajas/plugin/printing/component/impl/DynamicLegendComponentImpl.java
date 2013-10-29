@@ -12,7 +12,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.geomajas.layer.Layer;
-import org.geomajas.layer.wms.WmsLayer;
 import org.geomajas.plugin.printing.component.PdfContext;
 import org.geomajas.plugin.printing.component.PrintComponent;
 import org.geomajas.plugin.printing.component.dto.DynamicLegendComponentInfo;
@@ -76,11 +75,11 @@ public class DynamicLegendComponentImpl extends AbstractLegendComponentImpl<Dyna
 				if (child instanceof LegendViaUrlComponentImpl) {
 					String serverLayerId = ((LegendViaUrlComponentImpl) child).getServerLayerId();
 					Layer<?> layer = configurationService.getLayer(serverLayerId);
-					if (layer instanceof WmsLayer) {
-						WmsLayer wmsLayer = (WmsLayer) layer;
-						// TODO: Further usage of wmsLayer still has to be implemented.
-						// It can be used to check if at least one feature is in the envelope.
-					}
+					// if (layer instanceof WmsLayer) {
+					// WmsLayer wmsLayer = (WmsLayer) layer;
+					// TODO: Further usage of wmsLayer still has to be implemented.
+					// It can be used to check if at least one feature is in the envelope.
+					// }
 				}
 				child.layout(context);
 				Rectangle childBounds = child.getBounds();

@@ -13,6 +13,7 @@ import org.apache.axiom.om.OMAttribute;
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.impl.builder.StAXOMBuilder;
 import org.apache.http.client.ClientProtocolException;
+import org.geomajas.configuration.RasterLayerInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,26 +30,27 @@ import com.vividsolutions.jts.geom.Envelope;
  */
 public class NumberOfFeaturesInEnvelopeFromWfsRetriever implements NumberOfFeaturesInEnvelopeRetriever {
 
+	private static final String DATASOURCENAME_PARAM = "${DATASOURCENAME}";
+
 	private static final String NUMBER_OF_FEATURES_ATTRIBUTE_NAME = "numberOfFeatures";
 
 	private final Logger LOG = LoggerFactory.getLogger(NumberOfFeaturesInEnvelopeFromWfsRetriever.class);
 
-	@Autowired
 	private String wfsRequestUrlForBboxFeatureHits;
 
 	@Autowired
 	private FeatureCollectionRetriever featureCollectionRetriever;
 
 	@Override
-	public boolean isAtLeastOneFeatureInEnvelope(Envelope bbox) {
-		return countFeaturesInEnvelope(bbox) != 0;
+	public boolean isAtLeastOneFeatureInEnvelope(RasterLayerInfo rasterLayerInfo, Envelope bbox) {
+		return countFeaturesInEnvelope(rasterLayerInfo, bbox) != 0;
 	}
 
 	@Override
-	public int countFeaturesInEnvelope(Envelope bbox) {
+	public int countFeaturesInEnvelope(RasterLayerInfo rasterLayerInfo, Envelope bbox) {
 		InputStream response = null;
 		try {
-			response = retrieveGetFeatureResponseAsInputStream(bbox);
+			response = retrieveGetFeatureResponseAsInputStream(rasterLayerInfo, bbox);
 			return retrieveNumberOfFeatureHitsFromResponseStream(response);
 		} catch (Exception e) {
 			LOG.error("Number of features from envelope could not be parsed!", e);
@@ -93,10 +95,15 @@ public class NumberOfFeaturesInEnvelopeFromWfsRetriever implements NumberOfFeatu
 		return UNKNOWN_FEATURECOUNT;
 	}
 
-	private InputStream retrieveGetFeatureResponseAsInputStream(Envelope bbox) throws ClientProtocolException,
-			IOException {
-		return getFeatureCollectionRetriever().retrieveGetFeatureResponseAsInputStream(wfsRequestUrlForBboxFeatureHits,
-				bbox);
+	private InputStream retrieveGetFeatureResponseAsInputStream(RasterLayerInfo rasterLayerInfo, Envelope bbox)
+			throws ClientProtocolException, IOException {
+		String wfsUrl = replaceDataSourceParameter(rasterLayerInfo);
+		return featureCollectionRetriever.retrieveGetFeatureResponseAsInputStream(wfsUrl, bbox);
+	}
+
+	private String replaceDataSourceParameter(RasterLayerInfo rasterLayerInfo) {
+		String dataSourceName = rasterLayerInfo.getDataSourceName();
+		return wfsRequestUrlForBboxFeatureHits.replace(DATASOURCENAME_PARAM, dataSourceName);
 	}
 
 	private void close(InputStream response) {

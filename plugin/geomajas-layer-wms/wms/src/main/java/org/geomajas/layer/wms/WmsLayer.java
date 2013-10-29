@@ -351,7 +351,7 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 	public boolean isAtLeastOneFeatureInEnvelope(Envelope bbox) {
 		if (numberOfFeaturesInEnvelopeRetriever == null)
 			return true;
-		return numberOfFeaturesInEnvelopeRetriever.isAtLeastOneFeatureInEnvelope(bbox);
+		return numberOfFeaturesInEnvelopeRetriever.isAtLeastOneFeatureInEnvelope(getLayerInfo(), bbox);
 	}
 
 	private static String getStringFromInputStream(InputStream is) {
@@ -904,6 +904,15 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 
 	public List<Resolution> getResolutions() {
 		return resolutions;
+	}
+
+	public NumberOfFeaturesInEnvelopeRetriever getNumberOfFeaturesInEnvelopeRetriever() {
+		return numberOfFeaturesInEnvelopeRetriever;
+	}
+
+	public void setNumberOfFeaturesInEnvelopeRetriever(
+			NumberOfFeaturesInEnvelopeRetriever numberOfFeaturesInEnvelopeRetriever) {
+		this.numberOfFeaturesInEnvelopeRetriever = numberOfFeaturesInEnvelopeRetriever;
 	}
 
 }
