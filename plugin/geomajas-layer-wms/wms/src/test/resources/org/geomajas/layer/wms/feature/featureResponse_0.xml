@@ -1,0 +1,5 @@
+<wfs:FeatureCollection xmlns:wfs="http://www.opengis.net/wfs"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd http://www.deegree.org/xplanung/1/0 http://178.63.99.239:8080/xplansyn-wfs/services?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;OUTPUTFORMAT=text%2Fxml%3B+subtype%3Dgml%2F3.1.1&amp;TYPENAME=xplansyn:BP_Plan&amp;NAMESPACE=xmlns(xplansyn=http%3A%2F%2Fwww.deegree.org%2Fxplanung%2F1%2F0)"
+	timeStamp="2013-10-29T08:20:40.842Z" numberOfFeatures="0">
+</wfs:FeatureCollection>

@@ -25,20 +25,7 @@ import java.util.List;
 
 import javax.annotation.PostConstruct;
 import javax.imageio.ImageIO;
-import javax.xml.namespace.QName;
-import javax.xml.stream.FactoryConfigurationError;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
 
-import org.apache.axiom.om.OMAttribute;
-import org.apache.axiom.om.OMElement;
-import org.apache.axiom.om.impl.builder.StAXOMBuilder;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.geomajas.annotation.Api;
 import org.geomajas.configuration.Parameter;
 import org.geomajas.configuration.RasterLayerInfo;
@@ -57,6 +44,7 @@ import org.geomajas.layer.feature.Attribute;
 import org.geomajas.layer.feature.Feature;
 import org.geomajas.layer.feature.attribute.StringAttribute;
 import org.geomajas.layer.tile.RasterTile;
+import org.geomajas.layer.wms.feature.NumberOfFeaturesInEnvelopeRetriever;
 import org.geomajas.plugin.caching.service.CacheManagerService;
 import org.geomajas.security.SecurityContext;
 import org.geomajas.service.DispatcherUrlService;
@@ -127,13 +115,11 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 	private static final boolean IS_GML_REQUEST = false;
 
 	private static final boolean IS_HTML_REQUEST = true;
-	
+
 	private final Logger log = LoggerFactory.getLogger(WmsLayer.class);
 
 	private final List<Resolution> resolutions = new ArrayList<Resolution>();
-	
-	private String wfsRequestUrlForBboxFeatureHits = "";
-	
+
 	// @NotNull this seems to cause problems, it is tested in @PostConstruct
 	// anyway
 	private String baseWmsUrl;
@@ -188,6 +174,9 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 
 	@Autowired
 	private WmsLayerPainter painter;
+
+	@Autowired(required = false)
+	private NumberOfFeaturesInEnvelopeRetriever numberOfFeaturesInEnvelopeRetriever;
 
 	private boolean enableFeatureInfoSupportAsGml;
 
@@ -358,18 +347,11 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 		}
 		return getStringFromInputStream(stream);
 	}
-	
 
-	public boolean isAtLeastOneFeatureInEnvelope(Envelope env) {
-		try {
-			String requestUrl = buildRequestUrlFromEnvelope(env);
-			InputStream response = retrieveGetFeatureResponseAsInputStream(requestUrl);
-			String featureHits = retrieveNumberOfFeatureHitsFromResponseStream(response);
-			return "0".equals(featureHits);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return false;
+	public boolean isAtLeastOneFeatureInEnvelope(Envelope bbox) {
+		if (numberOfFeaturesInEnvelopeRetriever == null)
+			return true;
+		return numberOfFeaturesInEnvelopeRetriever.isAtLeastOneFeatureInEnvelope(bbox);
 	}
 
 	private static String getStringFromInputStream(InputStream is) {
@@ -632,36 +614,6 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 		} catch (IOException e) {
 			log.debug("Could not retrieve legend image height and size. Reason: ", e);
 		}
-	}
-
-	private String retrieveNumberOfFeatureHitsFromResponseStream(InputStream response) throws XMLStreamException,
-			FactoryConfigurationError {
-		XMLStreamReader parser = XMLInputFactory.newInstance().createXMLStreamReader(response);
-		StAXOMBuilder builder = new StAXOMBuilder(parser);
-		OMElement documentElement = builder.getDocumentElement();
-		OMAttribute attribute = documentElement.getAttribute(new QName("numberOfFeatures"));
-		if (attribute != null)
-			return attribute.getAttributeValue();
-		else
-			return "0";
-	}
-
-	private String buildRequestUrlFromEnvelope(Envelope env) {
-		StringBuilder requestUrlBuilder = new StringBuilder(wfsRequestUrlForBboxFeatureHits);
-		requestUrlBuilder.append("&bbox=");
-		requestUrlBuilder.append(env.getMinX()).append(",").append(env.getMinY()).append(",");
-		requestUrlBuilder.append(env.getMaxX()).append(",").append(env.getMaxY()).append(",");
-		requestUrlBuilder.append("EPSG:25833");
-		return requestUrlBuilder.toString();
-	}
-	
-	private InputStream retrieveGetFeatureResponseAsInputStream(String requestUrl) throws IOException,
-			ClientProtocolException {
-		HttpClient client = new DefaultHttpClient();
-		HttpGet request = new HttpGet(requestUrl);
-		HttpResponse response = client.execute(request);
-		InputStream content = response.getEntity().getContent();
-		return content;
 	}
 
 	public String getBaseWmsUrl() {
@@ -952,16 +904,6 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 
 	public List<Resolution> getResolutions() {
 		return resolutions;
-	}
-	
-
-	public String getWfsRequestUrlForBboxFeatureHits() {
-		return wfsRequestUrlForBboxFeatureHits;
-	}
-
-	public void setWfsRequestUrlForBboxFeatureHits(String wfsRequestUrlForBboxFeatureHits) {
-		isAtLeastOneFeatureInEnvelope(new Envelope(233396, 400000, 5649843, 6000000));
-		this.wfsRequestUrlForBboxFeatureHits = wfsRequestUrlForBboxFeatureHits;
 	}
 
 }
