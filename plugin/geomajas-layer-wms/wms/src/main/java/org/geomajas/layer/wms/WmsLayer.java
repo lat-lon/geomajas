@@ -175,7 +175,6 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 	@Autowired
 	private WmsLayerPainter painter;
 
-	@Autowired(required = false)
 	private NumberOfFeaturesInEnvelopeRetriever numberOfFeaturesInEnvelopeRetriever;
 
 	private boolean enableFeatureInfoSupportAsGml;
