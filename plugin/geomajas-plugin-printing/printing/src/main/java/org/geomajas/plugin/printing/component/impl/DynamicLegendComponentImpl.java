@@ -117,20 +117,19 @@ public class DynamicLegendComponentImpl extends AbstractLegendComponentImpl<Dyna
 	}
 
 	private boolean checkIfFeatureIsInEnvelope(PrintComponent<?> child) {
-		boolean isInEnvelope = true;
 		if (child instanceof LegendViaUrlComponentImpl) {
 			String serverLayerId = ((LegendViaUrlComponentImpl) child).getServerLayerId();
 			Layer<?> layer = configurationService.getLayer(serverLayerId);
-			if (child instanceof AbstractLegendComponentImpl<?> && layer instanceof WmsLayer) {
-				Envelope envelope = generateEnvelope(child);
-				isInEnvelope = ((WmsLayer) layer).isAtLeastOneFeatureInEnvelope(envelope);
+			if (layer instanceof WmsLayer) {
+				Envelope envelope = buildEnvelope(child);
+				return ((WmsLayer) layer).isAtLeastOneFeatureInEnvelope(envelope);
 			}
 		}
-		return isInEnvelope;
+		return true;
 	}
 
-	private Envelope generateEnvelope(PrintComponent<?> child) {
-		Bbox bbox = ((AbstractLegendComponentImpl<?>) child).getViewBbox();
+	private Envelope buildEnvelope(PrintComponent<?> child) {
+		Bbox bbox = getViewBbox();
 		return new Envelope(bbox.getX(), bbox.getX() + bbox.getWidth(), bbox.getY(), bbox.getY() + bbox.getHeight());
 	}
 
