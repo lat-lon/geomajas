@@ -25,6 +25,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.ui.Anchor;
 import com.smartgwt.client.data.RecordList;
+import com.smartgwt.client.types.Cursor;
 import com.smartgwt.client.types.ImageStyle;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.TitleOrientation;
@@ -36,6 +37,8 @@ import com.smartgwt.client.widgets.Slider;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.CloseClickEvent;
+import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.events.ValueChangedEvent;
 import com.smartgwt.client.widgets.events.ValueChangedHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
@@ -272,10 +275,38 @@ public class LayerActions extends Window {
 			UrlBuilder url = new UrlBuilder(Geomajas.getDispatcherUrl());
 			url.addPath(LEGEND_ICONS_PATH);
 			url.addPath(layer.getServerLayerId() + LEGEND_ICONS_TYPE);
-			String urlString = url.toString();
-			Img legendImage = new Img(urlString);
+			final String urlString = url.toString();
+			final Img legendImage = new Img(urlString);
 			legendImage.setBackgroundColor("white");
 			sampleMap.addChild(legendImage);
+			sampleMap.setCursor(Cursor.HAND);
+			sampleMap.setTooltip(MESSAGES.layerActionsShowLegendToolTip());
+			sampleMap.addClickHandler(new ClickHandler() {
+				@Override
+				public void onClick(ClickEvent event) {
+					final Window legendWindow = new Window();  
+	                legendWindow.setWidth(350);  
+	                legendWindow.setHeight(450);  
+	                legendWindow.setTitle(MESSAGES.layerActionsLegendTitle(layer.getLabel()));  
+	                legendWindow.setShowMinimizeButton(false);  
+	                legendWindow.setCanDragResize(true);
+	                legendWindow.setKeepInParentRect(true);
+	                legendWindow.centerInPage();  
+	                legendWindow.addCloseClickHandler(new CloseClickHandler() {  
+	                    public void onCloseClick(CloseClickEvent event) {  
+	                        legendWindow.destroy();  
+	                    }  
+	                });  
+	                
+					final Img img = new Img(urlString);
+					img.setBackgroundColor("white");
+					img.setImageType(ImageStyle.NORMAL);
+					img.setOverflow(Overflow.AUTO);
+	                
+	                legendWindow.addItem(img);  
+	                legendWindow.show();  
+				}
+			});
 		}
 		return sampleMap;
 	}

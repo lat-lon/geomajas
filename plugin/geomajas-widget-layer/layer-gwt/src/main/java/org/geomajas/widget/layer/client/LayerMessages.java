@@ -32,6 +32,8 @@ public interface LayerMessages extends Messages {
 	String layerActionsRemoveFilter();
 	String layerActionsShowLayer();
 	String layerActionsShowLayerToolTip();
+	String layerActionsLegendTitle(String layerLabel);
+	String layerActionsShowLegendToolTip();
 
 	String layerInfoLayerInfo();
 	String layerInfoLayerActions();
