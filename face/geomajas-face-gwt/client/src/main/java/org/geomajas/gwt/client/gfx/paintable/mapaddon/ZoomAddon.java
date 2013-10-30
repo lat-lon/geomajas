@@ -34,8 +34,6 @@ public class ZoomAddon extends MapAddon {
 
 	private MapWidget map;
 
-	private boolean firstTime = true;
-
 	public ZoomAddon(String id, MapWidget map) {
 		super(id, 20, 60);
 		this.map = map;
@@ -64,21 +62,17 @@ public class ZoomAddon extends MapAddon {
 
 		map.getVectorContext().drawImage(this, "max", Geomajas.getIsomorphicDir() + "geomajas/mapaddon/maxextent.png",
 				new Bbox(c.getX(), c.getY() + 20, 20, 20), new PictureStyle(1));
-
-		if (firstTime) {
-			map.getVectorContext().setController(this, "plus", new ZoomController(map, 2), Event.MOUSEEVENTS);
-			map.getVectorContext().setCursor(this, "plus", Cursor.POINTER.getValue());
-
-			map.getVectorContext().setController(this, "minus", new ZoomController(map, 0.5), Event.MOUSEEVENTS);
-			map.getVectorContext().setCursor(this, "minus", Cursor.POINTER.getValue());
-
-			map.getVectorContext().setController(this, "max", new MaxExtentController(map), Event.MOUSEEVENTS);
-			map.getVectorContext().setCursor(this, "max", Cursor.POINTER.getValue());
-		}
-		firstTime = false;
 	}
 
 	public void onDraw() {
+		map.getVectorContext().setController(this, "plus", new ZoomController(map, 2), Event.MOUSEEVENTS);
+		map.getVectorContext().setCursor(this, "plus", Cursor.POINTER.getValue());
+
+		map.getVectorContext().setController(this, "minus", new ZoomController(map, 0.5), Event.MOUSEEVENTS);
+		map.getVectorContext().setCursor(this, "minus", Cursor.POINTER.getValue());
+
+		map.getVectorContext().setController(this, "max", new MaxExtentController(map), Event.MOUSEEVENTS);
+		map.getVectorContext().setCursor(this, "max", Cursor.POINTER.getValue());
 	}
 
 	public void onRemove() {
