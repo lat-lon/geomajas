@@ -12,6 +12,8 @@ import org.geomajas.gwt.client.map.event.LayerStyleChangeEvent;
 import org.geomajas.gwt.client.map.store.DefaultRasterLayerStore;
 import org.geomajas.gwt.client.spatial.Bbox;
 
+import com.smartgwt.client.util.SC;
+
 /**
  * Client side combined {@link RasterLayer}
  * 
@@ -24,10 +26,22 @@ public class ComboRasterLayer extends RasterLayer {
 
 	private DefaultRasterLayerStore store;
 
+
 	public ComboRasterLayer(List<Layer<?>> layers) {
 		super(layers.get(0).getMapModel(), (ClientRasterLayerInfo) layers.get(0).getLayerInfo());
+		configureOpacity(layers);
 		this.layers = new ArrayList<Layer<?>>(layers);
 		this.store = new DefaultRasterLayerStore(this);
+	}
+
+	private void configureOpacity(List<Layer<?>> layers) {
+		for (Layer<?> layer : layers) {
+			if (layer instanceof RasterLayer) {
+				RasterLayer rLayer = (RasterLayer) layer;
+				double rasterLayerOpacity = rLayer.getOpacity();
+				if (getOpacity() > rasterLayerOpacity) setOpacity(rasterLayerOpacity);
+			}
+		}
 	}
 
 	public List<Layer<?>> getLayers() {
