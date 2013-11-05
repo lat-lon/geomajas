@@ -50,11 +50,16 @@
 			<artifactId>geomajas-layer-geotools</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.geomajas.plugin</groupId>
-			<artifactId>geomajas-layer-wms</artifactId>
-			<scope>test</scope>
-		</dependency>
+<!-- 		<dependency> -->
+<!-- 			<groupId>org.geomajas.plugin</groupId> -->
+<!-- 			<artifactId>geomajas-layer-wms</artifactId> -->
+<!-- 			<scope>test</scope> -->
+<!-- 		</dependency> -->
+        <dependency>
+            <groupId>org.geomajas.plugin</groupId>
+            <artifactId>geomajas-layer-wms</artifactId>
+            <version>1.11.0-latlon-SNAPSHOT</version>
+        </dependency>
 		<dependency>
 			<groupId>org.geomajas</groupId>
 			<artifactId>geomajas-impl</artifactId>

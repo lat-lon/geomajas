@@ -288,6 +288,28 @@
 				<artifactId>geomajas-plugin-springsecurity</artifactId>
 				<version>1.6.0</version>
 			</dependency>
+      
+            <dependency>
+               <groupId>org.apache.ws.commons.axiom</groupId>
+               <artifactId>axiom-api</artifactId>
+               <version>1.2.14</version>
+               </dependency>
+            <dependency>
+               <groupId>org.apache.ws.commons.axiom</groupId>
+               <artifactId>axiom-impl</artifactId>
+               <version>1.2.14</version>
+            </dependency>
+      
+    <dependency>
+      <groupId>org.apache.ws.commons.axiom</groupId>
+      <artifactId>axiom-api</artifactId>
+      <version>1.2.14</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.ws.commons.axiom</groupId>
+      <artifactId>axiom-impl</artifactId>
+      <version>1.2.14</version>
+    </dependency>
 
 		</dependencies>
 	</dependencyManagement>

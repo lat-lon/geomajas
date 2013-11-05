@@ -44,6 +44,7 @@ import org.geomajas.layer.feature.Attribute;
 import org.geomajas.layer.feature.Feature;
 import org.geomajas.layer.feature.attribute.StringAttribute;
 import org.geomajas.layer.tile.RasterTile;
+import org.geomajas.layer.wms.feature.NumberOfFeaturesInEnvelopeRetriever;
 import org.geomajas.plugin.caching.service.CacheManagerService;
 import org.geomajas.security.SecurityContext;
 import org.geomajas.service.DispatcherUrlService;
@@ -114,7 +115,7 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 	private static final boolean IS_GML_REQUEST = false;
 
 	private static final boolean IS_HTML_REQUEST = true;
-	
+
 	private final Logger log = LoggerFactory.getLogger(WmsLayer.class);
 
 	private final List<Resolution> resolutions = new ArrayList<Resolution>();
@@ -173,6 +174,8 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 
 	@Autowired
 	private WmsLayerPainter painter;
+
+	private NumberOfFeaturesInEnvelopeRetriever numberOfFeaturesInEnvelopeRetriever;
 
 	private boolean enableFeatureInfoSupportAsGml;
 
@@ -342,6 +345,12 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 			throw new LayerException(e, ExceptionCode.UNEXPECTED_PROBLEM);
 		}
 		return getStringFromInputStream(stream);
+	}
+
+	public boolean isAtLeastOneFeatureInEnvelope(Envelope bbox) {
+		if (numberOfFeaturesInEnvelopeRetriever == null)
+			return true;
+		return numberOfFeaturesInEnvelopeRetriever.isAtLeastOneFeatureInEnvelope(getLayerInfo(), bbox);
 	}
 
 	private static String getStringFromInputStream(InputStream is) {
@@ -894,6 +903,15 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 
 	public List<Resolution> getResolutions() {
 		return resolutions;
+	}
+
+	public NumberOfFeaturesInEnvelopeRetriever getNumberOfFeaturesInEnvelopeRetriever() {
+		return numberOfFeaturesInEnvelopeRetriever;
+	}
+
+	public void setNumberOfFeaturesInEnvelopeRetriever(
+			NumberOfFeaturesInEnvelopeRetriever numberOfFeaturesInEnvelopeRetriever) {
+		this.numberOfFeaturesInEnvelopeRetriever = numberOfFeaturesInEnvelopeRetriever;
 	}
 
 }
