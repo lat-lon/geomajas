@@ -335,14 +335,14 @@ public class MultiLayerFeatureInfoListener extends AbstractListener {
 
 	}
 
-	protected void showMultiHtmlWindow(Map<String, String> htmlMap) {
+	private void showMultiHtmlWindow(Map<String, String> htmlMap) {
 		Window window = new MultiLayerFeatureInfoHtmlWindow(mapWidget, htmlMap);
 		window.setPageTop(mapWidget.getAbsoluteTop() + 10);
 		window.setPageLeft(mapWidget.getAbsoluteLeft() + 50);
 		window.draw();
 	}
 
-	protected void showSingleHtmlWindow(Map<String, String> htmlMap) {
+	private void showSingleHtmlWindow(Map<String, String> htmlMap) {
 		String html = htmlMap.entrySet().iterator().next().getValue();
 		Window window = FeatureDetailWidgetFactory.createLayerDetailWindow(html);
 		window.setPageTop(mapWidget.getAbsoluteTop() + 10);
