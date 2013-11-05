@@ -144,17 +144,15 @@ public class CombinedLayertree extends LayerTreeBase {
 	 */
 	@Override
 	public void onLeafClick(LeafClickEvent event) {
-		LayerTreeLeafNode layerTreeNode;
-		if (event.getLeaf() instanceof LayerTreeLegendItemNode) {
-			layerTreeNode = ((LayerTreeLegendItemNode) event.getLeaf()).getParent();
-			treeGrid.deselectRecord(event.getLeaf());
-			treeGrid.selectRecord(layerTreeNode);
+		TreeNode leaf = event.getLeaf();
+		if (leaf instanceof LayerTreeLegendItemNode) {
+			LayerTreeLeafNode layerTreeLegendNode = ((LayerTreeLegendItemNode) leaf).getParent();
+			treeGrid.deselectRecord(leaf);
+			treeGrid.selectRecord(layerTreeLegendNode);
+			handleVisibilityOrSelect(layerTreeLegendNode);
 		} else {
-			layerTreeNode = (LayerTreeLeafNode) event.getLeaf();
+			handleVisibilityOrSelect(leaf);
 		}
-
-		// -- update model
-		mapModel.selectLayer(layerTreeNode.getLayer());
 	}
 
 	// ----------------------------------------------------------
