@@ -6,12 +6,13 @@ import java.util.List;
 
 import org.geomajas.configuration.client.ClientRasterLayerInfo;
 import org.geomajas.gwt.client.gfx.PainterVisitor;
-import org.geomajas.gwt.client.gfx.style.PictureStyle;
 import org.geomajas.gwt.client.map.cache.tile.RasterTile;
 import org.geomajas.gwt.client.map.cache.tile.TileFunction;
 import org.geomajas.gwt.client.map.event.LayerStyleChangeEvent;
 import org.geomajas.gwt.client.map.store.DefaultRasterLayerStore;
 import org.geomajas.gwt.client.spatial.Bbox;
+
+import com.smartgwt.client.util.SC;
 
 /**
  * Client side combined {@link RasterLayer}
@@ -27,11 +28,11 @@ public class ComboRasterLayer extends RasterLayer {
 
 	public ComboRasterLayer(List<Layer<?>> layers) {
 		super(layers.get(0).getMapModel(), (ClientRasterLayerInfo) layers.get(0).getLayerInfo());
-		double minOpacity = calculateMinOpacity(layers);
-		upateOpacity(minOpacity);
-		setOpacityWithoutFireEvent(minOpacity);
 		this.layers = new ArrayList<Layer<?>>(layers);
 		this.store = new DefaultRasterLayerStore(this);
+		double minOpacity = calculateMinOpacity(layers);
+		SC.say(Double.toString(minOpacity));
+		setOpacity(minOpacity);
 	}
 
 	private double calculateMinOpacity(List<Layer<?>> layers) {
@@ -44,12 +45,6 @@ public class ComboRasterLayer extends RasterLayer {
 			}
 		}
 		return minOpacity;
-	}
-	
-	public void updateOpacityForAllChildLayers(double opacity){
-		for(Layer<?> layer : layers){
-			layer.setOpacityWithoutFireEvent(opacity);
-		}
 	}
 
 	public List<Layer<?>> getLayers() {
