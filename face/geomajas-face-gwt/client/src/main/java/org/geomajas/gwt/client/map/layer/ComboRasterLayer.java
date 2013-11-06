@@ -31,7 +31,6 @@ public class ComboRasterLayer extends RasterLayer {
 		this.layers = new ArrayList<Layer<?>>(layers);
 		this.store = new DefaultRasterLayerStore(this);
 		double minOpacity = calculateMinOpacity(layers);
-		SC.say(Double.toString(minOpacity));
 		setOpacity(minOpacity);
 	}
 
