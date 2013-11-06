@@ -85,6 +85,9 @@ public interface ToolId {
 
 	/** Tool id for the zoom to selection toolbar button. */
 	String TOOL_ZOOM_TO_SELECTION = "ZoomToSelection";
+	
+	/** Tool id for the refresh of the map. */
+	String TOOL_MAP_REFRESH = "MapRefresh";
 
 	/** Tool id for the scale selection toolbar widget. */
 	String TOOL_SCALE_SELECT = "ScaleSelect";

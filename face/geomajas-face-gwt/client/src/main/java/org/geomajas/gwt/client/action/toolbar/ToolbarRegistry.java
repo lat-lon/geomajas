@@ -147,6 +147,12 @@ public final class ToolbarRegistry {
 				return new ZoomToSelectionAction(mapWidget);
 			}
 		});
+		REGISTRY.put(ToolId.TOOL_MAP_REFRESH, new ToolCreator() {
+
+			public ToolbarBaseAction createTool(MapWidget mapWidget) {
+				return new MapRefreshAction(mapWidget);
+			}
+		});
 		REGISTRY.put(ToolId.TOOL_SCALE_SELECT, new ToolCreator() {
 
 			public ToolbarBaseAction createTool(MapWidget mapWidget) {
