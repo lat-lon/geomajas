@@ -47,6 +47,9 @@ public final class FitSetting {
 	
 	/** Pixel tolerance on featureinfo requests. */
 	public static int featureInfoPixelTolerance = tooltipPixelTolerance;
+
+	/** Should only selected layers be shown in the featureinfo output? **/
+	public static boolean featureinfoJustShowSelectedLayer = true;
 	
 	// CHECKSTYLE VISIBILITY MODIFIER: ON
 

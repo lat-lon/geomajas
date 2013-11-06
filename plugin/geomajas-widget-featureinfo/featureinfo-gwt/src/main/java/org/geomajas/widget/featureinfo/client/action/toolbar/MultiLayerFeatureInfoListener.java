@@ -76,6 +76,8 @@ public class MultiLayerFeatureInfoListener extends AbstractListener {
 
 	private boolean includeRasterLayers = FitSetting.featureinfoIncludeRasterLayer;
 
+	private boolean justShowSelectedLayer = FitSetting.featureinfoJustShowSelectedLayer;
+
 	/**
 	 * Number of pixels that describes the tolerance allowed when trying to select features.
 	 */
@@ -139,6 +141,43 @@ public class MultiLayerFeatureInfoListener extends AbstractListener {
 	}
 
 	/**
+	 * Set whether to include raster layers.
+	 * 
+	 * @param includeRasterLayers
+	 *            whether to include raster layers in the result
+	 */
+	public void setIncludeRasterLayers(boolean includeRasterLayers) {
+		this.includeRasterLayers = includeRasterLayers;
+	}
+
+	/**
+	 * Are raster layers included?
+	 * 
+	 * @return the whether to include raster layer features in the result
+	 */
+	public boolean isIncludeRasterLayers() {
+		return includeRasterLayers;
+	}
+
+	/**
+	 * Set list labels.
+	 * 
+	 * @param featuresListLabels
+	 *            the featuresListLabels to set
+	 */
+	public void setFeaturesListLabels(Map<String, String> featuresListLabels) {
+		this.featuresListLabels = featuresListLabels;
+	}
+
+	public String getFeatureInfoFormat() {
+		return featureInfoFormat;
+	}
+
+	public void setFeatureInfoFormat(String featureInfo) {
+		this.featureInfoFormat = featureInfo;
+	}
+
+	/**
 	 * On mouse up, execute the search by location, and display a
 	 * {@link org.geomajas.widget.featureinfo.client.widget.MultiLayerFeaturesList} if features are found.
 	 */
@@ -186,6 +225,10 @@ public class MultiLayerFeatureInfoListener extends AbstractListener {
 		clickstart = false;
 	}
 
+	// -------------------------------------------------------------------------
+	// Private methods:
+	// -------------------------------------------------------------------------
+
 	private void handleFeatureInfoHtml(SearchByPointResponse rasterResponse) {
 		// Just show wms
 		// featureinfo response
@@ -212,7 +255,8 @@ public class MultiLayerFeatureInfoListener extends AbstractListener {
 		rasterLayerRequest.setPixelTolerance(pixelTolerance);
 		final Map<String, String> rasterLayerIds = new HashMap<String, String>();
 		for (Layer<?> layer : mapWidget.getMapModel().getLayers()) {
-			if (layer.isShowing() && layer instanceof RasterLayer && !layersToExclude.contains(layer.getId())) {
+			if (layer.isShowing() && isLayerSelectedOrNoLayerSelected(layer) && layer instanceof RasterLayer
+					&& !layersToExclude.contains(layer.getId())) {
 				rasterLayerIds.put(layer.getId(), layer.getServerLayerId());
 			}
 		}
@@ -233,16 +277,21 @@ public class MultiLayerFeatureInfoListener extends AbstractListener {
 		request.setFeatureIncludes(GwtCommandDispatcher.getInstance().getLazyFeatureIncludesSelect());
 
 		for (Layer<?> layer : mapWidget.getMapModel().getLayers()) {
-			if (layer.isShowing() && layer instanceof VectorLayer && !layersToExclude.contains(layer.getId())) {
+			if (layer.isShowing() && isLayerSelectedOrNoLayerSelected(layer) && layer instanceof VectorLayer
+					&& !layersToExclude.contains(layer.getId())) {
 				request.addLayerWithFilter(layer.getId(), layer.getServerLayerId(), ((VectorLayer) layer).getFilter());
 			}
 		}
 		return request;
 	}
 
-	// -------------------------------------------------------------------------
-	// Private methods:
-	// -------------------------------------------------------------------------
+	protected boolean isLayerSelectedOrNoLayerSelected(Layer<?> layer) {
+		return layer.isSelected() || isNoLayerSelected();
+	}
+
+	private boolean isNoLayerSelected() {
+		return mapWidget.getMapModel().getSelectedLayer() == null;
+	}
 
 	private void showFeatureInfoGml(Map<String, List<org.geomajas.layer.feature.Feature>> featureMap) {
 		if (featureMap.size() > 0) {
@@ -278,13 +327,27 @@ public class MultiLayerFeatureInfoListener extends AbstractListener {
 	private void showFeatureInfoHtml(Map<String, String> htmlMap) {
 		if (htmlMap.size() < 1) {
 			Notify.info(MESSAGES.multiLayerFeatureInfoNoResult());
+		} else if (!isNoLayerSelected()) {
+			showSingleHtmlWindow(htmlMap);
 		} else {
-			Window window = new MultiLayerFeatureInfoHtmlWindow(mapWidget, htmlMap);
-			window.setPageTop(mapWidget.getAbsoluteTop() + 10);
-			window.setPageLeft(mapWidget.getAbsoluteLeft() + 50);
-			window.draw();
+			showMultiHtmlWindow(htmlMap);
 		}
 
+	}
+
+	private void showMultiHtmlWindow(Map<String, String> htmlMap) {
+		Window window = new MultiLayerFeatureInfoHtmlWindow(mapWidget, htmlMap);
+		window.setPageTop(mapWidget.getAbsoluteTop() + 10);
+		window.setPageLeft(mapWidget.getAbsoluteLeft() + 50);
+		window.draw();
+	}
+
+	private void showSingleHtmlWindow(Map<String, String> htmlMap) {
+		String html = htmlMap.entrySet().iterator().next().getValue();
+		Window window = FeatureDetailWidgetFactory.createLayerDetailWindow(html);
+		window.setPageTop(mapWidget.getAbsoluteTop() + 10);
+		window.setPageLeft(mapWidget.getAbsoluteLeft() + 50);
+		window.draw();
 	}
 
 	/**
@@ -303,42 +366,5 @@ public class MultiLayerFeatureInfoListener extends AbstractListener {
 		Coordinate c1 = transformer.viewToWorld(new Coordinate(0, 0));
 		Coordinate c2 = transformer.viewToWorld(new Coordinate(pixelTolerance, 0));
 		return Mathlib.distance(c1, c2);
-	}
-
-	/**
-	 * Set whether to include raster layers.
-	 * 
-	 * @param includeRasterLayers
-	 *            whether to include raster layers in the result
-	 */
-	public void setIncludeRasterLayers(boolean includeRasterLayers) {
-		this.includeRasterLayers = includeRasterLayers;
-	}
-
-	/**
-	 * Are raster layers included?
-	 * 
-	 * @return the whether to include raster layer features in the result
-	 */
-	public boolean isIncludeRasterLayers() {
-		return includeRasterLayers;
-	}
-
-	/**
-	 * Set list labels.
-	 * 
-	 * @param featuresListLabels
-	 *            the featuresListLabels to set
-	 */
-	public void setFeaturesListLabels(Map<String, String> featuresListLabels) {
-		this.featuresListLabels = featuresListLabels;
-	}
-
-	public String getFeatureInfoFormat() {
-		return featureInfoFormat;
-	}
-
-	public void setFeatureInfoFormat(String featureInfo) {
-		this.featureInfoFormat = featureInfo;
 	}
 }
