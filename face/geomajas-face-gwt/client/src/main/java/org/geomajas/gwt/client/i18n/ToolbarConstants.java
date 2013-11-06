@@ -130,12 +130,14 @@ public interface ToolbarConstants extends Constants {
 	String zoomNextTitle();
 
 	String zoomPreviousTitle();
-
+	
 	String scaleSelectTitle();
 
 	String refreshConfigurationTitle();
 
 	String featureInfoTitle();
+
+	String refreshMapTitle();
 
 
 
@@ -172,5 +174,7 @@ public interface ToolbarConstants extends Constants {
 	String deselectAllTitle();
 
 	String deselectAllTooltip();
+	
+	String refreshMapTooltip();
 
 }
