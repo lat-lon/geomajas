@@ -42,6 +42,9 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SliderItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
+import com.smartgwt.client.widgets.form.validator.IsIntegerValidator;
 import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
@@ -54,23 +57,42 @@ import com.smartgwt.client.widgets.tab.TabSet;
 public class PrintPreferencesCanvas extends Canvas {
 
 	private static final PrintingMessages MESSAGES = GWT.create(PrintingMessages.class);
+
 	private static final String ORIENTATION = "orientation";
+
 	private static final String LANDSCAPE = "landscape";
+
 	private static final String PORTRAIT = "portrait";
+
 	private static final String TITLE = "title";
+
 	private static final String SIZE = "size";
+
 	private static final String DOWNLOAD_TYPE = "downloadType";
+
 	private static final String SAVE = "save";
+
 	private static final String OPEN = "open";
+
 	private static final String FILENAME = "filename";
+
 	private static final String EXTENSION = ".pdf";
+
 	private static final String URL_PATH = "d/printing";
+
 	private static final String URL_DOCUMENT_ID = "documentId";
+
 	private static final String URL_NAME = "name";
+
 	private static final String URL_TOKEN = "userToken";
+
 	private static final String URL_DOWNLOAD = "download";
+
 	private static final String URL_DOWNLOAD_YES = "1";
+
 	private static final String URL_DOWNLOAD_NO = "0";
+
+	private static final String DPI = "dpi";
 
 	private TextItem titleItem;
 
@@ -81,8 +103,10 @@ public class PrintPreferencesCanvas extends Canvas {
 	private RadioGroupItem orientationGroup;
 
 	private CheckboxItem legendOnNextPageCheckbox;
-	
+
 	private SliderItem rasterDpiSlider;
+
+	private TextItem rasterDpiTextItem;
 
 	private CheckboxItem arrowCheckbox;
 
@@ -93,8 +117,10 @@ public class PrintPreferencesCanvas extends Canvas {
 	private FormItemIcon barIcon;
 
 	private MapWidget mapWidget;
-	
+
 	private ImageUrlService imageUrlService = new ImageUrlServiceImpl();
+
+	private boolean changedRasterDpi = false;
 
 	public PrintPreferencesCanvas(MapWidget mapWidget) {
 		this.mapWidget = mapWidget;
@@ -140,7 +166,16 @@ public class PrintPreferencesCanvas extends Canvas {
 		rasterDpiSlider.setHeight(PrintingLayout.printPreferencesResolutionHeight);
 		rasterDpiSlider.setMinValue(72);
 		rasterDpiSlider.setMaxValue(600);
-		rasterDpiSlider.setNumValues(5);
+		rasterDpiSlider.addChangedHandler(updateRasterDpiTextItem());
+		// raster dpi text item
+		rasterDpiTextItem = new TextItem();
+		rasterDpiTextItem.setName(DPI);
+		rasterDpiTextItem.setTitle(MESSAGES.printPrefsRasterDPIValue());
+		rasterDpiTextItem.setLength(3);
+		rasterDpiTextItem.setDefaultValue(72);
+		rasterDpiTextItem.setValidators(new IsIntegerValidator());
+		rasterDpiTextItem.setValidateOnChange(true);
+		rasterDpiTextItem.addChangedHandler(updateRasterDpiSlider());
 		// north arrow
 		arrowCheckbox = new CheckboxItem();
 		arrowCheckbox.setValue(true);
@@ -173,8 +208,8 @@ public class PrintPreferencesCanvas extends Canvas {
 		downloadTypeGroup.setVertical(false);
 		downloadTypeGroup.setValue(SAVE);
 
-		form.setFields(titleItem, sizeItem, orientationGroup, legendOnNextPageCheckbox, arrowCheckbox, scaleBarCheckbox, rasterDpiSlider,
-				fileNameItem, downloadTypeGroup, statusText);
+		form.setFields(titleItem, sizeItem, orientationGroup, legendOnNextPageCheckbox, arrowCheckbox,
+				scaleBarCheckbox, rasterDpiSlider, rasterDpiTextItem, fileNameItem, downloadTypeGroup, statusText);
 		mainPreferences.setPane(form);
 		tabs.setTabs(mainPreferences);
 
@@ -192,6 +227,45 @@ public class PrintPreferencesCanvas extends Canvas {
 		vLayout.addMember(tabs);
 		vLayout.addMember(printButton);
 		addChild(vLayout);
+	}
+
+	private ChangedHandler updateRasterDpiTextItem() {
+		return new ChangedHandler() {
+
+			@Override
+			public void onChanged(ChangedEvent event) {
+				if (changedRasterDpi == false) {
+					try {
+						changedRasterDpi = true;
+						Float value = rasterDpiSlider.getValueAsFloat();
+						rasterDpiTextItem.setValue(value);
+					} finally {
+						changedRasterDpi = false;
+					}
+				}
+			}
+		};
+	}
+
+	private ChangedHandler updateRasterDpiSlider() {
+		return new ChangedHandler() {
+
+			@Override
+			public void onChanged(ChangedEvent event) {
+				if (changedRasterDpi == false) {
+					try {
+						changedRasterDpi = true;
+						String valueAsString = rasterDpiTextItem.getValueAsString();
+						int valueAsInt = Integer.parseInt(valueAsString);
+						if (valueAsInt >= 72 && valueAsInt <= 600) {
+							rasterDpiSlider.setValue(valueAsInt);
+						}
+					} finally {
+						changedRasterDpi = false;
+					}
+				}
+			}
+		};
 	}
 
 	private void stopProgress() {
@@ -225,10 +299,10 @@ public class PrintPreferencesCanvas extends Canvas {
 		builder.setWithArrow((Boolean) arrowCheckbox.getValue());
 		builder.setWithScaleBar((Boolean) scaleBarCheckbox.getValue());
 		builder.setRasterDpi((Integer) rasterDpiSlider.getValue());
-		builder.setLegendOnNewPage((Boolean)legendOnNextPageCheckbox.getValue());
+		builder.setLegendOnNewPage((Boolean) legendOnNextPageCheckbox.getValue());
 		PrintTemplateInfo template = builder.buildTemplate();
 		request.setTemplate(template);
-		request.setLegendOnNewPage((Boolean)legendOnNextPageCheckbox.getValue());
+		request.setLegendOnNewPage((Boolean) legendOnNextPageCheckbox.getValue());
 		final GwtCommand command = new GwtCommand(PrintGetTemplateRequest.COMMAND);
 		command.setCommandRequest(request);
 		GwtCommandDispatcher.getInstance().execute(command, new AbstractCommandCallback<PrintGetTemplateResponse>() {
