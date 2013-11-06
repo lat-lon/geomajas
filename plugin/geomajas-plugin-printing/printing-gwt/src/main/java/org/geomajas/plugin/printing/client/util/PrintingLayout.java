@@ -38,7 +38,7 @@ public final class PrintingLayout {
 	/** Width for the print preferences window. */
 	public static String printPreferencesWidth = "400";
 	/** Height for the print preferences window. */
-	public static String printPreferencesHeight = "330";
+	public static String printPreferencesHeight = "400";
 	/** Width for the resolution selector in the print preferences window. */
 	public static String printPreferencesResolutionWidth = "250";
 	/** Height for the resolution selector in the  print preferences window. */
