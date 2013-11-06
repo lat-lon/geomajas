@@ -40,6 +40,7 @@ import org.geomajas.widget.layer.client.widget.node.LayerTreeLeafNode;
 import org.geomajas.widget.layer.client.widget.node.LayerTreeLegendItemNode;
 import org.geomajas.widget.layer.client.widget.node.LayerTreeLegendNode;
 import org.geomajas.widget.layer.client.widget.node.LayerTreeNode;
+import org.geomajas.widget.layer.client.widget.node.SimpleLayerTreeNode;
 import org.geomajas.widget.layer.configuration.client.ClientAbstractNodeInfo;
 import org.geomajas.widget.layer.configuration.client.ClientBranchNodeInfo;
 import org.geomajas.widget.layer.configuration.client.ClientLayerNodeInfo;
@@ -78,15 +79,34 @@ public class CombinedLayertree extends LayerTreeBase {
 
 	private final MapWidget mapWidget;
 
+	private final boolean suppressLegendNodes;
+
 	private final List<HandlerRegistration> registrations = new ArrayList<HandlerRegistration>();
 
 	protected LayerTreeLeafNode rollOverLayerTreeNode;
 
 	private HashMap<VectorLayer, List<LayerTreeLegendItemNode>> legendIcons = new HashMap<VectorLayer, List<LayerTreeLegendItemNode>>();
 
+	/**
+	 * 
+	 * Legend nodes are drawn.
+	 * 
+	 * @aram mapWidget never <code>null</code>
+	 */
 	public CombinedLayertree(final MapWidget mapWidget) {
+		this(mapWidget, false);
+	}
+
+	/**
+	 * @param mapWidget
+	 *            never <code>null</code>
+	 * @param suppressLegendNodes
+	 *            false if the legend nodes in the layer tree should be drawn, true otherwise
+	 */
+	public CombinedLayertree(final MapWidget mapWidget, boolean suppressLegendNodes) {
 		super(mapWidget);
 		this.mapWidget = mapWidget;
+		this.suppressLegendNodes = suppressLegendNodes;
 		treeGrid.setShowRollOverCanvas(true);
 	}
 
@@ -126,10 +146,16 @@ public class CombinedLayertree extends LayerTreeBase {
 				Layer<?> layer = mapModel.getLayer(((ClientLayerNodeInfo) treeNode).getLayerId());
 				// Ignore layers that are not available in the map
 				if (layer != null) {
-					LayerTreeLegendNode ltln = new LayerTreeLegendNode(this, this.tree, layer);
-					tree.add(ltln, nodeRoot);
-					ltln.init();
-					return Collections.<LayerTreeNode> singletonList(ltln);
+					LayerTreeLeafNode leafNode;
+					if (suppressLegendNodes) {
+						leafNode = new SimpleLayerTreeNode(tree, layer);
+						tree.add(leafNode, nodeRoot);
+					} else {
+						leafNode = new LayerTreeLegendNode(this, this.tree, layer);
+						tree.add(leafNode, nodeRoot);
+						((LayerTreeLegendNode) leafNode).init();
+					}
+					return Collections.<LayerTreeNode> singletonList(leafNode);
 				}
 			}
 		}
@@ -144,17 +170,15 @@ public class CombinedLayertree extends LayerTreeBase {
 	 */
 	@Override
 	public void onLeafClick(LeafClickEvent event) {
-		LayerTreeLeafNode layerTreeNode;
-		if (event.getLeaf() instanceof LayerTreeLegendItemNode) {
-			layerTreeNode = ((LayerTreeLegendItemNode) event.getLeaf()).getParent();
-			treeGrid.deselectRecord(event.getLeaf());
-			treeGrid.selectRecord(layerTreeNode);
+		TreeNode leaf = event.getLeaf();
+		if (leaf instanceof LayerTreeLegendItemNode) {
+			LayerTreeLeafNode layerTreeLegendNode = ((LayerTreeLegendItemNode) leaf).getParent();
+			treeGrid.deselectRecord(leaf);
+			treeGrid.selectRecord(layerTreeLegendNode);
+			handleVisibilityOrSelect(layerTreeLegendNode);
 		} else {
-			layerTreeNode = (LayerTreeLeafNode) event.getLeaf();
+			handleVisibilityOrSelect(leaf);
 		}
-
-		// -- update model
-		mapModel.selectLayer(layerTreeNode.getLayer());
 	}
 
 	// ----------------------------------------------------------
@@ -162,8 +186,8 @@ public class CombinedLayertree extends LayerTreeBase {
 	@Override
 	protected void syncNodeState(boolean layersOnly) {
 		for (TreeNode childnode : tree.getAllNodes(tree.getRoot())) {
-			if (childnode instanceof LayerTreeLegendNode) {
-				if (((LayerTreeLegendNode) childnode).getLayer().isShowing()) {
+			if (childnode instanceof LayerTreeLegendNode || childnode instanceof SimpleLayerTreeNode) {
+				if (((LayerTreeLeafNode) childnode).getLayer().isShowing()) {
 					tree.openFolder(childnode);
 				} else {
 					tree.closeFolder(childnode);

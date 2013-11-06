@@ -196,12 +196,17 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 	 */
 	@Override
 	public void onLeafClick(LeafClickEvent event) {
+		TreeNode leaf = event.getLeaf();
+		handleVisibilityOrSelect(leaf);
+	}
+
+	protected void handleVisibilityOrSelect(TreeNode leaf) {
 		try {
 			Element e = EventHandler.getNativeMouseTarget();
 			if (IMG_TAGNAME.equals(e.getTagName())) {
-				onIconClick(event.getLeaf());
+				onIconClick(leaf);
 			} else {
-				LayerTreeLeafNode layerTreeNode = (LayerTreeLeafNode) event.getLeaf();
+				LayerTreeLeafNode layerTreeNode = (LayerTreeLeafNode) leaf;
 				mapModel.selectLayer(layerTreeNode.getLayer());
 			}
 		} catch (Exception e) { // NOSONAR
