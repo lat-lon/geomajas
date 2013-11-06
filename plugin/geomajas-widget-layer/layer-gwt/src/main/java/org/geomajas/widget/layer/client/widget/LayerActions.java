@@ -282,29 +282,31 @@ public class LayerActions extends Window {
 			sampleMap.setCursor(Cursor.HAND);
 			sampleMap.setTooltip(MESSAGES.layerActionsShowLegendToolTip());
 			sampleMap.addClickHandler(new ClickHandler() {
+
 				@Override
 				public void onClick(ClickEvent event) {
-					final Window legendWindow = new Window();  
-	                legendWindow.setWidth(350);  
-	                legendWindow.setHeight(450);  
-	                legendWindow.setTitle(MESSAGES.layerActionsLegendTitle(layer.getLabel()));  
-	                legendWindow.setShowMinimizeButton(false);  
-	                legendWindow.setCanDragResize(true);
-	                legendWindow.setKeepInParentRect(true);
-	                legendWindow.centerInPage();  
-	                legendWindow.addCloseClickHandler(new CloseClickHandler() {  
-	                    public void onCloseClick(CloseClickEvent event) {  
-	                        legendWindow.destroy();  
-	                    }  
-	                });  
-	                
+					final Window legendWindow = new Window();
+					legendWindow.setWidth(350);
+					legendWindow.setHeight(450);
+					legendWindow.setTitle(MESSAGES.layerActionsLegendTitle(layer.getLabel()));
+					legendWindow.setShowMinimizeButton(false);
+					legendWindow.setCanDragResize(true);
+					legendWindow.setKeepInParentRect(true);
+					legendWindow.centerInPage();
+					legendWindow.addCloseClickHandler(new CloseClickHandler() {
+
+						public void onCloseClick(CloseClickEvent event) {
+							legendWindow.destroy();
+						}
+					});
+
 					final Img img = new Img(urlString);
 					img.setBackgroundColor("white");
 					img.setImageType(ImageStyle.NORMAL);
 					img.setOverflow(Overflow.AUTO);
-	                
-	                legendWindow.addItem(img);  
-	                legendWindow.show();  
+
+					legendWindow.addItem(img);
+					legendWindow.show();
 				}
 			});
 		}
@@ -361,12 +363,19 @@ public class LayerActions extends Window {
 		opacitySlider.addValueChangedHandler(new ValueChangedHandler() {
 
 			public void onValueChanged(ValueChangedEvent event) {
-				double val = opacitySlider.getValue();
-				// layerImg.setOpacity((int) val);
-				if (val > 0) {
-					val /= 100;
+				if (!opacitySlider.valueIsChanging()) {
+					double opacity = calculateOpacityAsDecimal();
+					rasterLayer.setOpacity(opacity);
 				}
-				rasterLayer.setOpacity(val);
+			}
+
+			private double calculateOpacityAsDecimal() {
+				double opacity = opacitySlider.getValue();
+				if (opacity > 0) {
+					double decimal = opacity / 100;
+					return decimal == 100 ? 0.99 : decimal;
+				}
+				return 0;
 			}
 		});
 	}

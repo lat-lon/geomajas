@@ -34,6 +34,7 @@ import org.geomajas.gwt.client.spatial.Bbox;
 public class RasterLayer extends AbstractLayer<ClientRasterLayerInfo> {
 
 	private RasterLayerStore store;
+	private double opacity = 1;
 
 	/**
 	 * The only constructor! Set the MapModel and the layer info.
@@ -82,11 +83,24 @@ public class RasterLayer extends AbstractLayer<ClientRasterLayerInfo> {
 	 * @since 1.8.0
 	 */
 	public void setOpacity(double opacity) {
+		this.opacity = opacity;
 		getLayerInfo().setStyle(Double.toString(opacity));
 		for (RasterTile tile : store.getTiles()) {
 			tile.setStyle(new PictureStyle(opacity));
 		}
 		handlerManager.fireEvent(new LayerStyleChangeEvent(this));
+	}
+	
+	public void setOpacityWithoutFireEvent( double opacity){
+		this.opacity = opacity;
+		getLayerInfo().setStyle(Double.toString(opacity));
+		for (RasterTile tile : store.getTiles()) {
+			tile.setStyle(new PictureStyle(opacity));
+		}
+	}
+	
+	public double getOpacity() {
+		return opacity;
 	}
 
 	@Override

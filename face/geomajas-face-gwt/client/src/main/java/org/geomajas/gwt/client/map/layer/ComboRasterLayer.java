@@ -12,11 +12,13 @@ import org.geomajas.gwt.client.map.event.LayerStyleChangeEvent;
 import org.geomajas.gwt.client.map.store.DefaultRasterLayerStore;
 import org.geomajas.gwt.client.spatial.Bbox;
 
+import com.smartgwt.client.util.SC;
+
 /**
  * Client side combined {@link RasterLayer}
  * 
  * @author Alexander Erben
- *
+ * 
  */
 public class ComboRasterLayer extends RasterLayer {
 
@@ -28,6 +30,20 @@ public class ComboRasterLayer extends RasterLayer {
 		super(layers.get(0).getMapModel(), (ClientRasterLayerInfo) layers.get(0).getLayerInfo());
 		this.layers = new ArrayList<Layer<?>>(layers);
 		this.store = new DefaultRasterLayerStore(this);
+		double minOpacity = calculateMinOpacity(layers);
+		setOpacity(minOpacity);
+	}
+
+	private double calculateMinOpacity(List<Layer<?>> layers) {
+		double minOpacity = 1.0;
+		for (Layer<?> layer : layers) {
+			if (layer instanceof RasterLayer) {
+				RasterLayer rLayer = (RasterLayer) layer;
+				double rasterLayerOpacity = rLayer.getOpacity();
+				minOpacity = Math.min(minOpacity, rasterLayerOpacity);
+			}
+		}
+		return minOpacity;
 	}
 
 	public List<Layer<?>> getLayers() {
@@ -58,15 +74,15 @@ public class ComboRasterLayer extends RasterLayer {
 		};
 		store.applyAndSync(bounds, onDelete, onUpdate);
 	}
-	
+
 	@Override
 	public boolean isShowing() {
 		return true;
 	}
-	
+
 	public List<String> getServerLayerIds() {
 		List<String> layerIds = new ArrayList<String>();
-		for (Layer layer : getLayers()) {
+		for (Layer<?> layer : getLayers()) {
 			layerIds.add(layer.getServerLayerId());
 		}
 		return layerIds;
