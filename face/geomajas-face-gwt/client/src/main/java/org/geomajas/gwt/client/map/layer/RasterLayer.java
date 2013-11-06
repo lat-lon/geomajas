@@ -91,6 +91,14 @@ public class RasterLayer extends AbstractLayer<ClientRasterLayerInfo> {
 		handlerManager.fireEvent(new LayerStyleChangeEvent(this));
 	}
 	
+	public void setOpacityWithoutFireEvent( double opacity){
+		this.opacity = opacity;
+		getLayerInfo().setStyle(Double.toString(opacity));
+		for (RasterTile tile : store.getTiles()) {
+			tile.setStyle(new PictureStyle(opacity));
+		}
+	}
+	
 	public double getOpacity() {
 		return opacity;
 	}
