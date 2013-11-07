@@ -13,12 +13,12 @@
 	<parent>
 		<groupId>org.geomajas</groupId>
 		<artifactId>geomajas-parent</artifactId>
-		<version>1.2.0-latlon-SNAPSHOT</version>
+		<version>1.2.0-latlon-xplanisk2-SNAPSHOT</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.geomajas.plugin</groupId>
 	<artifactId>geomajas-plugin-printing-all</artifactId>
-	<version>2.4.0-latlon-SNAPSHOT</version>
+	<version>2.4.0-latlon-xplanisk2-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>Geomajas simple printing plug-in</name>
 	<description>Geomajas simple printing plug-in</description>
@@ -272,8 +272,8 @@
 	</profiles>
 
 	<properties>
-		<printing-backend-version>1.13.0-latlon-SNAPSHOT</printing-backend-version>
-		<printing-gwt-face-version>1.14.0-latlon-SNAPSHOT</printing-gwt-face-version>
+		<printing-backend-version>1.13.0-latlon-xplanisk2-SNAPSHOT</printing-backend-version>
+		<printing-gwt-face-version>1.14.0-latlon-xplanisk2-SNAPSHOT</printing-gwt-face-version>
 		<printing-puregwt-face-version>1.0.0-M5</printing-puregwt-face-version>
 		<printing-widget-puregwt-version>1.0.0-M3</printing-widget-puregwt-version>
 		<printing-rasterizing-version>1.2.0-M1</printing-rasterizing-version>

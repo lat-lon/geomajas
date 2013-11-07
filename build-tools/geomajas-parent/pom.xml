@@ -18,7 +18,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.geomajas</groupId>
 	<artifactId>geomajas-parent</artifactId>
-	<version>1.2.0-latlon-SNAPSHOT</version>
+	<version>1.2.0-latlon-xplanisk2-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>Geomajas parent module, contains some maven settings</name>
 	<description>
@@ -36,25 +36,25 @@
   
   <repositories>
     <repository>
-      <id>latlon-repo</id>
+      <id>latlon-xplanisk2-repo</id>
       <url>http://repo.lat-lon/nexus/content/groups/public/</url>
     </repository>
   </repositories>
 
   <distributionManagement>
     <repository>
-      <id>latlon-releases</id>
+      <id>latlon-xplanisk2-releases</id>
       <url>http://repo.lat-lon/nexus/content/repositories/releases/</url>
     </repository>
     <snapshotRepository>
-      <id>latlon-snapshots</id>
+      <id>latlon-xplanisk2-snapshots</id>
       <url>http://repo.lat-lon/nexus/content/repositories/snapshots/</url>
     </snapshotRepository>
   </distributionManagement>
 
   <pluginRepositories>
     <pluginRepository>
-      <id>latlon-repo</id>
+      <id>latlon-xplanisk2-repo</id>
       <url>http://repo.lat-lon/nexus/content/groups/public/</url>
     </pluginRepository>
   </pluginRepositories>

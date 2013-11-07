@@ -14,12 +14,12 @@
 	<parent>
 		<groupId>org.geomajas</groupId>
 		<artifactId>geomajas-doc-parent</artifactId>
-		<version>1.0.2-latlon-SNAPSHOT</version>
+		<version>1.0.2-latlon-xplanisk2-SNAPSHOT</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.geomajas.widget</groupId>
 	<artifactId>geomajas-widget-layer-documentation</artifactId>
-	<version>1.0.0-latlon-SNAPSHOT</version>
+	<version>1.0.0-latlon-xplanisk2-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>geomajas-widget-layer documentation</name>
 	<description>geomajas-widget-layer documentation</description>

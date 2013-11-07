@@ -8,7 +8,7 @@
   <parent>
     <groupId>org.geomajas.plugin</groupId>
     <artifactId>geomajas-plugin-wms-all</artifactId>
-    <version>1.11.0-latlon-SNAPSHOT</version>
+    <version>1.11.0-latlon-xplanisk2-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.geomajas.plugin</groupId>

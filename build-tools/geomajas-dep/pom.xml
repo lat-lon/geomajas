@@ -13,12 +13,12 @@
 	<parent>
 		<groupId>org.geomajas</groupId>
 		<artifactId>geomajas-parent</artifactId>
-		<version>1.2.0-latlon-SNAPSHOT</version>
+		<version>1.2.0-latlon-xplanisk2-SNAPSHOT</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.geomajas</groupId>
 	<artifactId>geomajas-dep</artifactId>
-	<version>1.13.12-latlon-SNAPSHOT</version>
+	<version>1.13.12-latlon-xplanisk2-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>Geomajas dependencies</name>
 	<description>
@@ -38,7 +38,7 @@
 			<dependency>
 				<groupId>org.geomajas</groupId>
 				<artifactId>geomajas-backend</artifactId>
-				<version>1.13.0-latlon-SNAPSHOT</version>
+				<version>1.13.0-latlon-xplanisk2-SNAPSHOT</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -52,7 +52,7 @@
 			<dependency>
 				<groupId>org.geomajas</groupId>
 				<artifactId>geomajas-face-gwt</artifactId>
-				<version>1.14.0-latlon-SNAPSHOT</version>
+				<version>1.14.0-latlon-xplanisk2-SNAPSHOT</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -115,7 +115,7 @@
 			<dependency>
 				<groupId>org.geomajas.plugin</groupId>
 				<artifactId>geomajas-plugin-wms-all</artifactId>
-				<version>1.11.0-latlon-SNAPSHOT</version>
+				<version>1.11.0-latlon-xplanisk2-SNAPSHOT</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -150,7 +150,7 @@
 			<dependency>
 				<groupId>org.geomajas.plugin</groupId>
 				<artifactId>geomajas-plugin-printing-all</artifactId>
-				<version>2.4.0-latlon-SNAPSHOT</version>
+				<version>2.4.0-latlon-xplanisk2-SNAPSHOT</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -216,7 +216,7 @@
 			<dependency>
 				<groupId>org.geomajas.plugin</groupId>
 				<artifactId>geomajas-widget-featureinfo-all</artifactId>
-				<version>1.0.0-latlon-SNAPSHOT</version>
+				<version>1.0.0-latlon-xplanisk2-SNAPSHOT</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
