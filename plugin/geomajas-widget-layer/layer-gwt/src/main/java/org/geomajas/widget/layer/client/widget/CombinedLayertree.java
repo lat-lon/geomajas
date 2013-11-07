@@ -258,12 +258,13 @@ public class CombinedLayertree extends LayerTreeBase {
 					rollOverLayerTreeNode = ((LayerTreeLegendItemNode) lgr).getParent();
 				} else if (lgr instanceof LayerTreeLegendNode) {
 					rollOverLayerTreeNode = (LayerTreeLeafNode) lgr;
+				} else if (lgr instanceof SimpleLayerTreeNode) {
+					rollOverLayerTreeNode = (SimpleLayerTreeNode) lgr;
 				} else {
 					rollOverLayerTreeNode = null;
 					rollOverTools.setVisible(false);
 					return emptyRollOver;
 				}
-
 				rollOverTools.setVisible(true);
 				return rollOverTools;
 			}
