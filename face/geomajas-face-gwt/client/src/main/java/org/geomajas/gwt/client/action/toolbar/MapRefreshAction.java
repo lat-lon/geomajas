@@ -4,6 +4,7 @@ import org.geomajas.gwt.client.action.ToolbarAction;
 import org.geomajas.gwt.client.i18n.I18nProvider;
 import org.geomajas.gwt.client.util.WidgetLayout;
 import org.geomajas.gwt.client.widget.MapWidget;
+import org.geomajas.gwt.client.widget.MapWidget.RenderStatus;
 
 import com.smartgwt.client.widgets.events.ClickEvent;
 
@@ -27,7 +28,7 @@ public class MapRefreshAction extends ToolbarAction {
 
 	@Override
 	public void onClick(ClickEvent event) {
-		mapWidget.getMapModel().refresh();
+		mapWidget.render(mapWidget.getMapModel(), null, RenderStatus.ALL);
 	}
 
 }
