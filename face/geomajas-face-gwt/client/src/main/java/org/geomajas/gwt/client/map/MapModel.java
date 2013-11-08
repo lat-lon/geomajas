@@ -1168,7 +1168,7 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 	 * @param layer
 	 *            layer to clear
 	 */
-	private void deselectLayer(Layer<?> layer) {
+	public void deselectLayer(Layer<?> layer) {
 		if (layer != null) {
 			layer.setSelected(false);
 			handlerManager.fireEvent(new LayerDeselectedEvent(layer));

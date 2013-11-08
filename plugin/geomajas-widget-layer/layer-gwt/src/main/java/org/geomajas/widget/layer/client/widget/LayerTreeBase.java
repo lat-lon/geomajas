@@ -207,7 +207,11 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 				onIconClick(leaf);
 			} else {
 				LayerTreeLeafNode layerTreeNode = (LayerTreeLeafNode) leaf;
-				mapModel.selectLayer(layerTreeNode.getLayer());
+				if (selectedLayerTreeNode.equals(layerTreeNode)) {
+					mapModel.deselectLayer(layerTreeNode.getLayer());
+				} else {
+					mapModel.selectLayer(layerTreeNode.getLayer());
+				}
 			}
 		} catch (Exception e) { // NOSONAR
 			Log.logError(e.getMessage());
