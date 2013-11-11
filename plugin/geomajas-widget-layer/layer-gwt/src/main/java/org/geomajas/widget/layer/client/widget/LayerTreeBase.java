@@ -72,6 +72,8 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 
 	protected LayerTreeLeafNode selectedLayerTreeNode;
 
+	protected LayerTreeBranchNode selectedLayerBranchNode;
+	
 	protected TreeGrid treeGrid;
 
 	protected RefreshableTree tree;
@@ -182,17 +184,27 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 					mapModel.setSelectedLayersOfCategory(null);
 				} else if (treeNode instanceof LayerTreeBranchNode) {
 					mapModel.selectLayer(null);
-					treeGrid.selectRecord(treeNode);
-					List<Layer<?>> childLayers = new ArrayList<Layer<?>>();
-					collectChildLayers((LayerTreeBranchNode) treeNode, childLayers);
-					mapModel.setSelectedLayersOfCategory(childLayers);
-					updateActiveCategoryNote(treeNode.getName());
+					if (sameFolderNodeIsClicked(treeNode)) {
+						treeGrid.deselectRecord(treeNode);
+						mapModel.setSelectedLayersOfCategory(null);
+						selectedLayerBranchNode = null;
+					} else {
+						List<Layer<?>> childLayers = new ArrayList<Layer<?>>();
+						collectChildLayers((LayerTreeBranchNode) treeNode, childLayers);
+						mapModel.setSelectedLayersOfCategory(childLayers);
+						updateActiveCategoryNote(treeNode.getName());
+						selectedLayerBranchNode = (LayerTreeBranchNode) treeNode;
+					}
 				}
 			}
 		} catch (Exception e) { // NOSONAR
 			Log.logError(e.getMessage());
 			// some other unusable element
 		}
+	}
+
+	private boolean sameFolderNodeIsClicked(TreeNode treeNode) {
+		return selectedLayerBranchNode != null && selectedLayerBranchNode == treeNode;
 	}
 
 	private void collectChildLayers(LayerTreeBranchNode branchNode, List<Layer<?>> childLayers) {
@@ -227,7 +239,7 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 				onIconClick(leaf);
 			} else {
 				LayerTreeLeafNode layerTreeNode = (LayerTreeLeafNode) leaf;
-				if (selectedLayerTreeNode.equals(layerTreeNode)) {
+				if (selectedLayerTreeNode == layerTreeNode) {
 					mapModel.deselectLayer(layerTreeNode.getLayer());
 				} else {
 					mapModel.selectLayer(layerTreeNode.getLayer());
