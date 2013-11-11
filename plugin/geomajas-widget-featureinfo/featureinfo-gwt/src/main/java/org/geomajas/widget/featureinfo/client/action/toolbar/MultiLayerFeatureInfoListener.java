@@ -253,18 +253,32 @@ public class MultiLayerFeatureInfoListener extends AbstractListener {
 		rasterLayerRequest.setCrs(mapWidget.getMapModel().getCrs());
 		rasterLayerRequest.setSearchType(SearchByPointRequest.SEARCH_ALL_LAYERS);
 		rasterLayerRequest.setPixelTolerance(pixelTolerance);
-		final Map<String, String> rasterLayerIds = new HashMap<String, String>();
-		for (Layer<?> layer : mapWidget.getMapModel().getLayers()) {
-			if (layer.isShowing() && isLayerSelectedOrNoLayerSelected(layer) && layer instanceof RasterLayer
-					&& !layersToExclude.contains(layer.getId())) {
-				rasterLayerIds.put(layer.getId(), layer.getServerLayerId());
-			}
-		}
+		final Map<String, String> rasterLayerIds = collectSelectedRasterLayerIds();
 		rasterLayerRequest.setLayerMapping(rasterLayerIds);
 		rasterLayerRequest.setBbox(toBbox(mapWidget.getMapModel().getMapView().getBounds()));
 		rasterLayerRequest.setScale(mapWidget.getMapModel().getMapView().getCurrentScale());
 		rasterLayerRequest.setFeatureInfoFormat(featureInfoFormat);
 		return rasterLayerRequest;
+	}
+
+	private Map<String, String> collectSelectedRasterLayerIds() {
+		final Map<String, String> rasterLayerIds = new HashMap<String, String>();
+		if (mapWidget.getMapModel().getSelectedLayersOfCategory() != null
+				&& !mapWidget.getMapModel().getSelectedLayersOfCategory().isEmpty()) {
+			for (Layer<?> layer : mapWidget.getMapModel().getSelectedLayersOfCategory()) {
+				if (layer.isShowing() && layer instanceof RasterLayer && !layersToExclude.contains(layer.getId())) {
+					rasterLayerIds.put(layer.getId(), layer.getServerLayerId());
+				}
+			}
+		} else {
+			for (Layer<?> layer : mapWidget.getMapModel().getLayers()) {
+				if (layer.isShowing() && isLayerSelectedOrNoLayerSelected(layer) && layer instanceof RasterLayer
+						&& !layersToExclude.contains(layer.getId())) {
+					rasterLayerIds.put(layer.getId(), layer.getServerLayerId());
+				}
+			}
+		}
+		return rasterLayerIds;
 	}
 
 	private SearchByLocationRequest createSearchByLocationRequest(Point point) {

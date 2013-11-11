@@ -11,6 +11,7 @@
 
 package org.geomajas.widget.layer.client.widget;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.geomajas.gwt.client.i18n.I18nProvider;
@@ -20,6 +21,7 @@ import org.geomajas.gwt.client.map.event.LayerSelectedEvent;
 import org.geomajas.gwt.client.map.event.LayerSelectionHandler;
 import org.geomajas.gwt.client.map.event.MapModelChangedEvent;
 import org.geomajas.gwt.client.map.event.MapModelChangedHandler;
+import org.geomajas.gwt.client.map.layer.Layer;
 import org.geomajas.gwt.client.util.Log;
 import org.geomajas.gwt.client.widget.MapWidget;
 import org.geomajas.gwt.client.widget.MapWidget.RenderGroup;
@@ -172,18 +174,36 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 	public void onFolderClick(FolderClickEvent event) {
 		try {
 			Element e = EventHandler.getNativeMouseTarget();
+			TreeNode treeNode = event.getFolder();
 			if (IMG_TAGNAME.equals(e.getTagName())) {
-				onIconClick(event.getFolder());
+				onIconClick(treeNode);
 			} else {
-				if (event.getFolder() instanceof LayerTreeLeafNode) {
-					mapModel.selectLayer(((LayerTreeLeafNode) event.getFolder()).getLayer());
-				} else {
+				if (treeNode instanceof LayerTreeLeafNode) {
+					mapModel.selectLayer(((LayerTreeLeafNode) treeNode).getLayer());
+					mapModel.setSelectedLayersOfCategory(null);
+				} else if (treeNode instanceof LayerTreeBranchNode) {
 					mapModel.selectLayer(null);
+					treeGrid.selectRecord(treeNode);
+					List<Layer<?>> childLayers = new ArrayList<Layer<?>>();
+					collectChildLayers((LayerTreeBranchNode) treeNode, childLayers);
+					mapModel.setSelectedLayersOfCategory(childLayers);
 				}
 			}
 		} catch (Exception e) { // NOSONAR
 			Log.logError(e.getMessage());
 			// some other unusable element
+		}
+	}
+
+	private void collectChildLayers(LayerTreeBranchNode branchNode, List<Layer<?>> childLayers) {
+		List<LayerTreeNode> childLayerNodes = branchNode.getChildLayers();
+		for (LayerTreeNode childLayer : childLayerNodes) {
+			if (childLayer instanceof LayerTreeLeafNode) {
+				Layer<?> layer = ((LayerTreeLeafNode) childLayer).getLayer();
+				childLayers.add(layer);
+			} else if (childLayer instanceof LayerTreeBranchNode) {
+				collectChildLayers((LayerTreeBranchNode) childLayer, childLayers);
+			}
 		}
 	}
 
@@ -212,6 +232,7 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 				} else {
 					mapModel.selectLayer(layerTreeNode.getLayer());
 				}
+				mapModel.setSelectedLayersOfCategory(null);
 			}
 		} catch (Exception e) { // NOSONAR
 			Log.logError(e.getMessage());
