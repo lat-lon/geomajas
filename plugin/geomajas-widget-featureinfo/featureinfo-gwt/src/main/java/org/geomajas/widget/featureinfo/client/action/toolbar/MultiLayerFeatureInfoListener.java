@@ -341,12 +341,11 @@ public class MultiLayerFeatureInfoListener extends AbstractListener {
 	private void showFeatureInfoHtml(Map<String, String> htmlMap) {
 		if (htmlMap.size() < 1) {
 			Notify.info(MESSAGES.multiLayerFeatureInfoNoResult());
-		} else if (!isNoLayerSelected()) {
+		} else if (htmlMap.size() == 1) {
 			showSingleHtmlWindow(htmlMap);
 		} else {
 			showMultiHtmlWindow(htmlMap);
 		}
-
 	}
 
 	private void showMultiHtmlWindow(Map<String, String> htmlMap) {
