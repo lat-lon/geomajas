@@ -135,7 +135,7 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 			treeGrid.deselectRecord(selected);
 		}
 		selectedLayerTreeNode = null;
-		htmlSelectedLayer.setContents(I18nProvider.getLayerTree().activeLayer(I18nProvider.getLayerTree().none()));
+		showNoLayerSelectedNote();
 	}
 
 	/**
@@ -151,8 +151,7 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 			if (node.getName().equals(event.getLayer().getLabel())) {
 				selectedLayerTreeNode = (LayerTreeLeafNode) node;
 				treeGrid.selectRecord(selectedLayerTreeNode);
-				htmlSelectedLayer.setContents(I18nProvider.getLayerTree().activeLayer(
-						selectedLayerTreeNode.getLayer().getLabel()));
+				updateActiveLayerNote(selectedLayerTreeNode.getLayer().getLabel());
 
 				// Canvas[] toolStripMembers = toolStrip.getMembers();
 				// updateButtonIconsAndStates(toolStripMembers);
@@ -187,6 +186,7 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 					List<Layer<?>> childLayers = new ArrayList<Layer<?>>();
 					collectChildLayers((LayerTreeBranchNode) treeNode, childLayers);
 					mapModel.setSelectedLayersOfCategory(childLayers);
+					updateActiveCategoryNote(treeNode.getName());
 				}
 			}
 		} catch (Exception e) { // NOSONAR
@@ -371,6 +371,18 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 	 */
 	protected TreeGrid createTreeGrid() {
 		return new TreeGrid();
+	}
+	
+	protected void showNoLayerSelectedNote() {
+		updateActiveLayerNote(I18nProvider.getLayerTree().none());
+	}
+
+	protected void updateActiveLayerNote(String activeLayer) {
+		htmlSelectedLayer.setContents(I18nProvider.getLayerTree().activeLayer(activeLayer));
+	}
+
+	protected void updateActiveCategoryNote(String activeCategory) {
+		htmlSelectedLayer.setContents(I18nProvider.getLayerTree().activeCategory(activeCategory));
 	}
 
 }

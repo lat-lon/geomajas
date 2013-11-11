@@ -24,6 +24,8 @@ public interface LayerTreeMessages extends Messages {
 
 	String activeLayer(String layerName);
 
+	String activeCategory(String categoryName);
+
 	String none();
 
 	String visibleAction();
