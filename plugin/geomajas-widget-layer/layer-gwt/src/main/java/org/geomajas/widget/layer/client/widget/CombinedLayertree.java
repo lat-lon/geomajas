@@ -175,9 +175,9 @@ public class CombinedLayertree extends LayerTreeBase {
 			LayerTreeLeafNode layerTreeLegendNode = ((LayerTreeLegendItemNode) leaf).getParent();
 			treeGrid.deselectRecord(leaf);
 			treeGrid.selectRecord(layerTreeLegendNode);
-			handleVisibilityOrSelect(layerTreeLegendNode);
+			handleVisibilityAndSelection(layerTreeLegendNode);
 		} else {
-			handleVisibilityOrSelect(leaf);
+			handleVisibilityAndSelection(leaf);
 		}
 	}
 
