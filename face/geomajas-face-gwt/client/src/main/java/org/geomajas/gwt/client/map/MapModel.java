@@ -118,6 +118,8 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 	private List<ComboRasterLayer> activeComboRasterLayers = new ArrayList<ComboRasterLayer>();
 
 	private List<Layer<?>> activeNonComboLayers = new ArrayList<Layer<?>>();
+	
+	private List<Layer<?>> selectedLayersOfCategory;
 
 	/**
 	 * Internal configuration state of the map.
@@ -1168,7 +1170,7 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 	 * @param layer
 	 *            layer to clear
 	 */
-	private void deselectLayer(Layer<?> layer) {
+	public void deselectLayer(Layer<?> layer) {
 		if (layer != null) {
 			layer.setSelected(false);
 			handlerManager.fireEvent(new LayerDeselectedEvent(layer));
@@ -1365,4 +1367,11 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		return currentAggregationId;
 	}
 
+	public List<Layer<?>> getSelectedLayersOfCategory() {
+		return selectedLayersOfCategory;
+	}
+
+	public void setSelectedLayersOfCategory(List<Layer<?>> selectedLayersOfCategory) {
+		this.selectedLayersOfCategory = selectedLayersOfCategory;
+	}
 }

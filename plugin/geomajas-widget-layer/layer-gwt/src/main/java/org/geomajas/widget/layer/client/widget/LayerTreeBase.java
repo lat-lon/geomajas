@@ -11,6 +11,7 @@
 
 package org.geomajas.widget.layer.client.widget;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.geomajas.gwt.client.i18n.I18nProvider;
@@ -20,6 +21,7 @@ import org.geomajas.gwt.client.map.event.LayerSelectedEvent;
 import org.geomajas.gwt.client.map.event.LayerSelectionHandler;
 import org.geomajas.gwt.client.map.event.MapModelChangedEvent;
 import org.geomajas.gwt.client.map.event.MapModelChangedHandler;
+import org.geomajas.gwt.client.map.layer.Layer;
 import org.geomajas.gwt.client.util.Log;
 import org.geomajas.gwt.client.widget.MapWidget;
 import org.geomajas.gwt.client.widget.MapWidget.RenderGroup;
@@ -70,6 +72,8 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 
 	protected LayerTreeLeafNode selectedLayerTreeNode;
 
+	protected LayerTreeBranchNode selectedLayerBranchNode;
+	
 	protected TreeGrid treeGrid;
 
 	protected RefreshableTree tree;
@@ -133,7 +137,7 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 			treeGrid.deselectRecord(selected);
 		}
 		selectedLayerTreeNode = null;
-		htmlSelectedLayer.setContents(I18nProvider.getLayerTree().activeLayer(I18nProvider.getLayerTree().none()));
+		showNoLayerSelectedNote();
 	}
 
 	/**
@@ -149,8 +153,7 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 			if (node.getName().equals(event.getLayer().getLabel())) {
 				selectedLayerTreeNode = (LayerTreeLeafNode) node;
 				treeGrid.selectRecord(selectedLayerTreeNode);
-				htmlSelectedLayer.setContents(I18nProvider.getLayerTree().activeLayer(
-						selectedLayerTreeNode.getLayer().getLabel()));
+				updateActiveLayerNote(selectedLayerTreeNode.getLayer().getLabel());
 
 				// Canvas[] toolStripMembers = toolStrip.getMembers();
 				// updateButtonIconsAndStates(toolStripMembers);
@@ -172,18 +175,47 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 	public void onFolderClick(FolderClickEvent event) {
 		try {
 			Element e = EventHandler.getNativeMouseTarget();
+			TreeNode treeNode = event.getFolder();
 			if (IMG_TAGNAME.equals(e.getTagName())) {
-				onIconClick(event.getFolder());
+				onIconClick(treeNode);
 			} else {
-				if (event.getFolder() instanceof LayerTreeLeafNode) {
-					mapModel.selectLayer(((LayerTreeLeafNode) event.getFolder()).getLayer());
-				} else {
+				if (treeNode instanceof LayerTreeLeafNode) {
+					mapModel.selectLayer(((LayerTreeLeafNode) treeNode).getLayer());
+					mapModel.setSelectedLayersOfCategory(null);
+				} else if (treeNode instanceof LayerTreeBranchNode) {
 					mapModel.selectLayer(null);
+					if (sameFolderNodeIsClicked(treeNode)) {
+						treeGrid.deselectRecord(treeNode);
+						mapModel.setSelectedLayersOfCategory(null);
+						selectedLayerBranchNode = null;
+					} else {
+						List<Layer<?>> childLayers = new ArrayList<Layer<?>>();
+						collectChildLayers((LayerTreeBranchNode) treeNode, childLayers);
+						mapModel.setSelectedLayersOfCategory(childLayers);
+						updateActiveCategoryNote(treeNode.getName());
+						selectedLayerBranchNode = (LayerTreeBranchNode) treeNode;
+					}
 				}
 			}
 		} catch (Exception e) { // NOSONAR
 			Log.logError(e.getMessage());
 			// some other unusable element
+		}
+	}
+
+	private boolean sameFolderNodeIsClicked(TreeNode treeNode) {
+		return selectedLayerBranchNode != null && selectedLayerBranchNode == treeNode;
+	}
+
+	private void collectChildLayers(LayerTreeBranchNode branchNode, List<Layer<?>> childLayers) {
+		List<LayerTreeNode> childLayerNodes = branchNode.getChildLayers();
+		for (LayerTreeNode childLayer : childLayerNodes) {
+			if (childLayer instanceof LayerTreeLeafNode) {
+				Layer<?> layer = ((LayerTreeLeafNode) childLayer).getLayer();
+				childLayers.add(layer);
+			} else if (childLayer instanceof LayerTreeBranchNode) {
+				collectChildLayers((LayerTreeBranchNode) childLayer, childLayers);
+			}
 		}
 	}
 
@@ -197,18 +229,22 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 	@Override
 	public void onLeafClick(LeafClickEvent event) {
 		TreeNode leaf = event.getLeaf();
-		handleVisibilityOrSelect(leaf);
+		handleVisibilityAndSelection(leaf);
 	}
 
-	protected void handleVisibilityOrSelect(TreeNode leaf) {
+	protected void handleVisibilityAndSelection(TreeNode leaf) {
 		try {
 			Element e = EventHandler.getNativeMouseTarget();
 			if (IMG_TAGNAME.equals(e.getTagName())) {
 				onIconClick(leaf);
+			}
+			LayerTreeLeafNode layerTreeNode = (LayerTreeLeafNode) leaf;
+			if (selectedLayerTreeNode == layerTreeNode) {
+				mapModel.deselectLayer(layerTreeNode.getLayer());
 			} else {
-				LayerTreeLeafNode layerTreeNode = (LayerTreeLeafNode) leaf;
 				mapModel.selectLayer(layerTreeNode.getLayer());
 			}
+			mapModel.setSelectedLayersOfCategory(null);
 		} catch (Exception e) { // NOSONAR
 			Log.logError(e.getMessage());
 			// some other unusable element
@@ -346,6 +382,18 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 	 */
 	protected TreeGrid createTreeGrid() {
 		return new TreeGrid();
+	}
+	
+	protected void showNoLayerSelectedNote() {
+		updateActiveLayerNote(I18nProvider.getLayerTree().none());
+	}
+
+	protected void updateActiveLayerNote(String activeLayer) {
+		htmlSelectedLayer.setContents(I18nProvider.getLayerTree().activeLayer(activeLayer));
+	}
+
+	protected void updateActiveCategoryNote(String activeCategory) {
+		htmlSelectedLayer.setContents(I18nProvider.getLayerTree().activeCategory(activeCategory));
 	}
 
 }
