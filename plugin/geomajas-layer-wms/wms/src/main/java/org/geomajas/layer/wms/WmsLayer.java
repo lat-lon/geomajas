@@ -12,6 +12,7 @@ package org.geomajas.layer.wms;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -50,6 +51,7 @@ import org.geomajas.security.SecurityContext;
 import org.geomajas.service.DispatcherUrlService;
 import org.geomajas.service.DtoConverterService;
 import org.geomajas.service.GeoService;
+import org.geomajas.service.ResourceService;
 import org.geotools.GML;
 import org.geotools.GML.Version;
 import org.geotools.data.ows.HTTPClient;
@@ -67,6 +69,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
@@ -175,6 +178,9 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 	@Autowired
 	private WmsLayerPainter painter;
 
+	@Autowired
+	private ResourceService resourceService;
+
 	private NumberOfFeaturesInEnvelopeRetriever numberOfFeaturesInEnvelopeRetriever;
 
 	private boolean enableFeatureInfoSupportAsGml;
@@ -253,6 +259,22 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 			}
 		}
 		retrieveAndSetLegendImageParameters(baseWmsUrl);
+		retrieveAndSetStaticLegendImageParameters(staticLegendImagePath);
+	}
+
+	private void retrieveAndSetStaticLegendImageParameters(String path)  {
+		if (path != null && !"".equals(path))
+			try {
+				BufferedImage img = getImage(path);
+				if (img == null) {
+					log.warn("Could not read static legend image!");
+				} else {
+					legendImageWidth = img.getWidth();
+					legendImageHeight = img.getHeight();
+				}
+			} catch (GeomajasException e) {
+				log.warn("Could not read static legend image!");
+			}
 	}
 
 	/**
@@ -446,12 +468,12 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 	public String getLegendImageUrl() {
 		return legendImageUrl;
 	}
-	
+
 	@Override
 	public String getStaticLegendImagePath() {
 		return staticLegendImagePath;
 	}
-	
+
 	public void setStaticLegendImagePath(String staticLegendImagePath) {
 		this.staticLegendImagePath = staticLegendImagePath;
 	}
@@ -623,6 +645,41 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 			}
 		} catch (IOException e) {
 			log.debug("Could not retrieve legend image height and size. Reason: ", e);
+		}
+	}
+	
+	private BufferedImage getImage(String href) throws GeomajasException {
+		InputStream is = null;
+		try {
+			Resource resource = resourceService.find(href);
+			if (resource != null) {
+				is = resource.getInputStream();
+			} else {
+				// backwards compatibility
+				resource = resourceService.find("images/" + href);
+				if (null == resource) {
+					resource = resourceService.find("image/" + href);
+				}
+				if (resource != null) {
+					is = resource.getInputStream();
+				} else {
+					is = ClassLoader.getSystemResourceAsStream(href);
+				}
+			}
+			if (is == null) {
+				throw new GeomajasException(ExceptionCode.RESOURCE_NOT_FOUND, href);
+			}
+			return ImageIO.read(is);
+		} catch (IOException io) {
+			throw new GeomajasException(io, ExceptionCode.RESOURCE_NOT_FOUND, href);
+		} finally {
+			if (is != null) {
+				try {
+					is.close();
+				} catch (IOException e) {
+					// ignore
+				}
+			}
 		}
 	}
 
