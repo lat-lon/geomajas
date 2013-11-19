@@ -35,6 +35,7 @@ import org.geomajas.geometry.Bbox;
 import org.geomajas.geometry.Crs;
 import org.geomajas.global.ExceptionCode;
 import org.geomajas.global.GeomajasException;
+import org.geomajas.internal.util.ResourceRetriever;
 import org.geomajas.layer.LayerException;
 import org.geomajas.layer.LayerLegendImageSupport;
 import org.geomajas.layer.RasterLayer;
@@ -179,7 +180,7 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 	private WmsLayerPainter painter;
 
 	@Autowired
-	private ResourceService resourceService;
+	private ResourceRetriever resourceRetriever;
 
 	private NumberOfFeaturesInEnvelopeRetriever numberOfFeaturesInEnvelopeRetriever;
 
@@ -265,7 +266,7 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 	private void retrieveAndSetStaticLegendImageParameters(String path)  {
 		if (path != null && !"".equals(path))
 			try {
-				BufferedImage img = getImage(path);
+				BufferedImage img = resourceRetriever.getImage(path);
 				if (img == null) {
 					log.warn("Could not read static legend image!");
 				} else {
@@ -648,41 +649,6 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 		}
 	}
 	
-	private BufferedImage getImage(String href) throws GeomajasException {
-		InputStream is = null;
-		try {
-			Resource resource = resourceService.find(href);
-			if (resource != null) {
-				is = resource.getInputStream();
-			} else {
-				// backwards compatibility
-				resource = resourceService.find("images/" + href);
-				if (null == resource) {
-					resource = resourceService.find("image/" + href);
-				}
-				if (resource != null) {
-					is = resource.getInputStream();
-				} else {
-					is = ClassLoader.getSystemResourceAsStream(href);
-				}
-			}
-			if (is == null) {
-				throw new GeomajasException(ExceptionCode.RESOURCE_NOT_FOUND, href);
-			}
-			return ImageIO.read(is);
-		} catch (IOException io) {
-			throw new GeomajasException(io, ExceptionCode.RESOURCE_NOT_FOUND, href);
-		} finally {
-			if (is != null) {
-				try {
-					is.close();
-				} catch (IOException e) {
-					// ignore
-				}
-			}
-		}
-	}
-
 	public String getBaseWmsUrl() {
 		return baseWmsUrl;
 	}
