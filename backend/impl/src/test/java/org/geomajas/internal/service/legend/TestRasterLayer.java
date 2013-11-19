@@ -57,4 +57,10 @@ public class TestRasterLayer implements RasterLayer, LayerLegendImageSupport {
 		return -1;
 	}
 
+	@Override
+	public String getStaticLegendImagePath() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

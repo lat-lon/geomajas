@@ -44,4 +44,10 @@ public interface LayerLegendImageSupport {
 	 */
 	String getLegendImageUrl();
 
+	/**
+	 * Get the path of the default static legend image
+	 * 
+	 * @return the relative path to the static legend image. Never <code>null</code>
+	 */
+	String getStaticLegendImagePath();
 }

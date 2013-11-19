@@ -34,6 +34,7 @@ import org.geomajas.geometry.Bbox;
 import org.geomajas.geometry.Crs;
 import org.geomajas.global.ExceptionCode;
 import org.geomajas.global.GeomajasException;
+import org.geomajas.internal.util.ResourceRetriever;
 import org.geomajas.layer.LayerException;
 import org.geomajas.layer.LayerLegendImageSupport;
 import org.geomajas.layer.RasterLayer;
@@ -175,6 +176,9 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 	@Autowired
 	private WmsLayerPainter painter;
 
+	@Autowired
+	private ResourceRetriever resourceRetriever;
+
 	private NumberOfFeaturesInEnvelopeRetriever numberOfFeaturesInEnvelopeRetriever;
 
 	private boolean enableFeatureInfoSupportAsGml;
@@ -184,6 +188,8 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 	private int legendImageHeight;
 
 	private int legendImageWidth;
+
+	private String staticLegendImagePath;
 
 	/**
 	 * Return the layers identifier.
@@ -251,6 +257,22 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 			}
 		}
 		retrieveAndSetLegendImageParameters(baseWmsUrl);
+		retrieveAndSetStaticLegendImageParameters(staticLegendImagePath);
+	}
+
+	private void retrieveAndSetStaticLegendImageParameters(String path)  {
+		if (path != null && !"".equals(path))
+			try {
+				BufferedImage img = resourceRetriever.getImage(path);
+				if (img == null) {
+					log.warn("Could not read static legend image!");
+				} else {
+					legendImageWidth = img.getWidth();
+					legendImageHeight = img.getHeight();
+				}
+			} catch (GeomajasException e) {
+				log.warn("Could not read static legend image!");
+			}
 	}
 
 	/**
@@ -445,6 +467,15 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 		return legendImageUrl;
 	}
 
+	@Override
+	public String getStaticLegendImagePath() {
+		return staticLegendImagePath;
+	}
+
+	public void setStaticLegendImagePath(String staticLegendImagePath) {
+		this.staticLegendImagePath = staticLegendImagePath;
+	}
+
 	private String formatGetFeatureInfoUrl(int width, int height, Bbox box, int x, int y, boolean isHtmlRequest)
 			throws GeomajasException {
 		// Always use direct url
@@ -614,7 +645,7 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 			log.debug("Could not retrieve legend image height and size. Reason: ", e);
 		}
 	}
-
+	
 	public String getBaseWmsUrl() {
 		return baseWmsUrl;
 	}
