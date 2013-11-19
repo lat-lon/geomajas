@@ -243,9 +243,11 @@ public class LegendGraphicServiceImpl implements LegendGraphicService {
 			return image;
 		} else if (layer instanceof RasterLayer) {
 			String legendImageUrl = null;
+			String staticLegendImagePath = null;
 			if (layer instanceof LayerLegendImageSupport) {
 				LayerLegendImageSupport legendImage = (LayerLegendImageSupport) layer;
 				legendImageUrl = ((LayerLegendImageSupport) layer).getLegendImageUrl();
+				staticLegendImagePath = ((LayerLegendImageSupport) layer).getStaticLegendImagePath();
 				if (legendImage.getLegendImageWidth() > 0 && legendImage.getLegendImageHeight() > 0) {
 					// use WMS layer legend size only if none is set in the legendMetadata
 					width = legendMetadata.getWidth() <= 0 ? legendImage.getLegendImageWidth() : width;
@@ -258,7 +260,10 @@ public class LegendGraphicServiceImpl implements LegendGraphicService {
 
 			if (legendImageUrl != null && !"".equals(legendImageUrl)) {
 				graphics.drawImage(getImage(legendImageUrl), 0, 0, width, height, null);
-			} else {
+			} else if (staticLegendImagePath != null && !"".equals(staticLegendImagePath)){
+				graphics.drawImage(getImage(staticLegendImagePath), 0, 0, width, height, null);
+			}
+			else {
 				graphics.drawImage(getImage(getRasterImagePath()), 0, 0, width, height, null);
 			}
 			graphics.dispose();

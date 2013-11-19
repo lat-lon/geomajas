@@ -185,6 +185,8 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 
 	private int legendImageWidth;
 
+	private String staticLegendImagePath;
+
 	/**
 	 * Return the layers identifier.
 	 * 
@@ -443,6 +445,15 @@ public class WmsLayer implements RasterLayer, LayerLegendImageSupport, LayerFeat
 	@Override
 	public String getLegendImageUrl() {
 		return legendImageUrl;
+	}
+	
+	@Override
+	public String getStaticLegendImagePath() {
+		return staticLegendImagePath;
+	}
+	
+	public void setStaticLegendImagePath(String staticLegendImagePath) {
+		this.staticLegendImagePath = staticLegendImagePath;
 	}
 
 	private String formatGetFeatureInfoUrl(int width, int height, Bbox box, int x, int y, boolean isHtmlRequest)
