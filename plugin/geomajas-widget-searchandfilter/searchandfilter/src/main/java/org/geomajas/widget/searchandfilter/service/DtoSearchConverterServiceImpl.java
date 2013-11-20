@@ -113,6 +113,8 @@ public class DtoSearchConverterServiceImpl implements DtoSearchConverterService 
 		if (l == null) {
 			throw new GeomajasException(ExceptionCode.LAYER_NOT_FOUND, criterion.getServerLayerId());
 		}
+        //Fix namespace in attributes
+        setAttributeNamespace(criterion, l);
 
 		String operator = criterion.getOperator();
 		if ("LIKE".equals(operator.toUpperCase())) {
@@ -129,7 +131,15 @@ public class DtoSearchConverterServiceImpl implements DtoSearchConverterService 
 		return filters;
 	}
 
-	private Map<VectorLayer, Filter> dtoGeometryCriterionToFilters(GeometryCriterion criterion, Crs mapCrs)
+    private void setAttributeNamespace(AttributeCriterion criterion, VectorLayer l) {
+        String attributeName = criterion.getAttributeName();
+        String dataSourceName = l.getLayerInfo().getFeatureInfo().getDataSourceName();
+        if (dataSourceName.contains(":") && !attributeName.contains(":")) {
+            criterion.setAttributeName(dataSourceName.substring(0, dataSourceName.indexOf(":") + 1) + attributeName);
+        }
+    }
+
+    private Map<VectorLayer, Filter> dtoGeometryCriterionToFilters(GeometryCriterion criterion, Crs mapCrs)
 			throws GeomajasException {
 		if (mapCrs == null) {
 			throw new GeomajasException(ExceptionCode.PARAMETER_MISSING, "mapCrs");
