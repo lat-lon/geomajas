@@ -187,6 +187,7 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 					if (sameFolderNodeIsClicked(treeNode)) {
 						treeGrid.deselectRecord(treeNode);
 						mapModel.setSelectedLayersOfCategory(null);
+						showNoCategorySelectedNote();
 						selectedLayerBranchNode = null;
 					} else {
 						List<Layer<?>> childLayers = new ArrayList<Layer<?>>();
@@ -390,6 +391,10 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 
 	protected void updateActiveLayerNote(String activeLayer) {
 		htmlSelectedLayer.setContents(I18nProvider.getLayerTree().activeLayer(activeLayer));
+	}
+
+	protected void showNoCategorySelectedNote() {
+		updateActiveCategoryNote(I18nProvider.getLayerTree().none());
 	}
 
 	protected void updateActiveCategoryNote(String activeCategory) {
