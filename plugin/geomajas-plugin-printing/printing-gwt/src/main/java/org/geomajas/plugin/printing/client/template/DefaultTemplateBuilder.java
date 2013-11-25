@@ -46,6 +46,7 @@ import org.geomajas.plugin.printing.component.dto.ScaleBarComponentInfo;
 import org.geomajas.plugin.rasterizing.command.dto.RasterLayerRasterizingInfo;
 import org.geomajas.sld.FeatureTypeStyleInfo;
 import org.geomajas.sld.RuleInfo;
+import org.geomajas.sld.UserStyleInfo;
 
 /**
  * Default print template builder, parameters include title, size, raster DPI, orientation, etc...
@@ -187,23 +188,25 @@ public class DefaultTemplateBuilder extends AbstractTemplateBuilder {
 				VectorLayer vectorLayer = (VectorLayer) layer;
 				ClientVectorLayerInfo layerInfo = vectorLayer.getLayerInfo();
 				String label = layerInfo.getLabel();
-				FeatureTypeStyleInfo fts = layerInfo.getNamedStyleInfo().getUserStyle().getFeatureTypeStyleList()
-						.get(0);
-				for (RuleInfo rule : fts.getRuleList()) {
-					// use title if present, name if not
-					String title = (rule.getTitle() != null ? rule.getTitle() : rule.getName());
-					// fall back to style name
-					if (title == null) {
-						title = layerInfo.getNamedStyleInfo().getName();
+				UserStyleInfo userStyle = layerInfo.getNamedStyleInfo().getUserStyle();
+				if (userStyle != null) {
+					FeatureTypeStyleInfo fts = userStyle.getFeatureTypeStyleList().get(0);
+					for (RuleInfo rule : fts.getRuleList()) {
+						// use title if present, name if not
+						String title = (rule.getTitle() != null ? rule.getTitle() : rule.getName());
+						// fall back to style name
+						if (title == null) {
+							title = layerInfo.getNamedStyleInfo().getName();
+						}
+						LegendItemComponentInfo item = new LegendItemComponentInfo();
+						LegendGraphicComponentInfo graphic = new LegendGraphicComponentInfo();
+						graphic.setLabel(title);
+						graphic.setRuleInfo(rule);
+						graphic.setLayerId(layerInfo.getServerLayerId());
+						item.addChild(graphic);
+						item.addChild(getLegendLabel(legend, title));
+						legend.addChild(item);
 					}
-					LegendItemComponentInfo item = new LegendItemComponentInfo();
-					LegendGraphicComponentInfo graphic = new LegendGraphicComponentInfo();
-					graphic.setLabel(title);
-					graphic.setRuleInfo(rule);
-					graphic.setLayerId(layerInfo.getServerLayerId());
-					item.addChild(graphic);
-					item.addChild(getLegendLabel(legend, title));
-					legend.addChild(item);
 				}
 			} else if (layer instanceof RasterLayer && layer.isShowing()) {
 				RasterLayer rasterLayer = (RasterLayer) layer;
