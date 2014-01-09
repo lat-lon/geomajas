@@ -21,6 +21,7 @@ import org.geomajas.gwt.client.map.event.LayerSelectedEvent;
 import org.geomajas.gwt.client.map.event.LayerSelectionHandler;
 import org.geomajas.gwt.client.map.event.MapModelChangedEvent;
 import org.geomajas.gwt.client.map.event.MapModelChangedHandler;
+import org.geomajas.gwt.client.map.layer.AbstractLayer;
 import org.geomajas.gwt.client.map.layer.Layer;
 import org.geomajas.gwt.client.util.Log;
 import org.geomajas.gwt.client.widget.MapWidget;
@@ -289,16 +290,24 @@ public abstract class LayerTreeBase extends Canvas implements LeafClickHandler, 
 
 	private void updateChildLayers(LayerTreeBranchNode branchTreeNode, boolean newStatus) {
 		List<LayerTreeNode> childNodes = branchTreeNode.getChildLayers();
+        LayerTreeLeafNode lastLayer = null;
 		for (LayerTreeNode childNode : childNodes) {
 			if (childNode instanceof LayerTreeLeafNode) {
 				LayerTreeLeafNode n = (LayerTreeLeafNode) childNode;
 				n.getLayer().setVisibleNoEvent(newStatus);
 				n.updateIcon();
+                lastLayer = n;
 			} else if (childNode instanceof LayerTreeBranchNode) {
 				LayerTreeBranchNode childBranchTreeNode = (LayerTreeBranchNode) childNode;
 				updateChildLayers(childBranchTreeNode, newStatus);
 			}
 		}
+        //Executing setVisible of the last layer to fire an event which updates the legend.
+        if (lastLayer != null) {
+            AbstractLayer<?> layer = lastLayer.getLayer();
+            layer.setVisible(!layer.isVisible());
+            layer.setVisible(newStatus);
+        }
 	}
 
 	// -------------------------------------------------------------------------
