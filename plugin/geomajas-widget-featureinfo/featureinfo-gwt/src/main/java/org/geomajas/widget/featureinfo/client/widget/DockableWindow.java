@@ -132,7 +132,7 @@ public class DockableWindow extends Window {
 			GWT.runAsync(new RunAsyncCallback() {
 				public void onSuccess() {
 					window.animateRect(currentPosition, Document.get().getBody().getClientHeight() - minimizedHeight,
-							minimizedWidth, null, new AnimationCallback() {
+							null, null, new AnimationCallback() {
 								public void execute(boolean earlyFinish) {
 									currentPosition += window.getWidth(); // not
 																		// necessarily
