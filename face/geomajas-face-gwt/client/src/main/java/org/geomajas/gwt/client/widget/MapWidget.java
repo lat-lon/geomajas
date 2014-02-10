@@ -45,6 +45,7 @@ import org.geomajas.gwt.client.gfx.paintable.mapaddon.Watermark;
 import org.geomajas.gwt.client.gfx.paintable.mapaddon.ZoomAddon;
 import org.geomajas.gwt.client.gfx.paintable.mapaddon.ZoomToRectangleAddon;
 import org.geomajas.gwt.client.gfx.painter.CirclePainter;
+import org.geomajas.gwt.client.gfx.painter.ClientWmsLayerPainter;
 import org.geomajas.gwt.client.gfx.painter.FeaturePainter;
 import org.geomajas.gwt.client.gfx.painter.FeatureTransactionPainter;
 import org.geomajas.gwt.client.gfx.painter.GeometryPainter;
@@ -296,6 +297,7 @@ public class MapWidget extends VLayout {
 		painterVisitor.registerPainter(new ImagePainter());
 		painterVisitor.registerPainter(new MapModelPainter(this));
 		painterVisitor.registerPainter(new RasterLayerPainter(this));
+		painterVisitor.registerPainter(new ClientWmsLayerPainter(this));
 		painterVisitor.registerPainter(new RasterTilePainter());
 		painterVisitor.registerPainter(new ComboRasterLayerPainter(this));
 

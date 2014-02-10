@@ -33,7 +33,7 @@ import org.geomajas.gwt.client.spatial.Bbox;
 @Api
 public class RasterLayer extends AbstractLayer<ClientRasterLayerInfo> {
 
-	private RasterLayerStore store;
+	protected RasterLayerStore store;
 	private double opacity = 1;
 
 	/**

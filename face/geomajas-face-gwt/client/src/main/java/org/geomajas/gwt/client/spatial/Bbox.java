@@ -461,4 +461,14 @@ public class Bbox {
 		double y = t.getYx() * coordinate.getY() + t.getYy() * coordinate.getY() + t.getDy();
 		return new Coordinate(x, y);
 	}
+
+	/**
+	 * Convert the GWT bounding box to a DTO bounding box.
+	 * 
+	 * @return the bbox
+	 */
+	public org.geomajas.geometry.Bbox toDtoBbox() {
+		return new org.geomajas.geometry.Bbox(getX(), getY(), getWidth(), getHeight());
+
+	}
 }

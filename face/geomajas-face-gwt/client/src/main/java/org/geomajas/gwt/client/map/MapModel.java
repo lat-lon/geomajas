@@ -53,9 +53,11 @@ import org.geomajas.gwt.client.map.feature.FeatureEditor;
 import org.geomajas.gwt.client.map.feature.FeatureTransaction;
 import org.geomajas.gwt.client.map.feature.LazyLoadCallback;
 import org.geomajas.gwt.client.map.layer.ComboRasterLayer;
+import org.geomajas.gwt.client.map.layer.InternalClientWmsLayer;
 import org.geomajas.gwt.client.map.layer.Layer;
 import org.geomajas.gwt.client.map.layer.RasterLayer;
 import org.geomajas.gwt.client.map.layer.VectorLayer;
+import org.geomajas.gwt.client.map.layer.configuration.ClientWmsLayerInfo;
 import org.geomajas.gwt.client.service.ClientConfigurationService;
 import org.geomajas.gwt.client.service.WidgetConfigurationCallback;
 import org.geomajas.gwt.client.spatial.Bbox;
@@ -1150,11 +1152,17 @@ public class MapModel implements Paintable, MapViewChangedHandler, HasFeatureSel
 		layers = new ArrayList<Layer<?>>();
 	}
 
-	private void addLayer(ClientLayerInfo layerInfo) {
+	public void addLayer(ClientLayerInfo layerInfo) {
 		switch (layerInfo.getLayerType()) {
 			case RASTER:
-				RasterLayer rasterLayer = new RasterLayer(this, (ClientRasterLayerInfo) layerInfo);
-				layers.add(rasterLayer);
+				if (layerInfo instanceof ClientWmsLayerInfo) {
+					InternalClientWmsLayer internalClientWmsLayer = new InternalClientWmsLayer(this,
+							(ClientWmsLayerInfo) layerInfo);
+					layers.add(internalClientWmsLayer);
+				} else {
+					RasterLayer rasterLayer = new RasterLayer(this, (ClientRasterLayerInfo) layerInfo);
+					layers.add(rasterLayer);
+				}
 				break;
 			default:
 				VectorLayer vectorLayer = new VectorLayer(this, (ClientVectorLayerInfo) layerInfo);

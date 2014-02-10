@@ -15,7 +15,7 @@ import org.geomajas.gwt.client.map.MapModel;
 import org.geomajas.gwt.client.map.layer.configuration.ClientWmsLayerInfo;
 import org.geomajas.gwt.client.map.store.ClientWmsRasterLayerStore;
 import org.geomajas.gwt.client.spatial.Bbox;
-import org.geomajas.gwt2.client.map.render.Tile;
+//import org.geomajas.gwt2.client.map.render.Tile;
 import org.geomajas.layer.tile.RasterTile;
 import org.geomajas.layer.tile.TileCode;
 
@@ -51,10 +51,10 @@ public class InternalClientWmsLayer extends RasterLayer {
 	}
 
 	public List<RasterTile> getTiles(Bbox worldBounds, double scale) {
-		List<Tile> tiles = wmsLayer.getTiles(scale, worldBounds.toDtoBbox());
+		List<RasterTile> tiles = wmsLayer.getTiles(scale, worldBounds.toDtoBbox());
 
 		List<RasterTile> rasterTiles = new ArrayList<RasterTile>(tiles.size());
-		for (Tile tile : tiles) {
+		for (RasterTile tile : tiles) {
 			RasterTile rasterTile = new RasterTile();
 			rasterTile.setUrl(tile.getUrl());
 			rasterTile.setBounds(tile.getBounds());
@@ -65,7 +65,7 @@ public class InternalClientWmsLayer extends RasterLayer {
 		return rasterTiles;
 	}
 
-	private TileCode convertTileCode(Tile tile) {
+	private TileCode convertTileCode(RasterTile tile) {
 		return new TileCode(tile.getCode().getTileLevel(), tile.getCode().getX(), tile.getCode().getY());
 	}
 

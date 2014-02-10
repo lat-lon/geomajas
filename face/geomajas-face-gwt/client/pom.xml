@@ -47,7 +47,24 @@
       <classifier>sources</classifier>
       <artifactId>geomajas-command</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>org.geomajas.plugin</groupId>
+      <artifactId>geomajas-plugin-wmsclient</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
+    </dependency>
+    <!-- 
+    
+    <dependency>
+      <groupId>org.geomajas</groupId>
+      <artifactId>geomajas-puregwt-client</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>org.geomajas</groupId>
+      <artifactId>geomajas-puregwt-client-impl</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
+    </dependency>
+ -->
     <!-- GWT dependencies -->
     <dependency>
       <groupId>com.google.gwt</groupId>
