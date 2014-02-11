@@ -19,111 +19,122 @@ import org.geomajas.layer.LayerType;
 
 /**
  * Configuration object for adding a Client WMS layer to the map.
- *
+ * 
  * @author Oliver May
  */
 public class ClientWmsLayerInfo extends ClientRasterLayerInfo {
 
-	private ClientWmsLayer wmsLayer;
+    private ClientWmsLayer wmsLayer;
 
+    private double minimumScaleValue;
 
-	public ClientWmsLayerInfo( ClientWmsLayer wmsLayer ) {
-		this.wmsLayer = wmsLayer;
-		LayerInfo layerInfo = new LayerInfo();
-		layerInfo.setLayerType( LayerType.RASTER);
-		setLayerInfo(layerInfo);
-	}
+    private double maximumScaleValue;
 
-	public ClientWmsLayer getWmsLayer() {
-		return wmsLayer;
-	}
+    public ClientWmsLayerInfo( ClientWmsLayer wmsLayer ) {
+        this.wmsLayer = wmsLayer;
+        LayerInfo layerInfo = new LayerInfo();
+        layerInfo.setLayerType( LayerType.RASTER );
+        setLayerInfo( layerInfo );
+    }
 
-	@Override
-	public String getId() {
-		return wmsLayer.getId();
-	}
+    public ClientWmsLayer getWmsLayer() {
+        return wmsLayer;
+    }
 
-	@Override
-	public String getLabel() {
-		return wmsLayer.getTitle();
-	}
+    @Override
+    public String getId() {
+        return wmsLayer.getId();
+    }
 
-	@Override
-	public boolean isVisible() {
-		return wmsLayer.isMarkedAsVisible();
-	}
+    @Override
+    public String getLabel() {
+        return wmsLayer.getTitle();
+    }
 
-	@Override
-	public void setVisible(boolean visible) {
-		wmsLayer.setMarkedAsVisible(visible);
-	}
+    @Override
+    public boolean isVisible() {
+        return wmsLayer.isMarkedAsVisible();
+    }
 
-	@Override
-	public ScaleInfo getMinimumScale() {
-		throw new UnsupportedOperationException();
-//		return new ScaleInfo(wmsLayer.getConfig().getMinimumScale());
-	}
+    @Override
+    public void setVisible( boolean visible ) {
+        wmsLayer.setMarkedAsVisible( visible );
+    }
 
-	@Override
-	public ScaleInfo getMaximumScale() {
-		throw new UnsupportedOperationException();
-//		return new ScaleInfo(wmsLayer.getConfig().getMaximumScale());
-	}
+    @Override
+    public ScaleInfo getMinimumScale() {
+        return new ScaleInfo( minimumScaleValue );
+    }
 
-	@Override
-	public ScaleInfo getZoomToPointScale() {
-		throw new UnsupportedOperationException();
-//		return new ScaleInfo(wmsLayer.getConfig().getMaximumScale());
-	}
+    @Override
+    public ScaleInfo getMaximumScale() {
+        return new ScaleInfo( maximumScaleValue );
+    }
 
-	@Override
-	public Bbox getMaxExtent() {
-		throw new UnsupportedOperationException();
-//		return wmsLayer.getCapabilities().getBoundingBox();
-	}
+    @Override
+    public ScaleInfo getZoomToPointScale() {
+        throw new UnsupportedOperationException();
+        // return new ScaleInfo(wmsLayer.getConfig().getMaximumScale());
+    }
 
-	@Override
-	public String getCrs() {
-		return wmsLayer.getCrs();
-	}
+    @Override
+    public Bbox getMaxExtent() {
+        throw new UnsupportedOperationException();
+        // return wmsLayer.getCapabilities().getBoundingBox();
+    }
 
-	@Override
-	public void setId(String id) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public String getCrs() {
+        return wmsLayer.getCrs();
+    }
 
-	@Override
-	public String getServerLayerId() {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public void setId( String id ) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public void setServerLayerId(String serverLayerId) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public String getServerLayerId() {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public void setLabel(String label) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public void setServerLayerId( String serverLayerId ) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public void setMinimumScale(ScaleInfo minimumScale) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public void setLabel( String label ) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public void setMaximumScale(ScaleInfo maximumScale) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public void setMinimumScale( ScaleInfo minimumScale ) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public void setZoomToPointScale(ScaleInfo zoomToPointScale) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public void setMaximumScale( ScaleInfo maximumScale ) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public void setMaxExtent(Bbox maxExtent) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public void setZoomToPointScale( ScaleInfo zoomToPointScale ) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setMaxExtent( Bbox maxExtent ) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void setMinimumScaleValue( double minimumScale ) {
+        this.minimumScaleValue = minimumScale;
+
+    }
+
+    public void setMaximumScaleValue( double maximumScale ) {
+        this.maximumScaleValue = maximumScale;
+    }
+
 }
