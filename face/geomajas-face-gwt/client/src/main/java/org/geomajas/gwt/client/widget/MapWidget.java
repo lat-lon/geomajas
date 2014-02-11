@@ -472,6 +472,7 @@ public class MapWidget extends VLayout {
 				}
 			}
 		} catch (Exception e) {
+		    e.printStackTrace();
 		} 
 	}
 
