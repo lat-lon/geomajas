@@ -59,7 +59,9 @@ public class ClientWmsLayer extends WmsLayerImpl {
      *            the mapModel.
      */
     public void setMapModel( MapModel mapModel ) {
-        setViewPort( new SmartGwtViewport( mapModel ) );
+        SmartGwtViewport viewPort = new SmartGwtViewport( mapModel );
+        viewPort.initialize( mapModel.getMapInfo(), null );
+        setViewPort( viewPort );
     }
 
     /**
@@ -70,7 +72,7 @@ public class ClientWmsLayer extends WmsLayerImpl {
 
         private final MapModel mapModel;
 
-        private final List<Double> fixedScales = new ArrayList<Double>();
+        private final List<Double> scales = new ArrayList<Double>();
 
         private ZoomStrategy zoomStrategy;
 
@@ -86,9 +88,9 @@ public class ClientWmsLayer extends WmsLayerImpl {
                 throw e;
             }
             for ( Double resolution : mapModel.getMapView().getResolutions() ) {
-                fixedScales.add( 1 / resolution );
+                scales.add( 1 / resolution );
             }
-            Collections.sort( fixedScales );
+            Collections.sort( scales );
         }
 
         @Override
@@ -164,8 +166,7 @@ public class ClientWmsLayer extends WmsLayerImpl {
 
         @Override
         public void initialize( ClientMapInfo mapInfo, MapEventBus eventBus ) {
-            // TODO Auto-generated method stub
-
+            setZoomStrategy( new FreeForAllZoomStrategy( mapInfo, null ) );
         }
 
         @Override
