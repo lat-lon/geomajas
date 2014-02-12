@@ -21,8 +21,11 @@ import org.geomajas.plugin.wmsclient.client.layer.config.WmsLayerConfiguration;
 import org.geomajas.plugin.wmsclient.client.layer.config.WmsTileConfiguration;
 import org.geomajas.plugin.wmsclient.client.render.WmsLayerRenderer;
 import org.geomajas.plugin.wmsclient.client.render.WmsLayerRendererFactory;
+import org.geomajas.plugin.wmsclient.client.render.WmsLayerRendererImpl;
 import org.geomajas.plugin.wmsclient.client.service.WmsService;
+import org.geomajas.plugin.wmsclient.client.service.WmsServiceImpl;
 import org.geomajas.plugin.wmsclient.client.service.WmsTileService;
+import org.geomajas.plugin.wmsclient.client.service.WmsTileServiceImpl;
 import org.geomajas.puregwt.client.gfx.HtmlContainer;
 import org.geomajas.puregwt.client.map.ViewPort;
 import org.geomajas.puregwt.client.map.layer.AbstractLayer;
@@ -49,14 +52,20 @@ public class WmsLayerImpl extends AbstractLayer implements WmsLayer {
 
 	protected final WmsTileConfiguration tileConfig;
 
-	@Inject
-	protected WmsService wmsService;
+//	@Inject
+	protected WmsService wmsService = new WmsServiceImpl();
 
-	@Inject
-	protected WmsTileService tileService;
+//	@Inject
+	protected WmsTileService tileService = new WmsTileServiceImpl();
 
-	@Inject
-	private WmsLayerRendererFactory rendererFactory;
+//	@Inject
+	private WmsLayerRendererFactory rendererFactory = new WmsLayerRendererFactory() {
+        
+        @Override
+        public WmsLayerRenderer create( WmsLayer layer, HtmlContainer htmlContainer ) {
+            return new WmsLayerRendererImpl( layer, htmlContainer );
+        }
+    };
 
 	protected WmsLayerRenderer renderer;
 
