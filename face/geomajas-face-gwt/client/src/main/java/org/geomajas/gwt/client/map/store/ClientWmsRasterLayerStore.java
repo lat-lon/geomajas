@@ -10,6 +10,11 @@
  */
 package org.geomajas.gwt.client.map.store;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.geomajas.gwt.client.map.MapViewState;
 import org.geomajas.gwt.client.map.cache.tile.RasterTile;
 import org.geomajas.gwt.client.map.cache.tile.TileFunction;
@@ -18,8 +23,6 @@ import org.geomajas.gwt.client.map.layer.RasterLayer;
 import org.geomajas.gwt.client.spatial.Bbox;
 import org.geomajas.gwt.client.spatial.Matrix;
 import org.geomajas.layer.tile.TileCode;
-
-import java.util.*;
 
 /**
  * A raster layer store that keeps tiles in cache while panning, only clearing them when a non-panning move occurs, see
@@ -95,22 +98,7 @@ public class ClientWmsRasterLayerStore implements RasterLayerStore {
 			}
 		}
 	}
-
-	/**
-	 * Method based on WmsTileServiceImpl in GWT2 client.
-	 *
-	 */
-	private List<org.geomajas.layer.tile.RasterTile> calculateTilesForBounds(Bbox bounds) {
-		List<org.geomajas.layer.tile.RasterTile> tiles = new ArrayList<org.geomajas.layer.tile.RasterTile>();
-
-		if (bounds.getHeight() == 0 || bounds.getWidth() == 0) {
-			return tiles;
-		}
-
-
-		return tiles;
-	}
-
+	
 	private void updateTiles(Bbox bounds, final TileFunction<RasterTile> onUpdate) {
 		Bbox panBounds = worldToPan(bounds);
 		for (RasterTile tile : tiles.values()) {

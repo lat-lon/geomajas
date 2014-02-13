@@ -24,6 +24,8 @@ import org.geomajas.layer.LayerType;
  */
 public class ClientWmsLayerInfo extends ClientRasterLayerInfo {
 
+    private static final long serialVersionUID = 1L;
+
     private ClientWmsLayer wmsLayer;
 
     private double minimumScaleValue;
