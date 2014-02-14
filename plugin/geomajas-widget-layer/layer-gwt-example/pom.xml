@@ -47,7 +47,43 @@
 				<version>${geomajas-widget-layer-gwt-face-version}</version>
 				<type>pom</type>
 				<scope>import</scope>
-			</dependency>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.geomajas</groupId>
+                        <artifactId>geomajas-puregwt-client</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.geomajas</groupId>
+                        <artifactId>geomajas-puregwt-client-impl</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.geomajas</groupId>
+                        <artifactId>geomajas-face-common-gwt</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.geomajas</groupId>
+                <artifactId>geomajas-puregwt-client</artifactId>
+                <version>1.0.0-M5</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.geomajas</groupId>
+                <artifactId>geomajas-puregwt-client-impl</artifactId>
+                <version>1.0.0-M5</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.geomajas</groupId>
+                <artifactId>geomajas-face-common-gwt</artifactId>
+                <version>1.4.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
 			<dependency>
 				<groupId>org.geomajas.plugin</groupId>
 				<artifactId>geomajas-layer-geotools</artifactId>
