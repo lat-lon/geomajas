@@ -22,7 +22,7 @@
 
 	<groupId>org.geomajas.plugin</groupId>
 	<artifactId>geomajas-plugin-wmsclient-all</artifactId>
-	<version>1.0.0-SNAPSHOT</version>
+	<version>1.0.0-latlon-SNAPSHOT</version>
 
 	<name>geomajas-plugin-wmsclient plug-in parent</name>
 	<description>geomajas-plugin-wmsclient plug-in grouping module</description>
