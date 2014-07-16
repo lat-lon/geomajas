@@ -42,3 +42,7 @@ target
 /project/geomajas-project-codemirror-gwt/target/
 /project/geomajas-project-codemirror-gwt/codemirror/target/
 /project/geomajas-project-codemirror-gwt/documentation/target/
+
+# IntelliJ
+*.iml
+.idea
