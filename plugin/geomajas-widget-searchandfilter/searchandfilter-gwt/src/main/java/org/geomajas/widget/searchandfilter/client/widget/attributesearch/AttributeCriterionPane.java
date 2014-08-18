@@ -66,12 +66,21 @@ public class AttributeCriterionPane extends Canvas {
 	 * @param layer layer to create criterion for
 	 */
 	public AttributeCriterionPane(VectorLayer layer) {
-		super();
-		this.layer = layer;
-
-		buildUI();
+		this(layer, true);
 	}
 
+    /**
+     * Create a search criterion pane, for the given vector layer. The layer is required, as it's list of attribute
+     * definitions are a vital part of the search criteria.
+     *
+     * @param layer layer to create criterion for
+     */
+    public AttributeCriterionPane(VectorLayer layer, boolean showOperatorSelect) {
+        super();
+        this.layer = layer;
+
+        buildUI(showOperatorSelect);
+    }
 	// -------------------------------------------------------------------------
 	// Public methods:
 	// -------------------------------------------------------------------------
@@ -214,7 +223,7 @@ public class AttributeCriterionPane extends Canvas {
 	// Private methods:
 	// -------------------------------------------------------------------------
 
-	private void buildUI() {
+	private void buildUI(boolean showOperatorSelect) {
 
 		// Attribute select:
 		attributeSelect = new SelectItem("attributeItem");
@@ -238,6 +247,10 @@ public class AttributeCriterionPane extends Canvas {
 		operatorSelect.setValidateOnChange(true);
 		operatorSelect.setShowErrorStyle(true);
 		operatorSelect.setRequired(true);
+//		if(!showOperatorSelect){
+//		    operatorSelect.hide();
+//	        operatorSelect.setRequired(false);
+//		}
 
 		// Value form item:
 		valueItem = new AttributeFormItem("valueItem");
