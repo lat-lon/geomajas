@@ -515,12 +515,18 @@ public class SimpleAttributeSearchPanel extends AbstractSearchPanel {
 
         private void updateLayerList() {
             List<String> layers = new ArrayList<String>();
-            for (Layer<?> vLayer : mapModel.getLayers()) {
-                if (vLayer instanceof VectorLayer) {
-                    layers.add(vLayer.getLabel());
+            VectorLayer defaultLayer = null;
+            for ( Layer<?> vLayer : mapModel.getLayers() ) {
+                if ( vLayer instanceof VectorLayer ) {
+                    layers.add( vLayer.getLabel() );
+                    if ( defaultLayer == null )
+                        defaultLayer = (VectorLayer) vLayer;
                 }
             }
-            layerSelect.setValueMap(layers.toArray(new String[layers.size()]));
+            layerSelect.setValueMap( layers.toArray( new String[layers.size()] ) );
+            if ( defaultLayer != null ) {
+                setLayer( defaultLayer );
+            }
         }
 
         private void buildUI() {
@@ -569,7 +575,7 @@ public class SimpleAttributeSearchPanel extends AbstractSearchPanel {
                         updateLayerList();
                     }
                 });
-                updateLayerList();
+                
             } else {
                 mapModel.addLayerSelectionHandler(new LayerSelectionHandler() {
                     public void onDeselectLayer(LayerDeselectedEvent event) {
@@ -649,6 +655,8 @@ public class SimpleAttributeSearchPanel extends AbstractSearchPanel {
             layout.addMember(optionLayout);
             layout.addMember(searchGrid);
             addChild(layout);
+            if(manualLayerSelection)
+                updateLayerList();
         }
 
         private void updateLabelTitle(String title) {
