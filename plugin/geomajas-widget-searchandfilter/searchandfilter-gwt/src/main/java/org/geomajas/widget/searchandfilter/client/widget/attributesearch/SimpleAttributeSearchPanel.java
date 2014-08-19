@@ -104,6 +104,7 @@ public class SimpleAttributeSearchPanel extends AbstractSearchPanel {
      */
     public SimpleAttributeSearchPanel(final MapWidget mapWidget, boolean manualLayerSelection, String layerId) {
         super(mapWidget);
+        setCanAddToFavourites( false );
         featureSearch = new FeatureSearch(mapWidget.getMapModel(), manualLayerSelection, layerId);
         addChild(featureSearch);
     }
