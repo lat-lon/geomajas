@@ -302,8 +302,10 @@ public class AttributeCriterionPane extends Canvas {
 	}
 
     private void updateAttributeSelect( String[] attributeSelectValues ) {
-        if ( attributeSelectValues != null && attributeSelectValues.length > 0 )
+        if ( attributeSelectValues != null && attributeSelectValues.length > 0 ) {
             attributeSelect.setValue( attributeSelectValues[0] );
+            attributeChanged();
+        }
     }
 
     private void attributeChanged() {
