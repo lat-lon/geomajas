@@ -54,6 +54,7 @@ public class AttributeCriterionPane extends Canvas {
 	private VectorLayer layer;
 
 	private AbstractReadOnlyAttributeInfo selectedAttribute;
+    private boolean showOperatorSelect;
 
 	// -------------------------------------------------------------------------
 	// Constructors:
@@ -78,8 +79,9 @@ public class AttributeCriterionPane extends Canvas {
     public AttributeCriterionPane(VectorLayer layer, boolean showOperatorSelect) {
         super();
         this.layer = layer;
+        this.showOperatorSelect = showOperatorSelect;
 
-        buildUI(showOperatorSelect);
+        buildUI();
     }
 	// -------------------------------------------------------------------------
 	// Public methods:
@@ -124,7 +126,11 @@ public class AttributeCriterionPane extends Canvas {
 	 * @return search criterion
 	 */
 	public AttributeCriterion getSearchCriterion() {
-		Object operator = operatorSelect.getValue();
+        Object operator;
+        if ( showOperatorSelect )
+            operator = operatorSelect.getValue();
+        else
+            operator = getDefaultOperatorForAttributeType( getSelectedAttribute() );
 		Object value = valueItem.getValue();
 
 		if (selectedAttribute != null && operator != null) {
@@ -219,11 +225,27 @@ public class AttributeCriterionPane extends Canvas {
 		return operator;
 	}
 
+
+    private String getDefaultOperatorForAttributeType( AbstractReadOnlyAttributeInfo attributeInfo ) {
+        if ( attributeInfo != null && attributeInfo instanceof PrimitiveAttributeInfo ) {
+            PrimitiveAttributeInfo primitive = (PrimitiveAttributeInfo) attributeInfo;
+            switch ( primitive.getType() ) {
+            case STRING:
+            case URL:
+            case IMGURL:
+                return "contains";
+            default:
+                return "=";
+            }
+        }
+        return "=";
+    }
+    
 	// -------------------------------------------------------------------------
 	// Private methods:
 	// -------------------------------------------------------------------------
 
-	private void buildUI(boolean showOperatorSelect) {
+	private void buildUI() {
 
 		// Attribute select:
 		attributeSelect = new SelectItem("attributeItem");
@@ -246,11 +268,11 @@ public class AttributeCriterionPane extends Canvas {
 
 		operatorSelect.setValidateOnChange(true);
 		operatorSelect.setShowErrorStyle(true);
-		operatorSelect.setRequired(true);
-//		if(!showOperatorSelect){
-//		    operatorSelect.hide();
-//	        operatorSelect.setRequired(false);
-//		}
+		if ( showOperatorSelect ) {
+            operatorSelect.setRequired( true );
+        } else {
+            operatorSelect.setVisible( false );
+        }
 
 		// Value form item:
 		valueItem = new AttributeFormItem("valueItem");
@@ -269,7 +291,10 @@ public class AttributeCriterionPane extends Canvas {
 		DynamicForm form = new DynamicForm();
 		form.setNumCols(6);
 		form.setHeight(26);
-		form.setFields(attributeSelect, operatorSelect, valueItem);
+        if ( showOperatorSelect )
+            form.setFields( attributeSelect, operatorSelect, valueItem );
+        else
+            form.setFields( attributeSelect, valueItem );
 		addChild(form);
 	}
 

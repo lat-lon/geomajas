@@ -255,7 +255,7 @@ public class SimpleAttributeSearchPanel extends AbstractSearchPanel {
             }
 
             // Empty row:
-            AttributeCriterionPane newRow = new AttributeCriterionPane(layer);
+            AttributeCriterionPane newRow = new AttributeCriterionPane(layer, false);
             newRow.setHeight(32);
             newRow.setStyleName(STYLE_SEARCH_ROW);
 
@@ -625,7 +625,6 @@ public class SimpleAttributeSearchPanel extends AbstractSearchPanel {
             criterionStack = new VStack();
             criterionStack.setAlign(VerticalAlignment.TOP);
             headerLayout.addMember(attrHeader);
-            headerLayout.addMember(operatorHeader);
             headerLayout.addMember(valueHeader);
             criterionStack.addMember(headerLayout);
 
