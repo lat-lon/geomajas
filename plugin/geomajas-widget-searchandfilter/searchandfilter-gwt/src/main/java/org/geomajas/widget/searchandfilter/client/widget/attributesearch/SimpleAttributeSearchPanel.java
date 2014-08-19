@@ -256,7 +256,7 @@ public class SimpleAttributeSearchPanel extends AbstractSearchPanel {
             }
 
             // Empty row:
-            AttributeCriterionPane newRow = new AttributeCriterionPane(layer, false);
+            AttributeCriterionPane newRow = new AttributeCriterionPane(layer, false, true);
             newRow.setHeight(32);
             newRow.setStyleName(STYLE_SEARCH_ROW);
 

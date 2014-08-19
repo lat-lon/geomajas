@@ -67,7 +67,7 @@ public class AttributeCriterionPane extends Canvas {
 	 * @param layer layer to create criterion for
 	 */
 	public AttributeCriterionPane(VectorLayer layer) {
-		this(layer, true);
+		this(layer, true, false);
 	}
 
     /**
@@ -76,12 +76,12 @@ public class AttributeCriterionPane extends Canvas {
      *
      * @param layer layer to create criterion for
      */
-    public AttributeCriterionPane(VectorLayer layer, boolean showOperatorSelect) {
+    public AttributeCriterionPane(VectorLayer layer, boolean showOperatorSelect, boolean showFirstAttribute) {
         super();
         this.layer = layer;
         this.showOperatorSelect = showOperatorSelect;
 
-        buildUI();
+        buildUI(showFirstAttribute);
     }
 	// -------------------------------------------------------------------------
 	// Public methods:
@@ -245,14 +245,15 @@ public class AttributeCriterionPane extends Canvas {
 	// Private methods:
 	// -------------------------------------------------------------------------
 
-	private void buildUI() {
+	private void buildUI(boolean showFirstAttribute) {
 
 		// Attribute select:
 		attributeSelect = new SelectItem("attributeItem");
 		attributeSelect.setWidth(140);
 		attributeSelect.setShowTitle(false);
-		attributeSelect.setValueMap(org.geomajas.gwt.client.widget.attribute.AttributeCriterionPane.
-				getSearchableAttributes(layer));
+		String[] attributeSelectValues = org.geomajas.gwt.client.widget.attribute.AttributeCriterionPane.
+				getSearchableAttributes(layer);
+        attributeSelect.setValueMap(attributeSelectValues);
 		attributeSelect.setHint(I18nProvider.getSearch().gridChooseAttribute());
 		attributeSelect.setShowHintInField(true);
 
@@ -296,9 +297,16 @@ public class AttributeCriterionPane extends Canvas {
         else
             form.setFields( attributeSelect, valueItem );
 		addChild(form);
+        if ( showFirstAttribute )
+            updateAttributeSelect( attributeSelectValues );
 	}
 
-	private void attributeChanged() {
+    private void updateAttributeSelect( String[] attributeSelectValues ) {
+        if ( attributeSelectValues != null && attributeSelectValues.length > 0 )
+            attributeSelect.setValue( attributeSelectValues[0] );
+    }
+
+    private void attributeChanged() {
 		selectedAttribute = getSelectedAttribute();
 		if (selectedAttribute != null) {
 			// Adjust operator value map and enabled:
