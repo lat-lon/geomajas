@@ -39,7 +39,8 @@ public class ComboRasterLayer extends RasterLayer {
 		for (Layer<?> layer : layers) {
 			if (layer instanceof RasterLayer) {
 				RasterLayer rLayer = (RasterLayer) layer;
-				double rasterLayerOpacity = rLayer.getOpacity();
+				double rasterLayerOpacity = Double.parseDouble(rLayer
+						.getLayerInfo().getStyle());
 				minOpacity = Math.min(minOpacity, rasterLayerOpacity);
 			}
 		}
