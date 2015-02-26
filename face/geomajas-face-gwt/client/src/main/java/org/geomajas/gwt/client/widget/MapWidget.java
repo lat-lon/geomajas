@@ -1146,11 +1146,11 @@ public class MapWidget extends VLayout {
 				layer.addLayerChangedHandler(new LayerChangedHandler() {
 
 					public void onLabelChange(LayerLabeledEvent event) {
-						render(layer, null, RenderStatus.ALL);
+						render(mapModel, null, RenderStatus.ALL);
 					}
 
 					public void onVisibleChange(LayerShownEvent event) {
-						render(layer, null, RenderStatus.ALL);
+						render(mapModel, null, RenderStatus.ALL);
 					}
 
 				});
