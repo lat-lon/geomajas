@@ -54,12 +54,14 @@ public class LegendOnNextPageDocument extends AbstractItextDocument {
 		PdfContext context = createContext(writer);
 		List<List<PrintComponent<?>>> pages = dynamicLegendComponent.layoutOnMultiplePages(createContext(writer));
 		for (List<PrintComponent<?>> page : pages) {
-			document.newPage();
-			context = createContext(writer);
-			page.add(dynamicLegendComponent.getTitleLabel());
-			render(context, page);
-			Image image = context.getImage();
-			document.add(image);
+			if(!page.isEmpty()){
+				document.newPage();
+				context = createContext(writer);
+				page.add(dynamicLegendComponent.getTitleLabel());
+				render(context, page);
+				Image image = context.getImage();
+				document.add(image);
+			}
 		}
 	}
 
